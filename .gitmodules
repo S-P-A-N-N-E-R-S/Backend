@@ -1,3 +1,6 @@
 [submodule "lib/protocol"]
 	path = lib/protocol
 	url = git@gitpgtcs.informatik.uni-osnabrueck.de:spanners/protocol.git
+[submodule "lib/ogdf"]
+	path = lib/ogdf
+	url = git@gitpgtcs.informatik.uni-osnabrueck.de:spanners/ogdf.git
