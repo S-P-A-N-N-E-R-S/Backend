@@ -1,6 +1,9 @@
 set(NETWORKING_NAME networking)
 
 set(NETWORKING_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/networking/io/io_server.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/io/connection_handler.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/io/connection.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/graph_message.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/abstract_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/shortest_path_response.hpp
@@ -14,6 +17,8 @@ set(NETWORKING_HEADERS
     )
 
 set(NETWORKING_SOURCES
+    io/io_server.cpp
+    io/connection.cpp
     messages/graph_message.cpp
     responses/abstract_response.cpp
     responses/shortest_path_response.cpp
@@ -24,10 +29,8 @@ set(NETWORKING_SOURCES
     )
 
 protobuf_generate_cpp(proto_sources proto_headers ${PROTO_FILES})
-
 set(networking_files "${NETWORKING_HEADERS};${NETWORKING_SOURCES};${proto_headers};${proto_sources}")
 
-# Add server executable and link necessary libraries
 add_library(${NETWORKING_NAME} STATIC "${networking_files}")
 target_include_directories(${NETWORKING_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
 target_include_directories(${NETWORKING_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
@@ -36,3 +39,5 @@ target_include_directories(${NETWORKING_NAME} PUBLIC "${CMAKE_CURRENT_BINARY_DIR
 
 target_link_libraries(${NETWORKING_NAME} PUBLIC OGDF)
 target_link_libraries(${NETWORKING_NAME} PRIVATE ${Protobuf_LIBRARIES})
+target_link_libraries(${NETWORKING_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${NETWORKING_NAME} PRIVATE ${Boost_LIBRARIES})
