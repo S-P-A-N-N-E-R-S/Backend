@@ -1,19 +1,38 @@
-set(PROJECT_NAME server)
-set(SOURCE_FILES main.cpp
-    # foo.cpp
-    # Put more files here
+set(NETWORKING_NAME networking)
+
+set(NETWORKING_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/networking/messages/graph_message.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/abstract_response.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/shortest_path_response.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/status_code.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/response_factory.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/response_type.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/requests/abstract_request.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/requests/shortest_path_request.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/requests/request_factory.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/requests/request_type.hpp
     )
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+set(NETWORKING_SOURCES
+    messages/graph_message.cpp
+    responses/abstract_response.cpp
+    responses/shortest_path_response.cpp
+    responses/response_factory.cpp
+    requests/abstract_request.cpp
+    requests/shortest_path_request.cpp
+    requests/request_factory.cpp
+    )
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+protobuf_generate_cpp(proto_sources proto_headers ${PROTO_FILES})
 
-set_target_properties(${PROJECT_NAME}
-    PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin"
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/bin"
-    RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/bin"
-)
+set(networking_files "${NETWORKING_HEADERS};${NETWORKING_SOURCES};${proto_headers};${proto_sources}")
+
+# Add server executable and link necessary libraries
+add_library(${NETWORKING_NAME} STATIC "${networking_files}")
+target_include_directories(${NETWORKING_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
+target_include_directories(${NETWORKING_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
+target_include_directories(${NETWORKING_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
+target_include_directories(${NETWORKING_NAME} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+
+target_link_libraries(${NETWORKING_NAME} PUBLIC OGDF)
+target_link_libraries(${NETWORKING_NAME} PRIVATE ${Protobuf_LIBRARIES})
