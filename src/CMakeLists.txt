@@ -1,3 +1,9 @@
+# Create protobuff files
+protobuf_generate_cpp(proto_sources proto_headers ${PROTO_FILES})
+
+#Suggestion: Networking and Handling do not need different librarys, we could combine them into one later
+
+#Create networking library
 set(NETWORKING_NAME networking)
 
 set(NETWORKING_HEADERS
@@ -28,7 +34,6 @@ set(NETWORKING_SOURCES
     requests/request_factory.cpp
     )
 
-protobuf_generate_cpp(proto_sources proto_headers ${PROTO_FILES})
 set(networking_files "${NETWORKING_HEADERS};${NETWORKING_SOURCES};${proto_headers};${proto_sources}")
 
 add_library(${NETWORKING_NAME} STATIC "${networking_files}")
@@ -41,3 +46,31 @@ target_link_libraries(${NETWORKING_NAME} PUBLIC OGDF)
 target_link_libraries(${NETWORKING_NAME} PRIVATE ${Protobuf_LIBRARIES})
 target_link_libraries(${NETWORKING_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(${NETWORKING_NAME} PRIVATE ${Boost_LIBRARIES})
+
+
+#Create handling library
+set(HANDLING_NAME handling)
+
+set(HANDLING_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/handling/handler_proxy.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/abstract_handler.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/dijkstra_handler.hpp
+)
+
+set(HANDLING_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/handling/handler_proxy.cpp
+    ${CMAKE_SOURCE_DIR}/src/handling/handlers/dijkstra_handler.cpp
+)
+
+set(handling_files "${HANDLING_HEADERS};${HANDLING_SOURCES};${proto_headers};${proto_sources}")
+add_library(${HANDLING_NAME} STATIC "${handling_files}")
+target_include_directories(${HANDLING_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include/handling")
+target_include_directories(${HANDLING_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
+target_include_directories(${HANDLING_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
+target_include_directories(${HANDLING_NAME} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(${HANDLING_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+
+target_link_libraries(${HANDLING_NAME} PUBLIC OGDF)
+target_link_libraries(${HANDLING_NAME} PRIVATE ${Protobuf_LIBRARIES})
+target_link_libraries(${HANDLING_NAME} PUBLIC ${NETWORKING_NAME})
