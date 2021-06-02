@@ -3,3 +3,7 @@ target_link_libraries(parsing_example PRIVATE networking)
 
 add_executable(server server.cpp)
 target_link_libraries(server PRIVATE networking)
+
+add_executable(parsing_example_handler parsing_example_handler.cpp )
+target_link_libraries(parsing_example_handler PRIVATE networking)
+target_link_libraries(parsing_example_handler PRIVATE handling)
