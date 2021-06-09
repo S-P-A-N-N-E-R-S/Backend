@@ -23,7 +23,7 @@ private:
     bool m_directed;
     ogdf::node m_start;
     const ogdf::Graph &m_graph;
-    ogdf::EdgeArray<int> m_weights;
+    ogdf::EdgeArray<double> m_weights;
 };
 
 }  // namespace server

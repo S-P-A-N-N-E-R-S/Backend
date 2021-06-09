@@ -50,7 +50,9 @@ public:
 private:
     void read();
 
-    void write(graphs::ResponseContainer &container);
+    void respond(graphs::ResponseContainer &container);
+
+    void write(const char *buffer, size_t length);
 
     size_t m_identifier;
 
