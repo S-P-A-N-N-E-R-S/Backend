@@ -7,48 +7,60 @@ DijkstraHandler::DijkstraHandler(shortest_path_request &sp_request)
     , m_directed(false)  //ToDo: add directed somewhere to graph or sp-request or both
     , m_start(m_req_message->node(sp_request.start_index()))
     , m_graph(m_req_message->graph())  //Maybe change graph() to pointer?
-    , m_weights(ogdf::EdgeArray<int>(m_graph))
+    , m_weights(ogdf::EdgeArray<double>(m_graph))
 {
     for (auto e : m_graph.edges)
     {
-        m_weights[e] = std::stoi(m_req_message->edge_attrs().at("cost")[e]);
+        m_weights[e] = std::stod(m_req_message->edge_attrs().at("cost")[e]);
     }
 }
 
 std::unique_ptr<abstract_response> DijkstraHandler::handle()
 {
     ogdf::NodeArray<ogdf::edge> preds;
-    ogdf::NodeArray<int> dist;
+    ogdf::NodeArray<double> dist;
 
-    ogdf::Dijkstra<int>().call(m_graph, m_weights, m_start, preds, dist, m_directed);
+    ogdf::Dijkstra<double>().call(m_graph, m_weights, m_start, preds, dist, m_directed);
 
     auto out_graph = std::make_unique<ogdf::Graph>();
     auto out_node_uids = std::make_unique<ogdf::NodeArray<uid_t>>(*out_graph);
-    auto out_edge_uids = std::make_unique<ogdf::EdgeArray<uid_t>>();
+    auto out_edge_uids = std::make_unique<ogdf::EdgeArray<uid_t>>(*out_graph);
     auto out_coords = std::make_unique<ogdf::NodeArray<coords_t>>(*out_graph);
     auto out_graphMap = std::make_unique<GraphAttributeMap>();
     auto out_nodeMap = std::make_unique<NodeAttributeMap>();
     auto out_edgeMap = std::make_unique<EdgeAttributeMap>();
 
-    auto out_preds = out_nodeMap->emplace("preds", ogdf::NodeArray<std::string>(*out_graph)).first;
-    auto out_dist = out_nodeMap->emplace("dist", ogdf::NodeArray<std::string>(*out_graph)).first;
+    //to access nodes by uids
+    auto original_uid_to_out_node = std::unordered_map<uid_t, ogdf::node>();
+
+    // add all nodes to answer (before adding edges)
     for (auto n : m_graph.nodes)
     {
         auto new_node = out_graph->newNode();
 
-        (*out_node_uids)[new_node] = m_req_message->node_uids()[n];
+        uid_t original_uid = m_req_message->node_uids()[n];
 
-        if (preds[n] != nullptr)
-        {
-            out_preds->second[new_node] =
-                std::to_string(m_req_message->node_uids()[preds[n]->opposite(n)]);
-        }
+        (*out_node_uids)[new_node] = original_uid;
 
-        out_dist->second[new_node] = std::to_string(dist[n]);
+        original_uid_to_out_node[original_uid] = new_node;
 
-        //This is redundant information we need so that response_factory does not crash!
+        //This is redundant information, but we need it because response_factory would crash!
         (*out_coords)[new_node] = m_req_message->node_coords()[n];
     }
+
+    //add edges to answer
+    for (auto n : m_graph.nodes)
+    {
+        auto preds_edge = preds[n];
+        if (preds_edge != nullptr)
+        {
+            auto source_uid = m_req_message->node_uids()[n];
+            auto target_uid = m_req_message->node_uids()[preds_edge->opposite(n)];
+            auto newEdge = out_graph->newEdge(original_uid_to_out_node[source_uid], original_uid_to_out_node[target_uid]);
+            (*out_edge_uids)[newEdge] = m_req_message->edge_uids()[preds_edge];
+        }
+    }
+
 
     std::unique_ptr<graph_message> message(
         new graph_message(std::move(out_graph), std::move(out_node_uids), std::move(out_edge_uids),
