@@ -2,8 +2,6 @@
 
 #include "networking/requests/request_type.hpp"
 
-#include "GraphData.pb.h"
-
 namespace server {
 
 class abstract_request

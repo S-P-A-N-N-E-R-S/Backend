@@ -5,7 +5,7 @@
 #include <boost/asio.hpp>
 #include <vector>
 
-#include "GraphData.pb.h"
+#include "container.pb.h"
 
 namespace server {
 

@@ -1,9 +1,12 @@
 #pragma once
 
-#include "GraphData.pb.h"
+#include "container.pb.h"
 
 namespace server {
 
-enum class request_type { SHORTEST_PATH = graphs::RequestContainer_RequestType_SHORTEST_PATH };
+enum class request_type {
+    UNDEFINED_REQUEST = graphs::RequestContainer_RequestType_UNDEFINED_REQUEST,
+    SHORTEST_PATH = graphs::RequestContainer_RequestType_SHORTEST_PATH
+};
 
 }  // namespace server

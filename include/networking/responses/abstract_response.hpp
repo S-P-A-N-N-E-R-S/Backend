@@ -3,8 +3,6 @@
 #include "networking/responses/response_type.hpp"
 #include "networking/responses/status_code.hpp"
 
-#include "GraphData.pb.h"
-
 namespace server {
 
 class abstract_response

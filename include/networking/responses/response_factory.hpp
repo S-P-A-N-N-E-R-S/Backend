@@ -5,7 +5,7 @@
 #include "networking/responses/abstract_response.hpp"
 #include "networking/responses/shortest_path_response.hpp"
 
-#include "GraphData.pb.h"
+#include "container.pb.h"
 
 namespace server {
 

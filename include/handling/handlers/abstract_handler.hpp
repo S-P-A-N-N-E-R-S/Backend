@@ -1,7 +1,6 @@
 #ifndef HANDLERS_HANDLER_H_
 #define HANDLERS_HANDLER_H_
 
-#include <GraphData.pb.h>
 #include <string>
 #include <vector>
 
