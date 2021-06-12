@@ -51,7 +51,6 @@ public:
     bool stop();
 
 private:
-
     void accept();
 
     server_status m_status = STOPPED;

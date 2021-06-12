@@ -39,7 +39,8 @@ int main(int argc, const char **argv)
     auto edge_uids = std::make_unique<ogdf::EdgeArray<server::uid_t>>(*og);
     auto *edge_costs = proto_request.mutable_edgecost();
 
-    for (const auto &edge : og->edges) {
+    for (const auto &edge : og->edges)
+    {
         const auto uid = edge->index();
 
         (*edge_uids)[edge] = uid;
