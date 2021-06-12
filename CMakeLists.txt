@@ -23,3 +23,6 @@ add_subdirectory(src)
 
 # Add executable(s)
 add_subdirectory(apps)
+
+# Add tests folder
+add_subdirectory(tests)
