@@ -6,7 +6,16 @@ variables:
 test-build:
     before_script:
         - export DEBIAN_FRONTEND=noninteractive
-        - apt-get -yq update && apt-get -y install g++ cmake libprotobuf-dev libboost-all-dev libasio-dev
+        - apt-get -yq update && apt-get -y install g++ cmake libboost-all-dev libasio-dev autoconf automake libtool wget make unzip sudo
+        - wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
+        - tar xf protobuf-cpp-3.16.0.tar.gz
+        - cd protobuf-3.16.0
+        - ./autogen.sh
+        - ./configure
+        - make -j4
+        - sudo make install
+        - sudo ldconfig
+        - cd ..
     script:
         - mkdir build
         - cd build
