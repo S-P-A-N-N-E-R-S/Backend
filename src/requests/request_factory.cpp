@@ -11,7 +11,7 @@ std::unique_ptr<abstract_request> request_factory::build_request(
     {
         case graphs::RequestContainer_RequestType_SHORTEST_PATH: {
             // We know that the container contains a shortest path request
-            graphs::ShortPathRequest proto_request;
+            graphs::ShortestPathRequest proto_request;
             const bool ok = container.request().UnpackTo(&proto_request);
 
             if (!ok)

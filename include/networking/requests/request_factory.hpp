@@ -4,7 +4,7 @@
 
 #include "networking/requests/abstract_request.hpp"
 
-#include "GraphData.pb.h"
+#include "container.pb.h"
 
 namespace server {
 

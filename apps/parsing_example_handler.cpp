@@ -16,54 +16,48 @@
  **/
 int main(int argc, const char **argv)
 {
+    graphs::ShortestPathRequest proto_request;
+
     auto og = std::make_unique<ogdf::Graph>();
     ogdf::randomSimpleConnectedGraph(*og, 100, 300);
 
-    auto ga = std::make_unique<server::GraphAttributeMap>();
-    ga->emplace("type", "euclidean");
-
     auto node_uids = std::make_unique<ogdf::NodeArray<server::uid_t>>(*og);
-    auto node_coords = std::make_unique<ogdf::NodeArray<server::coords_t>>(*og);
-    auto na = std::make_unique<server::NodeAttributeMap>();
-    {
-        ogdf::NodeArray<std::string> name(*og);
-        for (const auto &node : og->nodes)
-        {
-            name[node] = "Vertex " + std::to_string(node->index());
-            (*node_uids)[node] = node->index();
-            (*node_coords)[node] =
-                std::make_tuple(ogdf::randomDouble(-50, 50), ogdf::randomDouble(-50, 50),
-                                ogdf::randomDouble(-50, 50));
-        }
+    auto *node_coords = proto_request.mutable_vertexcoordinates();
 
-        na->emplace("name", std::move(name));
+    for (const auto &node : og->nodes)
+    {
+        const auto uid = node->index();
+
+        (*node_uids)[node] = uid;
+        node_coords->operator[](uid) = [] {
+            auto coords = graphs::VertexCoordinates{};
+            coords.set_x(ogdf::randomDouble(-50, 50));
+            coords.set_y(ogdf::randomDouble(-50, 50));
+            coords.set_z(ogdf::randomDouble(-50, 50));
+
+            return coords;
+        }();
     }
 
     auto edge_uids = std::make_unique<ogdf::EdgeArray<server::uid_t>>(*og);
-    auto ea = std::make_unique<server::EdgeAttributeMap>();
-    {
-        ogdf::EdgeArray<std::string> cost(*og);
-        for (const auto &edge : og->edges)
-        {
-            cost[edge] = std::to_string(ogdf::randomDouble(0, 100));
-            (*edge_uids)[edge] = edge->index();
-        }
+    auto *edge_costs = proto_request.mutable_edgecost();
 
-        ea->emplace("cost", std::move(cost));
+    for (const auto &edge : og->edges)
+    {
+        const auto uid = edge->index();
+
+        (*edge_uids)[edge] = uid;
+        edge_costs->operator[](uid) = ogdf::randomDouble(0, 100);
     }
 
     auto proto_graph =
-        server::graph_message(std::move(og), std::move(node_uids), std::move(edge_uids),
-                              std::move(node_coords), std::move(ga), std::move(na), std::move(ea))
-            .as_proto();
+        server::graph_message(std::move(og), std::move(node_uids), std::move(edge_uids)).as_proto();
 
-    graphs::ShortPathRequest proto_request;
     proto_request.set_allocated_graph(proto_graph.release());
+
     // Hardcoded for testing purposes only
-    uid_t start = 0;
-    uid_t end = 99;
-    proto_request.set_startindex(start);
-    proto_request.set_endindex(end);
+    proto_request.set_startindex(0);
+    proto_request.set_endindex(99);
 
     graphs::RequestContainer proto_request_container;
     proto_request_container.set_type(graphs::RequestContainer_RequestType_SHORTEST_PATH);

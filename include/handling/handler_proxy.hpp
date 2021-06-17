@@ -10,9 +10,6 @@
 //handler includes
 #include <handling/handlers/abstract_handler.hpp>
 
-//protobuf includes
-#include <GraphData.pb.h>
-
 #include <networking/messages/graph_message.hpp>
 #include <networking/requests/abstract_request.hpp>
 #include <networking/requests/shortest_path_request.hpp>

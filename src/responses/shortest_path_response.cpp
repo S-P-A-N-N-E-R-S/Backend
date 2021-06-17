@@ -2,10 +2,14 @@
 
 namespace server {
 
-shortest_path_response::shortest_path_response(std::unique_ptr<server::graph_message> shortest_path,
-                                               status_code status)
+shortest_path_response::shortest_path_response(
+    std::unique_ptr<server::graph_message> shortest_path,
+    std::unique_ptr<ogdf::EdgeArray<double>> edge_costs,
+    std::unique_ptr<ogdf::NodeArray<node_coordinates>> node_coords, status_code status)
     : abstract_response(response_type::SHORTEST_PATH, status)
     , m_proto_graph(std::make_unique<graphs::Graph>())
+    , m_edge_costs(std::make_unique<google::protobuf::Map<uid_t, double>>())
+    , m_vertex_coords(std::make_unique<google::protobuf::Map<uid_t, graphs::VertexCoordinates>>())
 {
     this->m_proto_graph->set_uid(shortest_path->uid());
 
@@ -19,17 +23,7 @@ shortest_path_response::shortest_path_response(std::unique_ptr<server::graph_mes
         auto *inserted = this->m_proto_graph->add_vertexlist();
         inserted->set_uid(uid);
 
-        const coords_t &coords = shortest_path->node_coords()[node];
-        inserted->set_x(std::get<0>(coords));
-        inserted->set_y(std::get<1>(coords));
-        inserted->set_z(std::get<2>(coords));
-
-        auto *proto_attrs = inserted->mutable_attributes();
-
-        for (const auto &[attr_name, attrs_for_nodes] : shortest_path->node_attrs())
-        {
-            (*proto_attrs)[attr_name] = attrs_for_nodes[node];
-        }
+        this->m_vertex_coords->operator[](uid) = node_coords->operator[](node).as_proto();
     }
 
     const auto &edge_uids = shortest_path->edge_uids();
@@ -42,22 +36,11 @@ shortest_path_response::shortest_path_response(std::unique_ptr<server::graph_mes
         inserted->set_invertexuid(node_uids[edge->source()]);
         inserted->set_outvertexuid(node_uids[edge->target()]);
 
-        auto *proto_attrs = inserted->mutable_attributes();
-
-        for (const auto &[attr_name, attrs_for_edges] : shortest_path->edge_attrs())
-        {
-            (*proto_attrs)[attr_name] = attrs_for_edges[edge];
-        }
-    }
-
-    auto *attrs = this->m_proto_graph->mutable_attributes();
-    for (const auto &[key, val] : shortest_path->graph_attrs())
-    {
-        (*attrs)[key] = val;
+        this->m_edge_costs->operator[](uid) = edge_costs->operator[](edge);
     }
 }
 
-const graphs::Graph *shortest_path_response::proto_graph()
+const graphs::Graph *shortest_path_response::proto_graph() const
 {
     return this->m_proto_graph.get();
 }
@@ -65,6 +48,28 @@ const graphs::Graph *shortest_path_response::proto_graph()
 std::unique_ptr<graphs::Graph> shortest_path_response::take_proto_graph()
 {
     return std::move(this->m_proto_graph);
+}
+
+const google::protobuf::Map<uid_t, double> *shortest_path_response::edge_costs() const
+{
+    return this->m_edge_costs.get();
+}
+
+std::unique_ptr<google::protobuf::Map<uid_t, double>> shortest_path_response::take_edge_costs()
+{
+    return std::move(this->m_edge_costs);
+}
+
+const google::protobuf::Map<uid_t, graphs::VertexCoordinates>
+    *shortest_path_response::vertex_coords() const
+{
+    return this->m_vertex_coords.get();
+}
+
+std::unique_ptr<google::protobuf::Map<uid_t, graphs::VertexCoordinates>>
+    shortest_path_response::take_vertex_coords()
+{
+    return std::move(this->m_vertex_coords);
 }
 
 }  // namespace server

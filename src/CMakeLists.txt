@@ -11,6 +11,7 @@ set(NETWORKING_HEADERS
     ${CMAKE_SOURCE_DIR}/include/networking/io/connection_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/connection.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/graph_message.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/messages/node_coordinates.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/abstract_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/shortest_path_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/status_code.hpp
@@ -26,6 +27,7 @@ set(NETWORKING_SOURCES
     io/io_server.cpp
     io/connection.cpp
     messages/graph_message.cpp
+    messages/node_coordinates.cpp
     responses/abstract_response.cpp
     responses/shortest_path_response.cpp
     responses/response_factory.cpp

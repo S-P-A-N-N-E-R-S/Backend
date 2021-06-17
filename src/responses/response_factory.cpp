@@ -1,7 +1,8 @@
 #include "networking/responses/response_factory.hpp"
 #include "networking/responses/shortest_path_response.hpp"
 
-#include "GraphData.pb.h"
+#include "container.pb.h"
+#include "shortest_path.pb.h"
 
 namespace server {
 
@@ -19,10 +20,8 @@ namespace {
             }
             break;
             default: {
-                // We should never get here
-                assert(false);
-                // TODO: Replace with UNDEFINED once defined in protobuf
-                return graphs::ResponseContainer_StatusCode::ResponseContainer_StatusCode_ERROR;
+                return graphs::ResponseContainer_StatusCode::
+                    ResponseContainer_StatusCode_UNDEFINED_STATUS;
             }
             break;
         }
@@ -38,11 +37,8 @@ namespace {
             }
             break;
             default: {
-                // We should never get here
-                assert(false);
-                // TODO: Replace with UNDEFINED once defined in protobuf
                 return graphs::ResponseContainer_ResponseType::
-                    ResponseContainer_ResponseType_SHORTEST_PATH;
+                    ResponseContainer_ResponseType_UNDEFINED_RESPONSE;
             }
             break;
         }
@@ -68,9 +64,18 @@ std::unique_ptr<graphs::ResponseContainer> response_factory::build_response(
             // We know that we got a shortest path response
             auto *spr = static_cast<shortest_path_response *>(response.get());
 
-            graphs::ShortPathResponse proto_response;
+            graphs::ShortestPathResponse proto_response;
 
             proto_response.set_allocated_graph(spr->take_proto_graph().release());
+
+            auto *coords = spr->take_vertex_coords().release();
+            proto_response.mutable_vertexcoordinates()->swap(*coords);
+            delete coords;  // This contains the empty "default value" map after the swap
+
+            auto *costs = spr->take_edge_costs().release();
+            proto_response.mutable_edgecost()->swap(*costs);
+            delete costs;
+
             const bool ok = proto_container->mutable_response()->PackFrom(proto_response);
 
             if (!ok)
