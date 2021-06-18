@@ -50,7 +50,8 @@ std::unique_ptr<abstract_response> DijkstraHandler::handle()
         {
             auto source_uid = m_req_message->node_uids()[n];
             auto target_uid = m_req_message->node_uids()[preds_edge->opposite(n)];
-            auto newEdge = out_graph->newEdge(original_uid_to_out_node[source_uid], original_uid_to_out_node[target_uid]);
+            auto newEdge = out_graph->newEdge(original_uid_to_out_node[source_uid],
+                                              original_uid_to_out_node[target_uid]);
             (*out_edge_uids)[newEdge] = m_req_message->edge_uids()[preds_edge];
             (*out_edge_costs)[newEdge] = m_weights->operator[](preds_edge);
         }

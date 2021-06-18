@@ -73,7 +73,7 @@ void connection::read()
                                {
                                    std::cout << "ERROR_READ_PROTO\n";
                                    m_handler.remove(m_identifier);
-                                    return;
+                                   return;
                                }
 
                                // Boost gzip decompression

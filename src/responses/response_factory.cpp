@@ -43,7 +43,7 @@ namespace {
             break;
         }
     }
-}
+}  // namespace
 
 std::unique_ptr<graphs::ResponseContainer> response_factory::build_response(
     std::unique_ptr<abstract_response> &response)

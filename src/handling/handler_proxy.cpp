@@ -1,9 +1,9 @@
 #include <handling/handler_proxy.hpp>
+#include <handling/handlers/dijkstra_handler.hpp>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <handling/handlers/dijkstra_handler.hpp>
 
 namespace server {
 
