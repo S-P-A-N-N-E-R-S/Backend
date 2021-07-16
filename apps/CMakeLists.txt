@@ -7,3 +7,6 @@ target_link_libraries(server PRIVATE networking handling)
 add_executable(parsing_example_handler parsing_example_handler.cpp)
 target_link_libraries(parsing_example_handler PRIVATE networking)
 target_link_libraries(parsing_example_handler PRIVATE handling)
+
+add_executable(parsing_speed_comparison parsing_speed_comparison.cpp)
+target_link_libraries(parsing_speed_comparison PRIVATE handling)
