@@ -138,11 +138,11 @@ int main(int argc, const char **argv)
         for (auto it = edges.begin(); it != edges.end(); ++it)
         {
             const auto uid = it->uid;
-            const auto in_index = it->in_vertex_uid;
-            const auto out_index = it->out_vertex_uid;
+            const auto in_uid = it->in_vertex_uid;
+            const auto out_uid = it->out_vertex_uid;
 
-            const ogdf::node source = uid_to_node[in_index];
-            const ogdf::node target = uid_to_node[out_index];
+            const ogdf::node source = uid_to_node[in_uid];
+            const ogdf::node target = uid_to_node[out_uid];
 
             const ogdf::edge inserted = built_graph.newEdge(source, target);
             uid_to_edge.insert({uid, inserted});
