@@ -15,7 +15,7 @@ if __name__ == "__main__":
     output_lines = proc.stdout.splitlines()
 
     result = {
-            "uid": [],
+            "map": [],
             "array": [],
             "vector": []
     }
@@ -24,7 +24,7 @@ if __name__ == "__main__":
         prefix, value = line.split()
 
         if prefix == "UID-based:":
-            result["uid"].append(int(value))
+            result["map"].append(int(value))
         elif prefix == "Array-based:":
             result["array"].append(int(value))
         elif prefix == "Vector-based:":
