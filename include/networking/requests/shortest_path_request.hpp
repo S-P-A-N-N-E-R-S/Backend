@@ -6,7 +6,7 @@
 #include "networking/messages/node_coordinates.hpp"
 #include "networking/requests/abstract_request.hpp"
 
-#include "shortest_path.pb.h"
+#include "handlers/shortest_path.pb.h"
 
 namespace server {
 
@@ -19,8 +19,8 @@ public:
     const server::graph_message *graph_message() const;
     std::unique_ptr<server::graph_message> take_graph_message();
 
-    uid_t start_index() const;
-    uid_t end_index() const;
+    uid_t start_uid() const;
+    uid_t end_uid() const;
 
     const ogdf::EdgeArray<double> *edge_costs() const;
     std::unique_ptr<ogdf::EdgeArray<double>> take_edge_costs();
@@ -31,8 +31,8 @@ public:
 private:
     std::unique_ptr<server::graph_message> m_graph_message;
 
-    uid_t m_start_index;
-    uid_t m_end_index;
+    uid_t m_start_uid;
+    uid_t m_end_uid;
 
     std::unique_ptr<ogdf::EdgeArray<double>> m_edge_costs;
     std::unique_ptr<ogdf::NodeArray<node_coordinates>> m_node_coords;

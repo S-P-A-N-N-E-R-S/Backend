@@ -2,7 +2,7 @@
 #include "networking/responses/shortest_path_response.hpp"
 
 #include "container.pb.h"
-#include "shortest_path.pb.h"
+#include "handlers/shortest_path.pb.h"
 
 namespace server {
 
@@ -27,18 +27,16 @@ namespace {
         }
     }
 
-    graphs::ResponseContainer_ResponseType to_proto_type(response_type type)
+    graphs::RequestType to_proto_type(response_type type)
     {
         switch (type)
         {
             case response_type::SHORTEST_PATH: {
-                return graphs::ResponseContainer_ResponseType::
-                    ResponseContainer_ResponseType_SHORTEST_PATH;
+                return graphs::RequestType::SHORTEST_PATH;
             }
             break;
             default: {
-                return graphs::ResponseContainer_ResponseType::
-                    ResponseContainer_ResponseType_UNDEFINED_RESPONSE;
+                return graphs::RequestType::UNDEFINED_REQUEST;
             }
             break;
         }
@@ -69,11 +67,11 @@ std::unique_ptr<graphs::ResponseContainer> response_factory::build_response(
             proto_response.set_allocated_graph(spr->take_proto_graph().release());
 
             auto *coords = spr->take_vertex_coords().release();
-            proto_response.mutable_vertexcoordinates()->swap(*coords);
+            proto_response.mutable_vertexcoordinates()->Swap(coords);
             delete coords;  // This contains the empty "default value" map after the swap
 
             auto *costs = spr->take_edge_costs().release();
-            proto_response.mutable_edgecosts()->swap(*costs);
+            proto_response.mutable_edgecosts()->Swap(costs);
             delete costs;
 
             const bool ok = proto_container->mutable_response()->PackFrom(proto_response);

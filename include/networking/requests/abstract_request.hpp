@@ -13,10 +13,9 @@ public:
 
 protected:
     abstract_request(request_type type);
-
-private:
     const request_type m_type;
 
+private:
     friend class request_factory;  // To allow object creation only from the factory
 };
 

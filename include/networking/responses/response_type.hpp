@@ -5,8 +5,8 @@
 namespace server {
 
 enum class response_type {
-    UNDEFINED_RESPONSE = graphs::ResponseContainer_ResponseType_UNDEFINED_RESPONSE,
-    SHORTEST_PATH = graphs::ResponseContainer_ResponseType_SHORTEST_PATH
+    UNDEFINED_RESPONSE = graphs::RequestType::UNDEFINED_REQUEST,
+    SHORTEST_PATH = graphs::RequestType::SHORTEST_PATH
 };
 
 }  // namespace server

@@ -50,10 +50,31 @@ public:
 
     const ogdf::Graph &graph() const;
 
+    // TODO(leon): Consider making this private + friend request classes
+    /**
+     * @brief Use this to obtain a index-based "view" on the nodes in `m_graph`. Necessary to map
+     *        node attributes to nodes.
+     */
+    const ogdf::Array<ogdf::node> &all_nodes() const;
+
+    // TODO(leon): Consider making this private + friend request classes
+    /**
+     * @brief Use this to obtain a index-based "view" on the nodes in `m_graph`. Necessary to map
+     *        node attributes to nodes.
+     */
+    const ogdf::Array<ogdf::edge> &all_edges() const;
+
 private:
     uid_t make_uid() const;
 
     std::unique_ptr<ogdf::Graph> m_graph;
+
+    // XXX: This is only okay because `graph_message::graph()` returns a const &. Otherwise,
+    //      we would not be able to make sure that the array is synchronized with `m_graph`.
+    //      We could consider adding some kind of invalidation when implementing methods such
+    //      as `graph_message::take_graph()` or similar.
+    std::unique_ptr<ogdf::Array<ogdf::node>> m_all_nodes;
+    std::unique_ptr<ogdf::Array<ogdf::edge>> m_all_edges;
 
     // TODO: Talk about if/how this should change when copying/modifying/etc. graph_messages
     uid_t m_uid{};

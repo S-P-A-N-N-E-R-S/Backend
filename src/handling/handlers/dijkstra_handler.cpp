@@ -7,7 +7,7 @@ namespace server {
 DijkstraHandler::DijkstraHandler(shortest_path_request &sp_request)
     : m_req_message(sp_request.graph_message())
     , m_directed(false)  //ToDo: add directed somewhere to graph or sp-request or both
-    , m_start(m_req_message->node(sp_request.start_index()))
+    , m_start(m_req_message->node(sp_request.start_uid()))
     , m_graph(m_req_message->graph())  //Maybe change graph() to pointer?
     , m_weights(sp_request.edge_costs())
     , m_node_coords(sp_request.node_coords())
