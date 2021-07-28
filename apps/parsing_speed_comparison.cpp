@@ -125,7 +125,10 @@ int main(int argc, const char **argv)
         ogdf::NodeArray<std::tuple<double, double, double>> coords(built_graph);
 
         std::unordered_map<uint64_t, ogdf::node> uid_to_node;
+        uid_to_node.reserve(node_uids.size());
+
         std::unordered_map<uint64_t, ogdf::edge> uid_to_edge;
+        uid_to_edge.reserve(edges.size());
 
         for (auto it = node_uids.begin(); it != node_uids.end(); ++it)
         {
