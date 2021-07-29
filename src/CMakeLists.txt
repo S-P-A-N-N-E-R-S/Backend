@@ -40,6 +40,7 @@ set(NETWORKING_HEADERS
     ${CMAKE_SOURCE_DIR}/include/networking/requests/shortest_path_request.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/requests/request_factory.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/requests/request_type.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/utils.hpp
     )
 
 set(NETWORKING_SOURCES
