@@ -8,9 +8,12 @@ find_package(Protobuf REQUIRED)
 set(PROTO_PATH ${CMAKE_SOURCE_DIR}/lib/protocol/protos)
 
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED COMPONENTS iostreams)
+find_package(Boost REQUIRED COMPONENTS iostreams coroutine)
 
-set(PROTO_FILES ${PROTO_PATH}/container.proto
+set(PROTO_FILES
+    ${PROTO_PATH}/meta.proto
+    ${PROTO_PATH}/shared_messages.proto
+    ${PROTO_PATH}/container.proto
     ${PROTO_PATH}/graph.proto
     ${PROTO_PATH}/shortest_path.proto
     # Put more files here

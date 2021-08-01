@@ -3,9 +3,11 @@
 
 #include <array>
 #include <boost/asio.hpp>
+#include <boost/asio/spawn.hpp>
 #include <vector>
 
 #include "container.pb.h"
+#include "meta.pb.h"
 
 namespace server {
 
@@ -43,26 +45,25 @@ public:
     /**
      * @brief Handles receiving and responding.
      *
-     * Starts async handling process and returns immediately.
+     * Creates a boost coroutine to handle the request and respond to the client
      */
     void handle();
 
 private:
-    void read();
+    void respond(boost::asio::yield_context &yield, graphs::ResponseContainer &container);
 
-    void respond(graphs::ResponseContainer &container);
+    void respond_error(boost::asio::yield_context &yield,
+                       graphs::ResponseContainer_StatusCode code);
 
-    void write(const char *buffer, size_t length);
+    bool direct_read(boost::asio::yield_context &yield, char *const data, size_t length);
+
+    void direct_write(boost::asio::yield_context &yield, const char *data, size_t length);
 
     size_t m_identifier;
 
     connection_handler &m_handler;
 
     boost::asio::ip::tcp::socket m_sock;
-
-    uint64_t m_size{0};
-
-    std::vector<char> m_buffer;
 };
 
 }  // namespace server

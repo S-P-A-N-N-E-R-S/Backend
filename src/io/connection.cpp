@@ -1,5 +1,7 @@
 #include <networking/io/connection.hpp>
 
+#include <iostream>
+
 #include <algorithm>
 #include <boost/asio/completion_condition.hpp>
 #include <boost/endian/conversion.hpp>
@@ -24,7 +26,7 @@ using boost::system::error_code;
 namespace server {
 
 namespace {
-    constexpr int LENGHT_FIELD_SIZE = 8;
+    constexpr int LENGTH_FIELD_SIZE = 8;
 }
 
 connection::connection(size_t id, connection_handler &handler, tcp::socket sock)
@@ -41,143 +43,153 @@ connection::~connection()
 
 void connection::handle()
 {
-    read();
+    boost::asio::spawn(m_sock.get_executor(), [this](boost::asio::yield_context yield) {
+        namespace io = boost::iostreams;
+
+        std::vector<char> recv_buffer;
+        size_t recv_size;
+
+        // Read size of meta message
+        if (!direct_read(yield, reinterpret_cast<char *const>(&recv_size), LENGTH_FIELD_SIZE))
+        {
+            respond_error(yield, graphs::ResponseContainer::READ_ERROR);
+            return;
+        }
+        boost::endian::big_to_native_inplace(recv_size);
+        recv_buffer.resize(recv_size);
+
+        // Read and parse meta message
+        if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
+        {
+            respond_error(yield, graphs::ResponseContainer::READ_ERROR);
+            return;
+        }
+        graphs::MetaData meta_data;
+        if (!meta_data.ParseFromArray(recv_buffer.data(), recv_buffer.size()))
+        {
+            std::cout << "[CONNECTION] Protobuf parsing error: Meta Message\n";
+            respond_error(yield, graphs::ResponseContainer::PROTO_PARSING_ERROR);
+            return;
+        }
+
+        // Get message container size from meta message and read the container
+        recv_buffer.resize(meta_data.containersize());
+        if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
+        {
+            respond_error(yield, graphs::ResponseContainer::READ_ERROR);
+            return;
+        }
+
+        // TODO Check if we need to decompress the received data first -> meta message
+        // Gzip decompression of container
+        io::filtering_streambuf<io::input> in_str_buf;
+        in_str_buf.push(io::gzip_decompressor{});
+        in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
+
+        // Copy compressed data into the decompressed buffer
+        std::vector<char> decompressed;
+        decompressed.reserve(recv_buffer.size());
+        std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
+                  std::back_inserter(decompressed));
+
+        // Parse decompressed container
+        graphs::RequestContainer request_container;
+        if (!request_container.ParseFromArray(decompressed.data(), decompressed.size()))
+        {
+            std::cout << "[CONNECTION] Protobuf parsing error: Container\n";
+            respond_error(yield, graphs::ResponseContainer::PROTO_PARSING_ERROR);
+            return;
+        }
+
+        // Request handling
+        server::request_factory req_factory;
+        std::unique_ptr<server::abstract_request> request =
+            req_factory.build_request(request_container);
+        if (!request)
+        {
+            std::cout << "[CONNECTION] Request factory error\n";
+            respond_error(yield, graphs::ResponseContainer::INVALID_REQUEST_ERROR);
+            return;
+        }
+
+        std::unique_ptr<server::abstract_response> response =
+            server::HandlerProxy().handle(std::move(request));
+
+        server::response_factory res_factory;
+        respond(yield, *(res_factory.build_response(response)));
+    });
 }
 
-void connection::read()
-{
-    async_read(m_sock, buffer(&m_size, LENGHT_FIELD_SIZE), transfer_exactly(8),
-               [this](error_code err, size_t len) {
-                   if (err)
-                   {
-                       std::cout << "ERROR_READ_SIZE\n";
-                       m_handler.remove(m_identifier);
-                       return;
-                   }
-
-                   boost::endian::big_to_native_inplace(m_size);
-
-                   try
-                   {
-                       namespace io = boost::iostreams;
-
-                       // TODO Discuss to use a max size for messages
-                       m_buffer.resize(m_size);
-                       std::cout << "Recv size: " << m_size << '\n';
-
-                       // Read next <size> bytes and create graphs::RequestContainer
-                       async_read(
-                           m_sock, buffer(m_buffer), transfer_exactly(m_size),
-                           [this](error_code err, size_t len) {
-                               if (err)
-                               {
-                                   std::cout << "ERROR_READ_PROTO\n";
-                                   m_handler.remove(m_identifier);
-                                   return;
-                               }
-
-                               // Boost gzip decompression
-                               io::filtering_streambuf<io::input> in_str_buf;
-                               in_str_buf.push(io::gzip_decompressor{});
-                               in_str_buf.push(io::array_source{m_buffer.data(), m_buffer.size()});
-
-                               // Copy compressed data into the decompressed buffer
-                               std::vector<char> decompressed;
-                               decompressed.reserve(m_buffer.size());
-                               std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
-                                         std::back_inserter(decompressed));
-
-                               graphs::RequestContainer request_container;
-                               if (request_container.ParseFromArray(decompressed.data(),
-                                                                    decompressed.size()))
-                               {
-                                   std::cout << "Parsed proto message!\n";
-
-                                   server::request_factory req_factory;
-                                   std::unique_ptr<server::abstract_request> request =
-                                       req_factory.build_request(request_container);
-                                   if (!request)
-                                   {
-                                       // No request parsed, return error
-                                       graphs::ResponseContainer response;
-                                       response.set_status(graphs::ResponseContainer::ERROR);
-                                       respond(response);
-                                       return;
-                                   }
-
-                                   // Call handler with parsed request and wait for response
-                                   std::unique_ptr<server::abstract_response> response =
-                                       server::HandlerProxy().handle(std::move(request));
-
-                                   // Build and send protobuffer from abstract_response object
-                                   server::response_factory res_factory;
-                                   respond(*(res_factory.build_response(response)));
-                               }
-                               else
-                               {
-                                   std::cout << "Error parsing proto message\n";
-                                   graphs::ResponseContainer response;
-                                   response.set_status(graphs::ResponseContainer::ERROR);
-                                   respond(response);
-                               }
-                           });
-                   }
-                   catch (std::bad_alloc &)
-                   {
-                       std::cout << "Bad alloc error\n";
-                       graphs::ResponseContainer response;
-                       response.set_status(graphs::ResponseContainer::ERROR);
-                       respond(response);
-                   }
-               });
-}
-
-void connection::respond(graphs::ResponseContainer &container)
+void connection::respond(boost::asio::yield_context &yield, graphs::ResponseContainer &container)
 {
     namespace io = boost::iostreams;
 
-    // Generate uncompressed buffer from protobuf container
-    std::vector<char> uncompressed;
-    uncompressed.resize(container.ByteSizeLong());
-    container.SerializeToArray(uncompressed.data(), uncompressed.size());
+    graphs::MetaData meta;
+    std::vector<char> container_data;
 
-    // Boost gzip compression
-    io::filtering_streambuf<io::input> in_str_buf;
-    in_str_buf.push(io::gzip_compressor{});
-    in_str_buf.push(io::array_source{uncompressed.data(), uncompressed.size()});
+    {
+        // Generate uncompressed buffer from protobuf container
+        std::vector<char> uncompressed;
+        uncompressed.resize(container.ByteSizeLong());
+        container.SerializeToArray(uncompressed.data(), uncompressed.size());
 
-    // Reserve size for the length of compressed message
-    // Reuse connections internal buffer because its content is no longer used
-    m_buffer.resize(LENGHT_FIELD_SIZE);
+        // Boost gzip compression
+        io::filtering_streambuf<io::input> in_str_buf;
+        in_str_buf.push(io::gzip_compressor{});
+        in_str_buf.push(io::array_source{uncompressed.data(), uncompressed.size()});
 
-    // Copy compressed data into the compressed buffer
-    std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {}, std::back_inserter(m_buffer));
+        // Copy compressed data into the compressed buffer
+        std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
+                  std::back_inserter(container_data));
+        meta.set_containersize(container_data.size());
+    }
 
-    // Copy the length of the message in the first 8 bytes of the compressed buffer
-    uint64_t len = boost::endian::native_to_big(m_buffer.size() - LENGHT_FIELD_SIZE);
-    std::copy(&len, &len + 1, reinterpret_cast<uint64_t *>(m_buffer.data()));
+    uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
 
-    write(m_buffer.data(), m_buffer.size());
+    std::vector<char> meta_data;
+    meta_data.resize(meta.GetCachedSize());
+    meta.SerializeToArray(meta_data.data(), meta_data.size());
+
+    // Send data to client
+    direct_write(yield, reinterpret_cast<const char *>(&len), LENGTH_FIELD_SIZE);
+    direct_write(yield, meta_data.data(), meta_data.size());
+    direct_write(yield, container_data.data(), container_data.size());
+
+    // Connection finished
+    m_handler.remove(m_identifier);
 }
 
-void connection::write(const char *buffer, size_t length)
+void connection::respond_error(boost::asio::yield_context &yield,
+                               graphs::ResponseContainer_StatusCode code)
 {
-    m_sock.async_send(boost::asio::buffer(buffer, length),
-                      [this, buffer, length](error_code ec, size_t bytes) {
-                          if (ec)
-                          {
-                              std::cout << "SENDING_ERROR: " << ec << '\n';
-                              m_handler.remove(m_identifier);
-                          }
-                          else
-                          {
-                              std::cout << "Sent " << bytes << " bytes\n";
-                              if (bytes < length)
-                                  write(buffer + bytes, length - bytes);
-                              else
-                                  m_handler.remove(m_identifier);
-                          }
-                      });
+    graphs::ResponseContainer response;
+    response.set_status(code);
+    respond(yield, response);
+}
+
+bool connection::direct_read(boost::asio::yield_context &yield, char *const data, size_t length)
+{
+    error_code error;
+    async_read(m_sock, buffer(data, length), transfer_exactly(length), yield[error]);
+    if (error)
+        std::cout << "[CONNECTION] Read error: " << error << '\n';
+    return !error;
+}
+
+void connection::direct_write(boost::asio::yield_context &yield, const char *data, size_t length)
+{
+    do
+    {
+        error_code error;
+        size_t bytes_sent = m_sock.async_send(buffer(data, length), yield[error]);
+        if (!error)
+        {
+            data += bytes_sent;
+            length -= bytes_sent;
+
+            std::cout << "[CONNECTION] Sent " << bytes_sent << " bytes" << std::endl;
+        }
+    } while (length > 0);
 }
 
 }  // namespace server

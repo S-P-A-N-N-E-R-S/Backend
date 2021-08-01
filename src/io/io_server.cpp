@@ -1,5 +1,6 @@
 #include <networking/io/io_server.hpp>
 
+#include <boost/asio/spawn.hpp>
 #include <chrono>
 
 #include <networking/io/connection.hpp>
@@ -24,6 +25,7 @@ void io_server::run()
 {
     if (m_status != RUNNING)
     {
+        m_status = RUNNING;
         accept();
         m_ctx.run();
     }
@@ -34,11 +36,11 @@ bool io_server::start()
     if (m_status != RUNNING)
     {
         m_future = std::async(std::launch::async, [this]() {
+            m_status = RUNNING;
             accept();
             m_ctx.run();
         });
 
-        m_status = RUNNING;
         return true;
     }
     return false;
@@ -59,16 +61,21 @@ bool io_server::stop()
 
 void io_server::accept()
 {
-    m_acceptor.async_accept([this](error_code err, tcp::socket sock) {
-        if (!err)
+    boost::asio::spawn(m_ctx, [this](boost::asio::yield_context yield) {
+        while (m_status == RUNNING)
         {
-            // Use timestamp to identify the connection
-            using namespace std::chrono;
-            size_t id = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-            m_connections.add(id, std::make_unique<connection>(id, m_connections, std::move(sock)));
+            tcp::socket sock{m_ctx};
+            error_code err;
+            m_acceptor.async_accept(sock, yield[err]);
+            if (!err)
+            {
+                using namespace std::chrono;
+                size_t id =
+                    duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+                m_connections.add(id,
+                                  std::make_unique<connection>(id, m_connections, std::move(sock)));
+            }
         }
-
-        accept();
     });
 }
 
