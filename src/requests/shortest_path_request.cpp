@@ -10,7 +10,7 @@ shortest_path_request::shortest_path_request(const graphs::ShortestPathRequest &
     , m_edge_costs{std::make_unique<ogdf::EdgeArray<double>>(m_graph_message->graph())}
     , m_node_coords{std::make_unique<ogdf::NodeArray<node_coordinates>>(m_graph_message->graph())}
 {
-    for (const auto &[uid, cost] : proto_request.edgecost())
+    for (const auto &[uid, cost] : proto_request.edgecosts())
     {
         const auto edge = m_graph_message->edge(uid);
         m_edge_costs->operator[](edge) = cost;

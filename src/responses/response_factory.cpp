@@ -73,7 +73,7 @@ std::unique_ptr<graphs::ResponseContainer> response_factory::build_response(
             delete coords;  // This contains the empty "default value" map after the swap
 
             auto *costs = spr->take_edge_costs().release();
-            proto_response.mutable_edgecost()->swap(*costs);
+            proto_response.mutable_edgecosts()->swap(*costs);
             delete costs;
 
             const bool ok = proto_container->mutable_response()->PackFrom(proto_response);
