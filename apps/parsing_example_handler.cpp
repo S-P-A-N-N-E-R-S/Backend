@@ -50,8 +50,9 @@ int main(int argc, const char **argv)
         edge_costs->Add(ogdf::randomDouble(0, 100));
     }
 
-    auto proto_graph =
-        server::graph_message(std::move(og), std::move(node_uids), std::move(edge_uids)).as_proto();
+    auto proto_graph = std::make_unique<graphs::Graph>(
+        server::graph_message(std::move(og), std::move(node_uids), std::move(edge_uids))
+            .as_proto());
 
     proto_request.set_allocated_graph(proto_graph.release());
 

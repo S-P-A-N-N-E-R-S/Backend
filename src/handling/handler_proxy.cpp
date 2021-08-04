@@ -48,12 +48,12 @@ std::unique_ptr<abstract_response> HandlerProxy::handle(std::unique_ptr<abstract
  * @param requestData simulates (uncompressed) data from persistence
  * @return std::unique_ptr<abstract_response> 
  */
-std::pair<std::unique_ptr<graphs::ResponseContainer>, long> HandlerProxy::handle(
+std::pair<graphs::ResponseContainer, long> HandlerProxy::handle(
     graphs::RequestContainer &requestData)
 {
     server::request_factory factory;
     std::unique_ptr<server::abstract_request> request = factory.build_request(requestData);
-    std::pair<std::unique_ptr<graphs::ResponseContainer>, long> response;
+    std::pair<graphs::ResponseContainer, long> response;
     switch (request->type())
     {
         case request_type::SHORTEST_PATH: {

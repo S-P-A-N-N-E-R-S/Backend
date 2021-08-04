@@ -15,3 +15,7 @@ target_link_libraries(schedule_tester PRIVATE persistence)
 add_executable(example_database_wrapper example_database_wrapper.cpp)
 target_link_libraries(example_database_wrapper PRIVATE persistence)
 target_link_libraries(example_database_wrapper PRIVATE handling)
+
+add_executable(generic_message_example generic_message_example.cpp)
+target_link_libraries(generic_message_example PRIVATE networking)
+target_link_libraries(generic_message_example PRIVATE handling)

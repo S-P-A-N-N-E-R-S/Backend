@@ -1,4 +1,6 @@
 #include "networking/responses/response_factory.hpp"
+
+#include "networking/responses/generic_response.hpp"
 #include "networking/responses/shortest_path_response.hpp"
 
 #include "container.pb.h"
@@ -43,13 +45,13 @@ namespace {
     }
 }  // namespace
 
-std::unique_ptr<graphs::ResponseContainer> response_factory::build_response(
-    std::unique_ptr<abstract_response> &response)
+graphs::ResponseContainer response_factory::build_response(
+    std::unique_ptr<abstract_response> response)
 {
-    auto proto_container = std::make_unique<graphs::ResponseContainer>();
+    graphs::ResponseContainer proto_container;
 
-    proto_container->set_status(to_proto_status(response->status()));
-    proto_container->set_type(to_proto_type(response->type()));
+    proto_container.set_status(to_proto_status(response->status()));
+    proto_container.set_type(to_proto_type(response->type()));
 
     if (response->status() != status_code::OK)
     {
@@ -74,18 +76,31 @@ std::unique_ptr<graphs::ResponseContainer> response_factory::build_response(
             proto_response.mutable_edgecosts()->Swap(costs);
             delete costs;
 
-            const bool ok = proto_container->mutable_response()->PackFrom(proto_response);
+            const bool ok = proto_container.mutable_response()->PackFrom(proto_response);
 
             if (!ok)
             {
-                proto_container->set_status(to_proto_status(status_code::ERROR));
+                proto_container.set_status(to_proto_status(status_code::ERROR));
                 return proto_container;
+            }
+        }
+        break;
+        case response_type::GENERIC: {
+            // We know that we got a generic response
+            auto *gr = static_cast<generic_response *>(response.get());
+
+            graphs::GenericResponse proto_response = gr->as_proto();
+            const bool ok = proto_container.mutable_response()->PackFrom(proto_response);
+
+            if (!ok)
+            {
+                proto_container.set_status(to_proto_status(status_code::ERROR));
             }
         }
         break;
         default: {
             // Unknown type
-            proto_container->set_status(to_proto_status(status_code::ERROR));
+            proto_container.set_status(to_proto_status(status_code::ERROR));
             return proto_container;
         }
         break;

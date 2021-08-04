@@ -21,8 +21,7 @@ class HandlerProxy
 {
 public:
     std::unique_ptr<abstract_response> handle(std::unique_ptr<abstract_request> request);
-    std::pair<std::unique_ptr<graphs::ResponseContainer>, long> handle(
-        graphs::RequestContainer &requestData);
+    std::pair<graphs::ResponseContainer, long> handle(graphs::RequestContainer &requestData);
 };
 
 }  // namespace server

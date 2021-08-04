@@ -66,7 +66,7 @@ std::unique_ptr<abstract_response> DijkstraHandler::handle()
                                                     std::move(out_node_coords), status_code::OK);
 }
 
-std::pair<std::unique_ptr<graphs::ResponseContainer>, long> DijkstraHandler::handle_new()
+std::pair<graphs::ResponseContainer, long> DijkstraHandler::handle_new()
 {
     ogdf::NodeArray<ogdf::edge> preds;
     ogdf::NodeArray<double> dist;
@@ -122,8 +122,8 @@ std::pair<std::unique_ptr<graphs::ResponseContainer>, long> DijkstraHandler::han
     std::unique_ptr<abstract_response> response = std::make_unique<shortest_path_response>(
         std::move(message), std::move(out_edge_costs), std::move(out_node_coords), status_code::OK);
 
-    return std::pair<std::unique_ptr<graphs::ResponseContainer>, long>(
-        response_factory().build_response(response), ogdf_time);
+    return std::pair<graphs::ResponseContainer, long>(
+        response_factory().build_response(std::move(response)), ogdf_time);
 }
 
 }  // namespace server

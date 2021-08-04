@@ -23,7 +23,7 @@ shortest_path_response::shortest_path_response(
 
     if (shortest_path)
     {
-        this->m_proto_graph = std::make_unique<graphs::Graph>(*(shortest_path->as_proto()));
+        this->m_proto_graph = std::make_unique<graphs::Graph>(shortest_path->as_proto());
     }
 
     if (edge_costs)

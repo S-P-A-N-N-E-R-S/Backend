@@ -32,11 +32,13 @@ set(NETWORKING_HEADERS
     ${CMAKE_SOURCE_DIR}/include/networking/messages/graph_message.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/node_coordinates.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/abstract_response.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/generic_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/shortest_path_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/status_code.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/response_factory.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/response_type.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/requests/abstract_request.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/requests/generic_request.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/requests/shortest_path_request.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/requests/request_factory.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/requests/request_type.hpp
@@ -49,9 +51,11 @@ set(NETWORKING_SOURCES
     messages/graph_message.cpp
     messages/node_coordinates.cpp
     responses/abstract_response.cpp
+    responses/generic_response.cpp
     responses/shortest_path_response.cpp
     responses/response_factory.cpp
     requests/abstract_request.cpp
+    requests/generic_request.cpp
     requests/shortest_path_request.cpp
     requests/request_factory.cpp
     )

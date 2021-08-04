@@ -44,7 +44,7 @@ int main(int argc, const char **argv)
         std::cout << "5" << std::endl;
 
         // pack result into db
-        persistence.add_response(next_jobs[0].first, *(response.first), response.second);
+        persistence.add_response(next_jobs[0].first, response.first, response.second);
     }
 }
 
@@ -68,14 +68,14 @@ binary_data generateRandomDijkstra(unsigned int seed)
         const auto uid = node->index();
 
         (*node_uids)[node] = uid;
-        node_coords->operator[](uid) = [] {
+        node_coords->Add([] {
             auto coords = graphs::VertexCoordinates{};
             coords.set_x(ogdf::randomDouble(-50, 50));
             coords.set_y(ogdf::randomDouble(-50, 50));
             coords.set_z(ogdf::randomDouble(-50, 50));
 
             return coords;
-        }();
+        }());
     }
 
     auto edge_uids = std::make_unique<ogdf::EdgeArray<server::uid_t>>(*og);
@@ -86,11 +86,12 @@ binary_data generateRandomDijkstra(unsigned int seed)
         const auto uid = edge->index();
 
         (*edge_uids)[edge] = uid;
-        edge_costs->operator[](uid) = ogdf::randomDouble(0, 100);
+        edge_costs->Add(ogdf::randomDouble(0, 100));
     }
 
-    auto proto_graph =
-        server::graph_message(std::move(og), std::move(node_uids), std::move(edge_uids)).as_proto();
+    auto proto_graph = std::make_unique<graphs::Graph>(
+        server::graph_message(std::move(og), std::move(node_uids), std::move(edge_uids))
+            .as_proto());
 
     proto_request.set_allocated_graph(proto_graph.release());
 
