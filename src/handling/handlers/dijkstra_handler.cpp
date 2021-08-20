@@ -1,4 +1,6 @@
+#include <chrono>
 #include <handling/handlers/dijkstra_handler.hpp>
+#include <networking/responses/response_factory.hpp>
 
 namespace server {
 
@@ -62,6 +64,66 @@ std::unique_ptr<abstract_response> DijkstraHandler::handle()
 
     return std::make_unique<shortest_path_response>(std::move(message), std::move(out_edge_costs),
                                                     std::move(out_node_coords), status_code::OK);
+}
+
+std::pair<std::unique_ptr<graphs::ResponseContainer>, long> DijkstraHandler::handle_new()
+{
+    ogdf::NodeArray<ogdf::edge> preds;
+    ogdf::NodeArray<double> dist;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    ogdf::Dijkstra<double>().call(m_graph, *m_weights, m_start, preds, dist, m_directed);
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    long ogdf_time = (std::chrono::duration_cast<std::chrono::microseconds>(stop - start)).count();
+
+    auto out_graph = std::make_unique<ogdf::Graph>();
+    auto out_node_uids = std::make_unique<ogdf::NodeArray<uid_t>>(*out_graph);
+    auto out_edge_uids = std::make_unique<ogdf::EdgeArray<uid_t>>(*out_graph);
+
+    auto out_edge_costs = std::make_unique<ogdf::EdgeArray<double>>(*out_graph);
+    auto out_node_coords = std::make_unique<ogdf::NodeArray<server::node_coordinates>>(*out_graph);
+
+    //to access nodes by uids
+    auto original_uid_to_out_node = std::unordered_map<uid_t, ogdf::node>();
+
+    // add all nodes to answer (before adding edges)
+    for (auto n : m_graph.nodes)
+    {
+        auto new_node = out_graph->newNode();
+
+        uid_t original_uid = m_req_message->node_uids()[n];
+
+        (*out_node_uids)[new_node] = original_uid;
+        (*out_node_coords)[new_node] = m_node_coords->operator[](n);
+
+        original_uid_to_out_node[original_uid] = new_node;
+    }
+
+    //add edges to answer
+    for (auto n : m_graph.nodes)
+    {
+        auto preds_edge = preds[n];
+        if (preds_edge != nullptr)
+        {
+            auto source_uid = m_req_message->node_uids()[n];
+            auto target_uid = m_req_message->node_uids()[preds_edge->opposite(n)];
+            auto newEdge = out_graph->newEdge(original_uid_to_out_node[source_uid],
+                                              original_uid_to_out_node[target_uid]);
+            (*out_edge_uids)[newEdge] = m_req_message->edge_uids()[preds_edge];
+            (*out_edge_costs)[newEdge] = m_weights->operator[](preds_edge);
+        }
+    }
+
+    auto message = std::make_unique<graph_message>(std::move(out_graph), std::move(out_node_uids),
+                                                   std::move(out_edge_uids));
+
+    std::unique_ptr<abstract_response> response = std::make_unique<shortest_path_response>(
+        std::move(message), std::move(out_edge_costs), std::move(out_node_coords), status_code::OK);
+
+    return std::pair<std::unique_ptr<graphs::ResponseContainer>, long>(
+        response_factory().build_response(response), ogdf_time);
 }
 
 }  // namespace server

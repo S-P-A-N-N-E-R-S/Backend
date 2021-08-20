@@ -76,3 +76,62 @@ target_include_directories(${HANDLING_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(${HANDLING_NAME} PUBLIC OGDF)
 target_link_libraries(${HANDLING_NAME} PRIVATE ${Protobuf_LIBRARIES})
 target_link_libraries(${HANDLING_NAME} PUBLIC ${NETWORKING_NAME})
+
+
+#Create scheduling library
+set(SCHEDULING_NAME scheduling)
+
+set(SCHEDULING_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/scheduler/process_flags.hpp
+    ${CMAKE_SOURCE_DIR}/include/scheduler/scheduler.hpp
+)
+
+set(SCHEDULING_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/scheduler/scheduler.cpp
+)
+
+set(scheduling_files "${SCHEDULING_HEADERS};${SCHEDULING_SOURCES};${proto_headers};${proto_sources}")
+add_library(${SCHEDULING_NAME} STATIC "${scheduling_files}")
+target_include_directories(${SCHEDULING_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include/scheduler")
+target_include_directories(${SCHEDULING_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
+target_include_directories(${SCHEDULING_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
+target_include_directories(${SCHEDULING_NAME} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(${SCHEDULING_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+
+target_link_libraries(${SCHEDULING_NAME} PUBLIC OGDF)
+target_link_libraries(${SCHEDULING_NAME} PRIVATE ${Protobuf_LIBRARIES})
+target_link_libraries(${SCHEDULING_NAME} PUBLIC ${NETWORKING_NAME})
+
+#create database library
+set(DATABASE_NAME persistence)
+
+set(DATABASE_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/persistence/database_wrapper.hpp
+)
+
+set(DATABASE_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/persistence/database_wrapper.cpp
+)
+
+set(database_files "${DATABASE_HEADERS};${DATABASE_SOURCES};${proto_headers};${proto_sources}")
+add_library(${DATABASE_NAME} STATIC "${database_files}")
+target_include_directories(${DATABASE_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include/scheduler")
+target_include_directories(${DATABASE_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
+target_include_directories(${DATABASE_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
+target_include_directories(${DATABASE_NAME} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(${DATABASE_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+find_library(PQXX_LIB pqxx)
+find_library(PQ_LIB pq)
+target_link_libraries(${DATABASE_NAME} PRIVATE ${PQXX_LIB})
+target_link_libraries(${DATABASE_NAME} PUBLIC OGDF)
+target_link_libraries(${DATABASE_NAME} PRIVATE ${Protobuf_LIBRARIES})
+target_link_libraries(${DATABASE_NAME} PUBLIC ${NETWORKING_NAME})
+
+
+# Build handler_process
+add_executable(handler_process ${CMAKE_SOURCE_DIR}/src/handling/handler_process.cpp)
+target_link_libraries(handler_process PRIVATE handling)
+target_link_libraries(handler_process PRIVATE scheduling)
+target_link_libraries(handler_process PRIVATE persistence)

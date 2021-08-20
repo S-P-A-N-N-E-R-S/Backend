@@ -7,3 +7,11 @@ target_link_libraries(server PRIVATE networking handling)
 add_executable(parsing_example_handler parsing_example_handler.cpp)
 target_link_libraries(parsing_example_handler PRIVATE networking)
 target_link_libraries(parsing_example_handler PRIVATE handling)
+
+add_executable(schedule_tester schedule_tester.cpp)
+target_link_libraries(schedule_tester PRIVATE scheduling)
+target_link_libraries(schedule_tester PRIVATE persistence)
+
+add_executable(example_database_wrapper example_database_wrapper.cpp)
+target_link_libraries(example_database_wrapper PRIVATE persistence)
+target_link_libraries(example_database_wrapper PRIVATE handling)
