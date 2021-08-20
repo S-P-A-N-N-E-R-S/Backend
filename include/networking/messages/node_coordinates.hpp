@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shortest_path.pb.h"
+#include "handlers/shortest_path.pb.h"
 
 namespace server {
 

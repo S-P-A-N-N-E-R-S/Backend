@@ -102,11 +102,11 @@ binary_data generateRandomDijkstra(unsigned int seed, int n, int m)
     proto_request.set_allocated_graph(proto_graph.release());
 
     // Hardcoded for testing purposes only
-    proto_request.set_startindex(0);
-    proto_request.set_endindex(99);
+    proto_request.set_startuid(0);
+    proto_request.set_enduid(99);
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestContainer_RequestType_SHORTEST_PATH);
+    proto_request_container.set_type(graphs::RequestType::SHORTEST_PATH);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
     // This is important: pqxx expects a basic_string<byte>, so we directly serialize it to this and not to char* as in connection.cpp

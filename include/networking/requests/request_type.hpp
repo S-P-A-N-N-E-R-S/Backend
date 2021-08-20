@@ -5,8 +5,8 @@
 namespace server {
 
 enum class request_type {
-    UNDEFINED_REQUEST = graphs::RequestContainer_RequestType_UNDEFINED_REQUEST,
-    SHORTEST_PATH = graphs::RequestContainer_RequestType_SHORTEST_PATH
+    UNDEFINED_REQUEST = graphs::RequestType::UNDEFINED_REQUEST,
+    SHORTEST_PATH = graphs::RequestType::SHORTEST_PATH
 };
 
 }  // namespace server

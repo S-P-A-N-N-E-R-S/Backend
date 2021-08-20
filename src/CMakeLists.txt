@@ -1,5 +1,23 @@
-# Create protobuff files
-protobuf_generate_cpp(proto_sources proto_headers ${PROTO_FILES})
+# Create protobuf files
+file(GLOB_RECURSE PROTO_FILES "${PROTO_PATH}/*.proto")
+file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated" PROTOBINDING_PATH)
+file(MAKE_DIRECTORY ${PROTOBINDING_PATH})
+
+foreach(proto ${PROTO_FILES})
+    file(TO_NATIVE_PATH ${proto} proto_native)
+
+    string(ASCII 27 Esc)
+    message("${Esc}[1;34mRunning protobuf compiler on ${proto_native} ...")
+
+    execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} --proto_path=${PROTO_PATH} --cpp_out=${PROTOBINDING_PATH} ${proto_native} RESULT_VARIABLE rv)
+
+    if(${rv})
+        message(FATAL_ERROR "protobuf compiler error for file ${proto_native}: ${rv}")
+    endif()
+endforeach()
+
+file(GLOB_RECURSE proto_headers "${PROTOBINDING_PATH}/*.pb.h")
+file(GLOB_RECURSE proto_sources "${PROTOBINDING_PATH}/*.pb.cc")
 
 #Suggestion: Networking and Handling do not need different librarys, we could combine them into one later
 
@@ -7,6 +25,7 @@ protobuf_generate_cpp(proto_sources proto_headers ${PROTO_FILES})
 set(NETWORKING_NAME networking)
 
 set(NETWORKING_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/networking/exceptions.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/io_server.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/connection_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/connection.hpp
@@ -42,7 +61,7 @@ add_library(${NETWORKING_NAME} STATIC "${networking_files}")
 target_include_directories(${NETWORKING_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
 target_include_directories(${NETWORKING_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
 target_include_directories(${NETWORKING_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
-target_include_directories(${NETWORKING_NAME} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(${NETWORKING_NAME} PUBLIC "${PROTOBINDING_PATH}")
 
 target_link_libraries(${NETWORKING_NAME} PUBLIC OGDF)
 target_link_libraries(${NETWORKING_NAME} PRIVATE ${Protobuf_LIBRARIES})
@@ -122,8 +141,8 @@ target_include_directories(${DATABASE_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
 target_include_directories(${DATABASE_NAME} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(${DATABASE_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
-find_library(PQXX_LIB pqxx)
-find_library(PQ_LIB pq)
+find_library(PQXX_LIB pqxx REQUIRED)
+find_library(PQ_LIB pq REQUIRED)
 target_link_libraries(${DATABASE_NAME} PRIVATE ${PQXX_LIB})
 target_link_libraries(${DATABASE_NAME} PUBLIC OGDF)
 target_link_libraries(${DATABASE_NAME} PRIVATE ${Protobuf_LIBRARIES})

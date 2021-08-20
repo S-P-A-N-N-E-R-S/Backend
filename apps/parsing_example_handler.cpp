@@ -29,14 +29,14 @@ int main(int argc, const char **argv)
         const auto uid = node->index();
 
         (*node_uids)[node] = uid;
-        node_coords->operator[](uid) = [] {
+        node_coords->Add([] {
             auto coords = graphs::VertexCoordinates{};
             coords.set_x(ogdf::randomDouble(-50, 50));
             coords.set_y(ogdf::randomDouble(-50, 50));
             coords.set_z(ogdf::randomDouble(-50, 50));
 
             return coords;
-        }();
+        }());
     }
 
     auto edge_uids = std::make_unique<ogdf::EdgeArray<server::uid_t>>(*og);
@@ -47,7 +47,7 @@ int main(int argc, const char **argv)
         const auto uid = edge->index();
 
         (*edge_uids)[edge] = uid;
-        edge_costs->operator[](uid) = ogdf::randomDouble(0, 100);
+        edge_costs->Add(ogdf::randomDouble(0, 100));
     }
 
     auto proto_graph =
@@ -56,11 +56,11 @@ int main(int argc, const char **argv)
     proto_request.set_allocated_graph(proto_graph.release());
 
     // Hardcoded for testing purposes only
-    proto_request.set_startindex(0);
-    proto_request.set_endindex(99);
+    proto_request.set_startuid(0);
+    proto_request.set_enduid(99);
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestContainer_RequestType_SHORTEST_PATH);
+    proto_request_container.set_type(graphs::RequestType::SHORTEST_PATH);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
     server::request_factory factory;

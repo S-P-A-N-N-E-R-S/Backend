@@ -22,16 +22,17 @@ public:
     const graphs::Graph *proto_graph() const;
     std::unique_ptr<graphs::Graph> take_proto_graph();
 
-    const google::protobuf::Map<uid_t, double> *edge_costs() const;
-    std::unique_ptr<google::protobuf::Map<uid_t, double>> take_edge_costs();
+    const google::protobuf::RepeatedField<double> *edge_costs() const;
+    std::unique_ptr<google::protobuf::RepeatedField<double>> take_edge_costs();
 
-    const google::protobuf::Map<uid_t, graphs::VertexCoordinates> *vertex_coords() const;
-    std::unique_ptr<google::protobuf::Map<uid_t, graphs::VertexCoordinates>> take_vertex_coords();
+    const google::protobuf::RepeatedPtrField<graphs::VertexCoordinates> *vertex_coords() const;
+    std::unique_ptr<google::protobuf::RepeatedPtrField<graphs::VertexCoordinates>>
+        take_vertex_coords();
 
 private:
     std::unique_ptr<graphs::Graph> m_proto_graph;
-    std::unique_ptr<google::protobuf::Map<uid_t, double>> m_edge_costs;
-    std::unique_ptr<google::protobuf::Map<uid_t, graphs::VertexCoordinates>> m_vertex_coords;
+    std::unique_ptr<google::protobuf::RepeatedField<double>> m_edge_costs;
+    std::unique_ptr<google::protobuf::RepeatedPtrField<graphs::VertexCoordinates>> m_vertex_coords;
 };
 
 }  // namespace server
