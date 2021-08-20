@@ -16,8 +16,7 @@ public:
     response_factory() = default;
     ~response_factory() = default;
 
-    std::unique_ptr<graphs::ResponseContainer> build_response(
-        std::unique_ptr<abstract_response> &response);
+    graphs::ResponseContainer build_response(std::unique_ptr<abstract_response> response);
 };
 
 }  // namespace server

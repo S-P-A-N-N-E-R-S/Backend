@@ -1,5 +1,7 @@
 #include "networking/responses/shortest_path_response.hpp"
 
+#include "networking/utils.hpp"
+
 namespace server {
 
 shortest_path_response::shortest_path_response(
@@ -21,33 +23,22 @@ shortest_path_response::shortest_path_response(
 
     if (shortest_path)
     {
-        this->m_proto_graph = std::make_unique<graphs::Graph>(*(shortest_path->as_proto()));
+        this->m_proto_graph = std::make_unique<graphs::Graph>(shortest_path->as_proto());
     }
 
     if (edge_costs)
     {
-        const auto nof_edges = shortest_path->graph().numberOfEdges();
-        const auto &all_edges = shortest_path->all_edges();
-
-        this->m_edge_costs->Reserve(nof_edges);
-        for (size_t idx = 0; idx < nof_edges; ++idx)
-        {
-            const auto cost = edge_costs->operator[](all_edges[idx]);
-            this->m_edge_costs->Add(cost);
-        }
+        utils::serialize_edge_attribute(*edge_costs, *shortest_path, *(this->m_edge_costs));
     }
 
     if (node_coords)
     {
-        const auto nof_nodes = shortest_path->graph().numberOfNodes();
-        const auto &all_nodes = shortest_path->all_nodes();
-
-        this->m_vertex_coords->Reserve(nof_nodes);
-        for (size_t idx = 0; idx < nof_nodes; ++idx)
-        {
-            auto coords = node_coords->operator[](all_nodes[idx]).as_proto();
-            this->m_vertex_coords->Add(std::move(coords));
-        }
+        utils::serialize_node_attribute(
+            *node_coords, *shortest_path, *(this->m_vertex_coords),
+            std::function<graphs::VertexCoordinates(const node_coordinates &)>(
+                [](const auto &coords) {
+                    return coords.as_proto();
+                }));
     }
 }
 

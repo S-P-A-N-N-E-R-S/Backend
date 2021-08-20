@@ -9,10 +9,11 @@ namespace server {
 class request_parse_error : public std::exception
 {
 public:
-    request_parse_error(const char *msg, request_type type)
+    request_parse_error(const char *msg, request_type type, std::string_view handler_type = "")
         : std::exception()
         , m_message{msg}
         , m_request_type{type}
+        , m_handler_type{handler_type}
     {
     }
 
@@ -21,14 +22,20 @@ public:
         return this->m_message;
     }
 
-    request_type type() const noexcept
+    server::request_type request_type() const noexcept
     {
         return this->m_request_type;
     }
 
+    const std::string_view &handler_type() const noexcept
+    {
+        return this->m_handler_type;
+    }
+
 private:
     const char *m_message;
-    request_type m_request_type;
+    server::request_type m_request_type;
+    std::string_view m_handler_type;
 };
 
 }  // namespace server

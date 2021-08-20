@@ -1,5 +1,6 @@
 #include "networking/requests/request_factory.hpp"
 
+#include "networking/requests/generic_request.hpp"
 #include "networking/requests/shortest_path_request.hpp"
 
 namespace server {
@@ -20,6 +21,18 @@ std::unique_ptr<abstract_request> request_factory::build_request(
             }
 
             auto retval = std::make_unique<shortest_path_request>(proto_request);
+            return retval;
+        }
+        break;
+        case graphs::RequestType::GENERIC: {
+            graphs::GenericRequest proto_request;
+
+            if (const bool ok = container.request().UnpackTo(&proto_request); !ok)
+            {
+                return std::unique_ptr<abstract_request>(nullptr);
+            }
+
+            auto retval = std::make_unique<generic_request>(proto_request);
             return retval;
         }
         break;

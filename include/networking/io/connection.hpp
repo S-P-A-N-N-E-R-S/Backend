@@ -50,7 +50,7 @@ public:
     void handle();
 
 private:
-    void respond(boost::asio::yield_context &yield, graphs::ResponseContainer &container);
+    void respond(boost::asio::yield_context &yield, const graphs::ResponseContainer &container);
 
     void respond_error(boost::asio::yield_context &yield,
                        graphs::ResponseContainer_StatusCode code);

@@ -116,11 +116,12 @@ void connection::handle()
             server::HandlerProxy().handle(std::move(request));
 
         server::response_factory res_factory;
-        respond(yield, *(res_factory.build_response(response)));
+        respond(yield, res_factory.build_response(std::move(response)));
     });
 }
 
-void connection::respond(boost::asio::yield_context &yield, graphs::ResponseContainer &container)
+void connection::respond(boost::asio::yield_context &yield,
+                         const graphs::ResponseContainer &container)
 {
     namespace io = boost::iostreams;
 

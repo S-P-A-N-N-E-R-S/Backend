@@ -39,7 +39,7 @@ public:
     graph_message &operator=(const graph_message &other);
     graph_message &operator=(graph_message &&other) = default;
 
-    std::unique_ptr<graphs::Graph> as_proto() const;
+    graphs::Graph as_proto() const;
 
     const ogdf::node &node(uid_t uid) const;
     const ogdf::edge &edge(uid_t uid) const;
@@ -50,14 +50,12 @@ public:
 
     const ogdf::Graph &graph() const;
 
-    // TODO(leon): Consider making this private + friend request classes
     /**
      * @brief Use this to obtain a index-based "view" on the nodes in `m_graph`. Necessary to map
      *        node attributes to nodes.
      */
     const ogdf::Array<ogdf::node> &all_nodes() const;
 
-    // TODO(leon): Consider making this private + friend request classes
     /**
      * @brief Use this to obtain a index-based "view" on the nodes in `m_graph`. Necessary to map
      *        node attributes to nodes.

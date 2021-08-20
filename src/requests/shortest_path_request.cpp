@@ -1,6 +1,7 @@
 #include "networking/requests/shortest_path_request.hpp"
 
 #include "networking/exceptions.hpp"
+#include "networking/utils.hpp"
 
 namespace server {
 
@@ -25,17 +26,10 @@ shortest_path_request::shortest_path_request(const graphs::ShortestPathRequest &
     }
 
     // Convert attributes to OGDF-friendly representation
-    for (size_t idx = 0; idx < proto_request.edgecosts_size(); ++idx)
-    {
-        const auto &edge = this->m_graph_message->all_edges()[idx];
-        this->m_edge_costs->operator[](edge) = proto_request.edgecosts(idx);
-    }
-
-    for (size_t idx = 0; idx < proto_request.vertexcoordinates_size(); ++idx)
-    {
-        const auto &node = this->m_graph_message->all_nodes()[idx];
-        this->m_node_coords->operator[](node) = proto_request.vertexcoordinates(idx);
-    }
+    utils::parse_edge_attribute(proto_request.edgecosts(), *(this->m_graph_message),
+                                *(this->m_edge_costs));
+    utils::parse_node_attribute(proto_request.vertexcoordinates(), *(this->m_graph_message),
+                                *(this->m_node_coords));
 }
 
 const graph_message *shortest_path_request::graph_message() const

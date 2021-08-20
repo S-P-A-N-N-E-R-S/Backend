@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 
     auto response = server::HandlerProxy().handle(request);
 
-    database.add_response(job_id, *(response.first), response.second);
+    database.add_response(job_id, response.first, response.second);
 
     return process_flags::SUCCESS;
 }

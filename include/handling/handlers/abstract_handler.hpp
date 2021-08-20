@@ -15,7 +15,7 @@ class AbstractHandler
 {
 public:
     virtual std::unique_ptr<abstract_response> handle() = 0;
-    virtual std::pair<std::unique_ptr<graphs::ResponseContainer>, long> handle_new() = 0;
+    virtual std::pair<graphs::ResponseContainer, long> handle_new() = 0;
 };
 
 }  // namespace server

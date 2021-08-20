@@ -263,10 +263,10 @@ graph_message &graph_message::operator=(const graph_message &other)
     return *this;
 }
 
-std::unique_ptr<graphs::Graph> graph_message::as_proto() const
+graphs::Graph graph_message::as_proto() const
 {
-    auto retval = std::make_unique<graphs::Graph>();
-    retval->set_uid(this->m_uid);
+    graphs::Graph retval;
+    retval.set_uid(this->m_uid);
 
     // TODO(leon): Cache this? (Maybe not a good idea)
     // Map nodes to indices for edge representation
@@ -278,7 +278,7 @@ std::unique_ptr<graphs::Graph> graph_message::as_proto() const
     // Add nodes
     for (const ogdf::node &node : this->m_graph->nodes)
     {
-        graphs::Vertex *inserted = retval->add_vertexlist();
+        graphs::Vertex *inserted = retval.add_vertexlist();
         inserted->set_uid(node_uids[node]);
         node_to_index[node] = cur_idx++;
     }
@@ -287,7 +287,7 @@ std::unique_ptr<graphs::Graph> graph_message::as_proto() const
     const auto &edge_uids = *(this->m_edge_uids);
     for (const ogdf::edge &edge : this->m_graph->edges)
     {
-        graphs::Edge *inserted = retval->add_edgelist();
+        graphs::Edge *inserted = retval.add_edgelist();
         inserted->set_uid(edge_uids[edge]);
 
         inserted->set_invertexindex(node_to_index[edge->source()]);
