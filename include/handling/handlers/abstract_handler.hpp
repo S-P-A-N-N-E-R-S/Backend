@@ -1,8 +1,4 @@
-#ifndef HANDLERS_HANDLER_H_
-#define HANDLERS_HANDLER_H_
-
-#include <string>
-#include <vector>
+#pragma once
 
 #include <networking/responses/abstract_response.hpp>
 
@@ -19,7 +15,7 @@ class AbstractHandler
 {
 public:
     virtual std::unique_ptr<abstract_response> handle() = 0;
+    virtual std::pair<std::unique_ptr<graphs::ResponseContainer>, long> handle_new() = 0;
 };
 
 }  // namespace server
-#endif  // HANDLERS_HANDLER_H_

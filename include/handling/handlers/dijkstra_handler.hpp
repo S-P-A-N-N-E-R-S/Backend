@@ -18,6 +18,7 @@ public:
     DijkstraHandler(shortest_path_request &sp_request);
 
     virtual std::unique_ptr<abstract_response> handle();
+    virtual std::pair<std::unique_ptr<graphs::ResponseContainer>, long> handle_new();
 
 private:
     const graph_message *m_req_message;
