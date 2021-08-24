@@ -39,7 +39,7 @@ int main(int argc, const char **argv)
 
         // Use handler to calculate result
         long ogdf_time;
-        auto response = server::HandlerProxy().handle(request);
+        auto response = server::handler_proxy().handle(request);
 
         std::cout << "5" << std::endl;
 

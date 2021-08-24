@@ -2,7 +2,7 @@ add_executable(parsing_example parsing_example.cpp)
 target_link_libraries(parsing_example PRIVATE networking)
 
 add_executable(server server.cpp)
-target_link_libraries(server PRIVATE networking handling)
+target_link_libraries(server PRIVATE networking handling scheduling persistence)
 
 add_executable(parsing_example_handler parsing_example_handler.cpp)
 target_link_libraries(parsing_example_handler PRIVATE networking)
@@ -19,3 +19,7 @@ target_link_libraries(example_database_wrapper PRIVATE handling)
 add_executable(generic_message_example generic_message_example.cpp)
 target_link_libraries(generic_message_example PRIVATE networking)
 target_link_libraries(generic_message_example PRIVATE handling)
+
+add_executable(available_handlers_example available_handlers_example.cpp)
+target_link_libraries(available_handlers_example PRIVATE networking)
+target_link_libraries(available_handlers_example PRIVATE handling)

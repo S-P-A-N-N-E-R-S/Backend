@@ -29,7 +29,7 @@ int main()
         db.add_job(1, data);
     }
 
-    server::scheduler scheduler("./src/handler_process", 4, connection_string);
+    auto &scheduler = server::scheduler::instance();
     // scheduler.set_time_limit(1000);
     //scheduler.set_resource_limit(1<<16);
 
@@ -73,7 +73,6 @@ binary_data generateRandomDijkstra(unsigned int seed, int n, int m)
     for (const auto &node : og->nodes)
     {
         const auto uid = node->index();
-
         (*node_uids)[node] = uid;
         node_coords->Add([] {
             auto coords = graphs::VertexCoordinates{};

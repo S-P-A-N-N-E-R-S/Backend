@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
     auto request = database.get_request_data(job_id, user_id);
 
-    auto response = server::HandlerProxy().handle(request);
+    auto response = server::handler_proxy().handle(request);
 
     database.add_response(job_id, response.first, response.second);
 

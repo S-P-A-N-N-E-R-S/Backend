@@ -32,6 +32,7 @@ set(NETWORKING_HEADERS
     ${CMAKE_SOURCE_DIR}/include/networking/messages/graph_message.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/node_coordinates.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/abstract_response.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/available_handlers_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/generic_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/shortest_path_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/status_code.hpp
@@ -51,6 +52,7 @@ set(NETWORKING_SOURCES
     messages/graph_message.cpp
     messages/node_coordinates.cpp
     responses/abstract_response.cpp
+    responses/available_handlers_response.cpp
     responses/generic_response.cpp
     responses/shortest_path_response.cpp
     responses/response_factory.cpp
@@ -78,13 +80,16 @@ target_link_libraries(${NETWORKING_NAME} PRIVATE ${Boost_LIBRARIES})
 set(HANDLING_NAME handling)
 
 set(HANDLING_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/handling/handler_factory.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handler_proxy.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/abstract_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/dijkstra_handler.hpp
 )
 
 set(HANDLING_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/handling/handler_factory.cpp
     ${CMAKE_SOURCE_DIR}/src/handling/handler_proxy.cpp
+    ${CMAKE_SOURCE_DIR}/src/handling/handlers/abstract_handler.cpp
     ${CMAKE_SOURCE_DIR}/src/handling/handlers/dijkstra_handler.cpp
 )
 

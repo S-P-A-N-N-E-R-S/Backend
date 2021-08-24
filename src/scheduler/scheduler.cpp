@@ -7,6 +7,15 @@
 
 namespace server {
 
+scheduler &scheduler::instance()
+{
+    static scheduler instance =
+        scheduler("./src/handler_process", 4,
+                  "host=localhost port=5432 user= spanner_user dbname=spanner_db "
+                  "password=pwd connect_timeout=10");
+    return instance;
+}
+
 scheduler::scheduler(const std::string &exec_path, size_t process_limit,
                      const std::string &database_connection)
     : m_exec_path(exec_path)
@@ -16,10 +25,11 @@ scheduler::scheduler(const std::string &exec_path, size_t process_limit,
     , m_processes(0)
     , m_database_connection_string(database_connection)
     , m_database(database_connection)
+    , m_thread_started(false)
     , m_thread_halted(false)
     , m_stop(false)
     , m_sleep(std::chrono::milliseconds(1000))
-    , m_thread(nullptr)
+    , m_thread()
 {
     const boost::filesystem::path path{m_exec_path};
     if (!boost::filesystem::exists(path))
@@ -36,11 +46,6 @@ scheduler::scheduler(const std::string &exec_path, size_t process_limit,
 scheduler::~scheduler()
 {
     stop_scheduler(true);
-    if (m_thread != nullptr)
-    {
-        m_thread->join();
-        delete m_thread;
-    }
 }
 
 void scheduler::set_time_limit(int64_t time_limit)
@@ -73,19 +78,20 @@ void scheduler::set_sleep(int64_t sleep)
 
 void scheduler::start()
 {
-    if (m_thread != nullptr)
+    // we want to allow a call to start() only once
+    if (m_thread_started)
     {
         throw std::runtime_error("scheduler::start() called more than once!");
     }
-    // we want to allow a call to start() only once
-    m_thread = new std::thread([this] {
+    m_thread_started = true;
+    m_thread = std::thread([this] {
         this->run_thread();
     });
 }
 
 bool scheduler::running()
 {
-    return (m_thread != nullptr) && (!m_thread_halted);
+    return m_thread_started && (!m_thread_halted);
 }
 
 void scheduler::run_thread()
@@ -126,8 +132,8 @@ void scheduler::run_thread()
                     break;
 
                     case process_flags::SEGFAULT: {
-                        m_database.set_messages((*it)->job_id, db_status_type::Failed, "",
-                                                "Segfault");
+                        m_database.set_messages((*it)->job_id, db_status_type::Failed,
+                                                (*it)->data_cout.get(), "Segfault");
                     }
                     break;
 

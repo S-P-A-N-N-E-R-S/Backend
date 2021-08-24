@@ -1,28 +1,21 @@
-#ifndef BASE_HANDLER_H_
-#define BASE_HANDLER_H_
+#pragma once
 
-#include <string>
-
-// OGDF include
-#include <ogdf/basic/Graph.h>
-#include <ogdf/basic/GraphAttributes.h>
-
-//handler includes
-#include <handling/handlers/abstract_handler.hpp>
-//#include <handling/handlers/dijkstra_handler.hpp>
-
-#include <networking/messages/graph_message.hpp>
-#include <networking/requests/abstract_request.hpp>
-#include <networking/requests/shortest_path_request.hpp>
+#include <networking/responses/abstract_response.hpp>
 
 namespace server {
 
-class HandlerProxy
+class handler_proxy
 {
 public:
-    std::unique_ptr<abstract_response> handle(std::unique_ptr<abstract_request> request);
+    /**
+     * @brief Handle the given request by dynamically finding the correct registered handler.
+     * 
+     * @param requestData (uncompressed) data from persistence
+     * @return response container as well as the OGDF time
+     */
     std::pair<graphs::ResponseContainer, long> handle(graphs::RequestContainer &requestData);
+
+    std::unique_ptr<abstract_response> available_handlers();
 };
 
 }  // namespace server
-#endif  // BASE_HANDLER_H_

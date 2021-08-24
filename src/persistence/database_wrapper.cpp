@@ -47,7 +47,7 @@ void database_wrapper::check_connection()
     }
 }
 
-void database_wrapper::add_job(int user_id, const binary_data &data)
+int database_wrapper::add_job(int user_id, const binary_data &data)
 {
     check_connection();
     pqxx::work txn{m_database_connection};
@@ -72,6 +72,8 @@ void database_wrapper::add_job(int user_id, const binary_data &data)
     txn.exec_params0("UPDATE jobs SET request_id = $1 WHERE job_id = $2", request_id, job_id);
 
     txn.commit();
+
+    return job_id;
 }
 
 void database_wrapper::set_status(int job_id, db_status_type status)
