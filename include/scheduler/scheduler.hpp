@@ -26,18 +26,15 @@ struct job_process {
 class scheduler
 {
 public:
-    /**
-     * @brief Construct a new scheduler backend object. Time and ressource limit are inactive and can be set through respective setters, sleep is 1 second
-     * 
-     * @param exe_path  The path were the executable handler_process can be found
-     * @param process_limit Maximum number of task processes.
-     */
-    scheduler(const std::string &exec_path, size_t process_limit,
-              const std::string &database_connection);
+    static scheduler &instance();
+    // {
+    //     static scheduler instance = scheduler("./src/handler_process", 4, "host=localhost port=5432 user= spanner_user dbname=spanner_db "
+    //                                 "password=pwd connect_timeout=10");
+    //     return instance;
+    // }
 
     /**
      * @brief Destroy the scheduler backend object. Internally calls stop_scheduler(true).
-     * 
      */
     ~scheduler();
 
@@ -70,8 +67,7 @@ public:
     void set_sleep(int64_t sleep);
 
     /**
-     * @brief Starts the scheduller
-     * 
+     * @brief Starts the schedullr
      */
     void start();
 
@@ -97,6 +93,9 @@ public:
     void cancel_task(int job_id, int user_id);
 
 private:
+    scheduler(const std::string &exec_path, size_t process_limit,
+              const std::string &database_connection);
+
     std::string m_exec_path;
     size_t m_process_limit;
     int64_t m_time_limit;
@@ -108,12 +107,13 @@ private:
     std::string m_database_connection_string;
     database_wrapper m_database;
 
+    bool m_thread_started;
     bool m_thread_halted;
     bool m_stop;
 
     std::chrono::milliseconds m_sleep;
 
-    std::thread *m_thread;
+    std::thread m_thread;
 
     void run_thread();
 

@@ -1,34 +1,34 @@
+#include <handling/handler_list.hpp>
 #include <handling/handler_proxy.hpp>
 #include <handling/handlers/dijkstra_handler.hpp>
 #include <iostream>
 #include <networking/requests/request_factory.hpp>
+#include <networking/responses/available_handlers_response.hpp>
 
 namespace server {
 
-/**
- * @brief Old method used in prototype
- * 
- * @param request 
- * @return std::unique_ptr<abstract_response> 
- */
-std::unique_ptr<abstract_response> HandlerProxy::handle(std::unique_ptr<abstract_request> request)
+std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
+    graphs::RequestContainer &requestData)
 {
-    std::unique_ptr<abstract_response> response;
+    server::request_factory factory;
+    std::unique_ptr<server::abstract_request> request = factory.build_request(requestData);
+    std::pair<graphs::ResponseContainer, long> response;
     switch (request->type())
     {
         case request_type::SHORTEST_PATH: {
-            shortest_path_request *sp_request =
-                dynamic_cast<shortest_path_request *>(request.get());
+            auto &factories = handler_factories();
 
-            if (sp_request == nullptr)
+            auto factory = factories["dijkstra"];
+
+            if (factory == nullptr)
             {
-                //ToDo: Lets crash the server because I'm to lazy for real error handling in the prototype
-                throw std::runtime_error("handlerProxy: dynamic_cast failed!");
+                throw std::runtime_error("Key dijkstra not found in factories!");
             }
 
-            DijkstraHandler h = DijkstraHandler(*sp_request);
+            auto handler = factory->produce(std::move(request));
 
-            response = h.handle();
+            response = handler->handle();
+
             break;
         }
         default: {
@@ -42,43 +42,18 @@ std::unique_ptr<abstract_response> HandlerProxy::handle(std::unique_ptr<abstract
     return response;
 }
 
-/**
- * @brief New WIP variant using persistence_mock data
- * 
- * @param requestData simulates (uncompressed) data from persistence
- * @return std::unique_ptr<abstract_response> 
- */
-std::pair<graphs::ResponseContainer, long> HandlerProxy::handle(
-    graphs::RequestContainer &requestData)
+std::unique_ptr<abstract_response> handler_proxy::available_handlers()
 {
-    server::request_factory factory;
-    std::unique_ptr<server::abstract_request> request = factory.build_request(requestData);
-    std::pair<graphs::ResponseContainer, long> response;
-    switch (request->type())
+    auto handler_information = std::make_unique<graphs::AvailableHandlersResponse>();
+    auto handlers = handler_information->mutable_handlers();
+
+    for (auto &it : handler_factories())
     {
-        case request_type::SHORTEST_PATH: {
-            shortest_path_request *sp_request =
-                dynamic_cast<shortest_path_request *>(request.get());
-
-            if (sp_request == nullptr)
-            {
-                //ToDo: Lets crash the server because I'm to lazy for real error handling in the prototype
-                throw std::runtime_error("handlerProxy: dynamic_cast failed!");
-            }
-
-            DijkstraHandler h(*sp_request);
-            response = h.handle_new();
-            break;
-        }
-        default: {
-            //ToDo: Real error handling
-            std::cout << "No valid request Type" << std::endl;
-            break;
-        }
+        handlers->Add(it.second->handler_information());
     }
 
-    //ToDo: Store result in database and provide some kind of status update system
-    return response;
+    return std::make_unique<available_handlers_response>(std::move(handler_information),
+                                                         status_code::OK);
 }
 
 }  //namespace server

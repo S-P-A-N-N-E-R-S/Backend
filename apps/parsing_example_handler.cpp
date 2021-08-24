@@ -64,11 +64,7 @@ int main(int argc, const char **argv)
     proto_request_container.set_type(graphs::RequestType::SHORTEST_PATH);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
-    server::request_factory factory;
-    std::unique_ptr<server::abstract_request> request =
-        factory.build_request(proto_request_container);
-
-    auto response = server::HandlerProxy().handle(std::move(request));
+    auto response = server::handler_proxy().handle(proto_request_container);
 
     return 0;
 }

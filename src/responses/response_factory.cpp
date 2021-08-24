@@ -1,5 +1,6 @@
 #include "networking/responses/response_factory.hpp"
 
+#include "networking/responses/available_handlers_response.hpp"
 #include "networking/responses/generic_response.hpp"
 #include "networking/responses/shortest_path_response.hpp"
 
@@ -33,8 +34,16 @@ namespace {
     {
         switch (type)
         {
+            case response_type::AVAILABLE_HANDLERS: {
+                return graphs::RequestType::AVAILABLE_HANDLERS;
+            }
+            break;
             case response_type::SHORTEST_PATH: {
                 return graphs::RequestType::SHORTEST_PATH;
+            }
+            break;
+            case response_type::GENERIC: {
+                return graphs::RequestType::GENERIC;
             }
             break;
             default: {
@@ -95,6 +104,17 @@ graphs::ResponseContainer response_factory::build_response(
             if (!ok)
             {
                 proto_container.set_status(to_proto_status(status_code::ERROR));
+            }
+        }
+        break;
+        case response_type::AVAILABLE_HANDLERS: {
+            auto *ahr = static_cast<available_handlers_response *>(response.get());
+            auto available_handlers = ahr->take_available_handlers();
+            const bool ok = proto_container.mutable_response()->PackFrom(*available_handlers);
+            if (!ok)
+            {
+                proto_container.set_status(to_proto_status(status_code::ERROR));
+                return proto_container;
             }
         }
         break;

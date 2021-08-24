@@ -27,8 +27,9 @@ public:
      * Adds the parsed binary data of a request to the database.
      * @param user_id The ID of the user who scheduled the job
      * @param binary A binary data object that contains the parsed request
+     * @return id of the inserted job
      */
-    void add_job(int user_id, const binary_data &binary);
+    int add_job(int user_id, const binary_data &binary);
 
     /**
      * Sets the status of a job to 'waiting', 'in progress', 'finished' or 'aborted'.

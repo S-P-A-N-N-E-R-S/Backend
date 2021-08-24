@@ -1,7 +1,5 @@
 #include <networking/io/connection.hpp>
 
-#include <iostream>
-
 #include <algorithm>
 #include <boost/asio/completion_condition.hpp>
 #include <boost/endian/conversion.hpp>
@@ -16,6 +14,8 @@
 #include <networking/io/connection_handler.hpp>
 #include <networking/requests/request_factory.hpp>
 #include <networking/responses/response_factory.hpp>
+
+#include <scheduler/scheduler.hpp>
 
 using boost::asio::async_read;
 using boost::asio::buffer;
@@ -101,19 +101,32 @@ void connection::handle()
             return;
         }
 
-        // Request handling
-        server::request_factory req_factory;
-        std::unique_ptr<server::abstract_request> request =
-            req_factory.build_request(request_container);
-        if (!request)
+        std::unique_ptr<server::abstract_response> response;
+        // TODO: find a better way instead of manually checking for these "meta" handlers
+        if (request_container.type() == graphs::RequestType::AVAILABLE_HANDLERS)
         {
-            std::cout << "[CONNECTION] Request factory error\n";
-            respond_error(yield, graphs::ResponseContainer::INVALID_REQUEST_ERROR);
-            return;
+            response = handler_proxy().available_handlers();
         }
+        else
+        {
+            //This is a very quick and dirty and unsave fix and I hate it so much.
+            // We absolutely should change this after RequestType was moved into MetaMessage
+            binary_data binary;
+            binary.resize(decompressed.size());
+            for (size_t i = 0; i < decompressed.size(); i++)
+            {
+                binary[i] = static_cast<std::byte>(decompressed[i]);
+            }
 
-        std::unique_ptr<server::abstract_response> response =
-            server::HandlerProxy().handle(std::move(request));
+            // TODO: remove hardcoded string with env variables
+            std::string connection_string =
+                "host=localhost port=5432 user=spanner_user dbname=spanner_db "
+                "password=pwd connect_timeout=10";
+            database_wrapper database(connection_string);
+            // TODO: Try-Catch to catch database or authentification errors
+            int job_id = database.add_job(0, binary);
+            response = std::unique_ptr<abstract_response>(nullptr);
+        }
 
         server::response_factory res_factory;
         respond(yield, res_factory.build_response(std::move(response)));
