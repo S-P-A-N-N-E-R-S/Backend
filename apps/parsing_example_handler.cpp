@@ -4,6 +4,7 @@
 #include <ogdf/basic/extended_graph_alg.h>
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/graphalg/Dijkstra.h>
+#include "generic_container.pb.h"
 
 #include <networking/requests/request_factory.hpp>
 #include <networking/responses/response_factory.hpp>
@@ -16,7 +17,8 @@
  **/
 int main(int argc, const char **argv)
 {
-    graphs::ShortestPathRequest proto_request;
+    graphs::GenericRequest proto_request;
+    proto_request.set_handlertype("shortest_path");
 
     auto og = std::make_unique<ogdf::Graph>();
     ogdf::randomSimpleConnectedGraph(*og, 100, 300);
@@ -57,14 +59,23 @@ int main(int argc, const char **argv)
     proto_request.set_allocated_graph(proto_graph.release());
 
     // Hardcoded for testing purposes only
-    proto_request.set_startuid(0);
-    proto_request.set_enduid(99);
+    proto_request.mutable_graphattributes()->operator[]("startUid") = "0";
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestType::SHORTEST_PATH);
+    proto_request_container.set_type(graphs::RequestType::GENERIC);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
-    auto response = server::handler_proxy().handle(proto_request_container);
+    auto [response_container, time] = server::handler_proxy().handle(proto_request_container);
+
+    graphs::GenericResponse parsed_resp;
+    const bool ok = response_container.response().UnpackTo(&parsed_resp);
+    assert(("Couldn't parse GenericResponse from container", ok));
+
+    const double path_cost =
+        std::accumulate(parsed_resp.edgecosts().begin(), parsed_resp.edgecosts().end(), 0.0);
+
+    std::cout << "parsed graph nof nodes: " << parsed_resp.graph().vertexlist_size() << "\n";
+    std::cout << "cost of path: " << path_cost << "\n";
 
     return 0;
 }

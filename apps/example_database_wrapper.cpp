@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include "generic_container.pb.h"
+
 #include <ogdf/basic/extended_graph_alg.h>
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/graphalg/Dijkstra.h>
@@ -8,15 +10,13 @@
 #include "networking/requests/abstract_request.hpp"
 #include "persistence/database_wrapper.hpp"
 
-typedef std::basic_string<std::byte> binary_data;
-
-binary_data generateRandomDijkstra(unsigned int seed);
+binary_data generate_random_dijkstra(unsigned int seed, int n, int m);
 
 int main(int argc, const char **argv)
 {
     std::string connection_string = "host=localhost port=5432 user= spanner_user dbname=spanner_db "
                                     "password=pwd connect_timeout=10";
-    auto data = generateRandomDijkstra(123);
+    auto data = generate_random_dijkstra(123, 100, 1000);
     std::cout << "add_job:" << std::endl;
     server::database_wrapper persistence(connection_string);
     persistence.add_job(1234, data);
@@ -48,16 +48,16 @@ int main(int argc, const char **argv)
     }
 }
 
-binary_data generateRandomDijkstra(unsigned int seed)
+binary_data generate_random_dijkstra(unsigned int seed, int n, int m)
 {
     // Build a dummy Dijkstra Request
     ogdf::setSeed(seed);
 
-    graphs::ShortestPathRequest proto_request;
+    graphs::GenericRequest proto_request;
 
     auto og = std::make_unique<ogdf::Graph>();
 
-    ogdf::randomSimpleConnectedGraph(*og, 100, 500);
+    ogdf::randomSimpleConnectedGraph(*og, n, m);
 
     auto node_uids = std::make_unique<ogdf::NodeArray<server::uid_t>>(*og);
 
@@ -66,7 +66,6 @@ binary_data generateRandomDijkstra(unsigned int seed)
     for (const auto &node : og->nodes)
     {
         const auto uid = node->index();
-
         (*node_uids)[node] = uid;
         node_coords->Add([] {
             auto coords = graphs::VertexCoordinates{};
@@ -96,11 +95,10 @@ binary_data generateRandomDijkstra(unsigned int seed)
     proto_request.set_allocated_graph(proto_graph.release());
 
     // Hardcoded for testing purposes only
-    proto_request.set_startuid(0);
-    proto_request.set_enduid(99);
+    (*proto_request.mutable_graphattributes())["startUid"] = "0";
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestType::SHORTEST_PATH);
+    proto_request_container.set_type(graphs::RequestType::GENERIC);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
     // This is important: pqxx expects a basic_string<byte>, so we directly serialize it to this and not to char* as in connection.cpp

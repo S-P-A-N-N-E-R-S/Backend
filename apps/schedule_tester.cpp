@@ -6,12 +6,14 @@
 #include <scheduler.hpp>
 #include <thread>
 
-binary_data generateRandomDijkstra(unsigned int seed, int n, int m);
+#include "generic_container.pb.h"
+
+binary_data generate_random_dijkstra(unsigned int seed, int n, int m);
 
 /**
- * @brief Tests some simple scheduling options. Some possible manipulations are commented out 
- * 
- * @return int 
+ * @brief Tests some simple scheduling options. Some possible manipulations are commented out
+ *
+ * @return int
  */
 int main()
 {
@@ -25,7 +27,7 @@ int main()
     for (int i = 0; i < 10; i++)
     {
         std::cout << "Tester: Generating " << i << std::endl;
-        auto data = generateRandomDijkstra(11235, n, m);
+        auto data = generate_random_dijkstra(11235, n, m);
         db.add_job(1, data);
     }
 
@@ -55,12 +57,12 @@ int main()
     }
 }
 
-binary_data generateRandomDijkstra(unsigned int seed, int n, int m)
+binary_data generate_random_dijkstra(unsigned int seed, int n, int m)
 {
     // Build a dummy Dijkstra Request
     ogdf::setSeed(seed);
 
-    graphs::ShortestPathRequest proto_request;
+    graphs::GenericRequest proto_request;
 
     auto og = std::make_unique<ogdf::Graph>();
 
@@ -102,11 +104,10 @@ binary_data generateRandomDijkstra(unsigned int seed, int n, int m)
     proto_request.set_allocated_graph(proto_graph.release());
 
     // Hardcoded for testing purposes only
-    proto_request.set_startuid(0);
-    proto_request.set_enduid(99);
+    (*proto_request.mutable_graphattributes())["startUid"] = "0";
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestType::SHORTEST_PATH);
+    proto_request_container.set_type(graphs::RequestType::GENERIC);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
     // This is important: pqxx expects a basic_string<byte>, so we directly serialize it to this and not to char* as in connection.cpp
