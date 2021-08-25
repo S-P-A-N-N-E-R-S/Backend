@@ -15,7 +15,7 @@ std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
     std::pair<graphs::ResponseContainer, long> response;
     switch (request->type())
     {
-        case request_type::SHORTEST_PATH: {
+        case request_type::GENERIC: {
             auto &factories = handler_factories();
 
             auto factory = factories["dijkstra"];

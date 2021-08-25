@@ -4,4 +4,4 @@
 // By including it, the contained handlers are registered and compiled.
 
 #include <handling/handlers/dijkstra_handler.hpp>
-register_handler("dijkstra", DijkstraHandler)
+register_handler("dijkstra", dijkstra_handler)
