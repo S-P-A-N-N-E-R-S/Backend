@@ -91,12 +91,14 @@ graphs::HandlerInformation dijkstra_handler::handler_information()
     dijkstra_handler::addFieldInformation(information, graphs::FieldInformation_FieldType_GRAPH,
                                           "Graph", "graph", true);
     dijkstra_handler::addFieldInformation(information, graphs::FieldInformation_FieldType_VERTEX_ID,
-                                          "Start node", "startUid", true);
+                                          "Start node", "intAttributes.startUid", true);
     dijkstra_handler::addFieldInformation(information,
                                           graphs::FieldInformation_FieldType_EDGE_COSTS,
                                           "Edge costs", "edgeCosts", true);
-    dijkstra_handler::addFieldInformation(
-        information, graphs::FieldInformation_FieldType_EDGE_COSTS, "", "vertexCoordinates", true);
+    dijkstra_handler::addFieldInformation(information,
+                                          graphs::FieldInformation_FieldType_VERTEX_COORDINATES, "",
+                                          "vertexCoordinates", true);
+
     // add result information
     dijkstra_handler::addResultInformation(
         information, graphs::ResultInformation_HandlerReturnType_GRAPH, "graph");
