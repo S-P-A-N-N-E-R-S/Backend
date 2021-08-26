@@ -2,7 +2,9 @@
 
 #include "networking/responses/available_handlers_response.hpp"
 #include "networking/responses/generic_response.hpp"
+#include "networking/responses/new_job_response.hpp"
 #include "networking/responses/shortest_path_response.hpp"
+#include "networking/responses/status_response.hpp"
 
 #include "container.pb.h"
 #include "handlers/shortest_path.pb.h"
@@ -110,6 +112,28 @@ graphs::ResponseContainer response_factory::build_response(
             auto *ahr = static_cast<available_handlers_response *>(response.get());
             auto available_handlers = ahr->take_available_handlers();
             const bool ok = proto_container.mutable_response()->PackFrom(*available_handlers);
+            if (!ok)
+            {
+                proto_container.set_status(to_proto_status(status_code::ERROR));
+                return proto_container;
+            }
+        }
+        break;
+        case response_type::NEW_JOB: {
+            auto *new_job_response = static_cast<server::new_job_response *>(response.get());
+            auto new_job_response_graphs = new_job_response->take_new_job_response();
+            const bool ok = proto_container.mutable_response()->PackFrom(new_job_response_graphs);
+            if (!ok)
+            {
+                proto_container.set_status(to_proto_status(status_code::ERROR));
+                return proto_container;
+            }
+        }
+        break;
+        case response_type::STATUS: {
+            auto *stat_response = static_cast<status_response *>(response.get());
+            auto stat_response_graphs = stat_response->take_status_response();
+            const bool ok = proto_container.mutable_response()->PackFrom(stat_response_graphs);
             if (!ok)
             {
                 proto_container.set_status(to_proto_status(status_code::ERROR));

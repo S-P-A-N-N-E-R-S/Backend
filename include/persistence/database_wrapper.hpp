@@ -6,6 +6,7 @@
 #include <networking/responses/response_factory.hpp>
 
 #include "meta.pb.h"
+#include "status.pb.h"
 
 typedef std::basic_string<std::byte> binary_data;
 
@@ -19,8 +20,6 @@ private:
     const std::string m_connection_string;
     pqxx::connection m_database_connection;
     void check_connection();
-
-    std::string status_to_string(db_status_type status);
 
 public:
     database_wrapper(const std::string &connection_string);
@@ -112,6 +111,22 @@ public:
      * @return list of jobs and their respective states
      */
     std::vector<std::pair<int, std::string>> get_status(int user_id);
+
+    /**
+     * @brief Converts a db_Status_type to a string
+     * 
+     * @param status 
+     * @return status as string 
+     */
+    static std::string status_to_string(db_status_type status);
+
+    /**
+     * @brief Converts a string to a graphs::StatusType
+     * 
+     * @param status 
+     * @return status as graphs::StatusType 
+     */
+    static graphs::StatusType string_to_graphs_status(const std::string &status);
 };
 
 }  // end namespace server

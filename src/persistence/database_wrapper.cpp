@@ -41,6 +41,34 @@ std::string database_wrapper::status_to_string(db_status_type status)
     }
 }
 
+graphs::StatusType database_wrapper::string_to_graphs_status(const std::string &status)
+{
+    if (status == "Waiting")
+    {
+        return graphs::StatusType::WAITING;
+    }
+    else if (status == "Running")
+    {
+        return graphs::StatusType::RUNNING;
+    }
+    else if (status == "Success")
+    {
+        return graphs::StatusType::SUCCESS;
+    }
+    else if (status == "Failed")
+    {
+        return graphs::StatusType::FAILED;
+    }
+    else if (status == "Aborted")
+    {
+        return graphs::StatusType::ABORTED;
+    }
+    else
+    {
+        return graphs::StatusType::UNKNOWN_STATUS;
+    }
+}
+
 void database_wrapper::check_connection()
 {
     if (!(m_database_connection.is_open()))
