@@ -13,6 +13,7 @@
 #include <handling/handler_proxy.hpp>
 #include <networking/io/connection_handler.hpp>
 #include <networking/requests/request_factory.hpp>
+#include <networking/responses/new_job_response.hpp>
 #include <networking/responses/response_factory.hpp>
 
 #include <scheduler/scheduler.hpp>
@@ -112,8 +113,13 @@ void connection::handle()
         // TODO: Try-Catch to catch database or authentification errors
         int job_id = database.add_job(0, type, decompressed);
 
-        // TODO: Answer with status message here once it's defined
-        respond(yield, res_factory.build_response({}));
+        graphs::NewJobResponse new_job_resp;
+        new_job_resp.set_jobid(job_id);
+
+        auto response =
+            std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
+
+        respond(yield, res_factory.build_response(std::move(response)));
     });
 }
 

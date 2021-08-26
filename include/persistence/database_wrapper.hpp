@@ -99,6 +99,19 @@ public:
      */
     void set_messages(int job_id, const db_status_type status, const std::string &out,
                       const std::string &err);
+
+    /**
+     * @brief Gets the status of a single job of a user
+     */
+    std::string get_status(int job_id, int user_id);
+
+    /**
+     * @brief Gets the status for all jobs of a user
+     * 
+     * @param user_id 
+     * @return list of jobs and their respective states
+     */
+    std::vector<std::pair<int, std::string>> get_status(int user_id);
 };
 
 }  // end namespace server
