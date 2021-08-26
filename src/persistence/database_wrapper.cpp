@@ -1,5 +1,7 @@
 #include <persistence/database_wrapper.hpp>
 
+#include "networking/exceptions.hpp"
+
 namespace server {
 
 // Default static connection string
@@ -57,7 +59,7 @@ int database_wrapper::add_job(int user_id, graphs::RequestType type, const binar
     int job_id;
     if (!(row_job[0] >> job_id))
     {
-        throw std::runtime_error("Can't access job_id");
+        throw row_access_error("Can't access job_id");
     }
 
     // We don't want to manually maintain an enum in Postgres. Thus, we represent the RequestType as
@@ -69,7 +71,7 @@ int database_wrapper::add_job(int user_id, graphs::RequestType type, const binar
     int request_id;
     if (!(row_request[0] >> request_id))
     {
-        throw std::runtime_error("Can't access request_id");
+        throw row_access_error("Can't access request_id");
     }
 
     txn.exec_params0("UPDATE jobs SET request_id = $1 WHERE job_id = $2", request_id, job_id);
@@ -111,7 +113,7 @@ void database_wrapper::add_response(int job_id, graphs::RequestType type,
     int result_id;
     if (!(row_res[0] >> result_id))
     {
-        throw std::runtime_error("Can't access result_id");
+        throw row_access_error("Can't access result_id");
     }
 
     // If returned number of rows is zero, then the job does no longer exist, an error is thrown and we wont commit
@@ -193,7 +195,7 @@ std::vector<std::pair<int, int>> database_wrapper::get_next_jobs(int n)
 
         if (!(row[0] >> job.first && row[1] >> job.second))
         {
-            throw std::runtime_error("Cant access row!");
+            throw row_access_error("Can't access row", rows);
         }
 
         available[i++] = job;
@@ -227,6 +229,58 @@ void database_wrapper::set_messages(int job_id, const db_status_type status, con
                      status_to_string(status), out, err, job_id);
 
     txn.commit();
+}
+
+std::string database_wrapper::get_status(int job_id, int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+
+    pqxx::result rows = txn.exec_params(
+        "SELECT status FROM jobs WHERE job_id = $1 AND user_id = $2", job_id, user_id);
+
+    std::string status;
+
+    if (rows.size() < 1)
+    {
+        status = "Not Found";
+    }
+    else if (!(rows[0][0] >> status))
+    {
+        throw row_access_error("Can't access row", rows);
+    }
+
+    return status;
+}
+
+std::vector<std::pair<int, std::string>> database_wrapper::get_status(int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+
+    pqxx::result rows = txn.exec_params("SELECT job_id, status FROM jobs WHERE user_id = $1 "
+                                        "ORDER BY job_id",
+                                        user_id);
+
+    std::vector<std::pair<int, std::string>> states(rows.size());
+
+    size_t i = 0;
+
+    for (auto const &row : rows)
+    {
+        std::pair<int, std::string> status_info;
+
+        if (!(row[0] >> status_info.first && row[1] >> status_info.second))
+        {
+            throw row_access_error("Can't access row", rows);
+        }
+
+        states[i++] = std::move(status_info);
+    }
+
+    return states;
 }
 
 // /**

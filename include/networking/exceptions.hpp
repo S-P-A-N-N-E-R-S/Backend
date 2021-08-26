@@ -1,6 +1,8 @@
 #pragma once
 
-#include "networking/responses/response_type.hpp"
+#include "networking/requests/request_type.hpp"
+
+#include <pqxx/result.hxx>
 
 #include <exception>
 
@@ -36,6 +38,39 @@ private:
     const char *m_message;
     server::request_type m_request_type;
     std::string_view m_handler_type;
+};
+
+class row_access_error : public std::exception
+{
+public:
+    row_access_error(const char *msg, const pqxx::result &result)
+        : std::exception()
+        , m_message{msg}
+        , m_query{result.query()}
+    {
+    }
+
+    // Use this constructor if you don't have a pqxx::result at hand
+    row_access_error(const char *msg)
+        : std::exception()
+        , m_message{msg}
+        , m_query{}
+    {
+    }
+
+    const char *what() const noexcept
+    {
+        return this->m_message;
+    }
+
+    const std::string &query() const noexcept
+    {
+        return this->m_query;
+    }
+
+private:
+    const char *const m_message;
+    const std::string m_query;
 };
 
 }  // namespace server

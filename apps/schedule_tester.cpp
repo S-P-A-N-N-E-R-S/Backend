@@ -51,6 +51,21 @@ int main()
     //scheduler.stop_scheduler(true);
 
     //sched_thread.join();
+
+    int status_seconds = 5;
+
+    sleep(status_seconds);
+
+    auto states = db.get_status(1);
+
+    std::cout << "States after " << status_seconds << " seconds:\n";
+
+    for (auto &status : states)
+    {
+        std::cout << status.first << ": " << status.second << "\n";
+    }
+    std::cout << std::endl;
+
     while (scheduler.running())
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));

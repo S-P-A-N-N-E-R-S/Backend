@@ -36,6 +36,7 @@ set(NETWORKING_HEADERS
     ${CMAKE_SOURCE_DIR}/include/networking/responses/generic_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/shortest_path_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/status_code.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/new_job_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/response_factory.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/response_type.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/requests/abstract_request.hpp
@@ -55,6 +56,7 @@ set(NETWORKING_SOURCES
     responses/available_handlers_response.cpp
     responses/generic_response.cpp
     responses/shortest_path_response.cpp
+    responses/new_job_response.cpp
     responses/response_factory.cpp
     requests/abstract_request.cpp
     requests/generic_request.cpp
