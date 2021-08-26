@@ -15,6 +15,7 @@
 #include <networking/requests/request_factory.hpp>
 #include <networking/responses/new_job_response.hpp>
 #include <networking/responses/response_factory.hpp>
+#include <networking/responses/status_response.hpp>
 
 #include <scheduler/scheduler.hpp>
 
@@ -81,6 +82,12 @@ void connection::handle()
             return;
         }
 
+        // TODO: remove hardcoded string with env variables
+        std::string connection_string =
+            "host=localhost port=5432 user=spanner_user dbname=spanner_db "
+            "password=pwd connect_timeout=10";
+        database_wrapper database(connection_string);
+
         const auto type = meta_data.type();
         server::response_factory res_factory;
 
@@ -88,6 +95,31 @@ void connection::handle()
         if (type == graphs::RequestType::AVAILABLE_HANDLERS)
         {
             respond(yield, res_factory.build_response(handler_proxy().available_handlers()));
+            return;
+        }
+        else if (type == graphs::RequestType::STATUS)
+        {
+            //ToDO: change user_id from hardcoded to dynamically read from request
+            int user_id = 1;
+            auto states = database.get_status(user_id);
+
+            graphs::StatusResponse status_response;
+            auto respStates = status_response.mutable_states();
+
+            for (auto &status : states)
+            {
+                graphs::StatusSingle statusSingle;
+
+                statusSingle.set_job_id(status.first);
+                statusSingle.set_status(database_wrapper::string_to_graphs_status(status.second));
+
+                respStates->Add(std::move(statusSingle));
+            }
+
+            auto response = std::make_unique<server::status_response>(std::move(status_response),
+                                                                      status_code::OK);
+
+            respond(yield, res_factory.build_response(std::move(response)));
             return;
         }
 
@@ -105,11 +137,6 @@ void connection::handle()
         std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
                   reinterpret_cast<char *>(decompressed.data()));
 
-        // TODO: remove hardcoded string with env variables
-        std::string connection_string =
-            "host=localhost port=5432 user=spanner_user dbname=spanner_db "
-            "password=pwd connect_timeout=10";
-        database_wrapper database(connection_string);
         // TODO: Try-Catch to catch database or authentification errors
         int job_id = database.add_job(0, type, decompressed);
 

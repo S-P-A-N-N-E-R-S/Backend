@@ -8,4 +8,9 @@ new_job_response::new_job_response(graphs::NewJobResponse &&new_job_response, st
 {
 }
 
+graphs::NewJobResponse new_job_response::take_new_job_response()
+{
+    return std::move(m_new_job_response);
+}
+
 }  // namespace server

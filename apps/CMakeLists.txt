@@ -23,3 +23,8 @@ target_link_libraries(generic_message_example PRIVATE handling)
 add_executable(available_handlers_example available_handlers_example.cpp)
 target_link_libraries(available_handlers_example PRIVATE networking)
 target_link_libraries(available_handlers_example PRIVATE handling)
+
+add_executable(status_response_example status_response_example.cpp)
+target_link_libraries(status_response_example PRIVATE networking)
+target_link_libraries(status_response_example PRIVATE handling)
+
