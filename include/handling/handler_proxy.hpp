@@ -13,7 +13,8 @@ public:
      * @param requestData (uncompressed) data from persistence
      * @return response container as well as the OGDF time
      */
-    std::pair<graphs::ResponseContainer, long> handle(graphs::RequestContainer &requestData);
+    std::pair<graphs::ResponseContainer, long> handle(graphs::RequestType type,
+                                                      graphs::RequestContainer &requestData);
 
     std::unique_ptr<abstract_response> available_handlers();
 };

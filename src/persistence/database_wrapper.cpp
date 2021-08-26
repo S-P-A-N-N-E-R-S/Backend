@@ -47,7 +47,7 @@ void database_wrapper::check_connection()
     }
 }
 
-int database_wrapper::add_job(int user_id, const binary_data &data)
+int database_wrapper::add_job(int user_id, graphs::RequestType type, const binary_data &data)
 {
     check_connection();
     pqxx::work txn{m_database_connection};
@@ -60,8 +60,11 @@ int database_wrapper::add_job(int user_id, const binary_data &data)
         throw std::runtime_error("Can't access job_id");
     }
 
+    // We don't want to manually maintain an enum in Postgres. Thus, we represent the RequestType as
+    // an int in the database.
     pqxx::row row_request =
-        txn.exec_params1("INSERT INTO data (binary_data) VALUES ($1) RETURNING data_id", data);
+        txn.exec_params1("INSERT INTO data (type, binary_data) VALUES ($1, $2) RETURNING data_id",
+                         static_cast<int>(type), data);
 
     int request_id;
     if (!(row_request[0] >> request_id))
@@ -88,8 +91,8 @@ void database_wrapper::set_status(int job_id, db_status_type status)
     txn.commit();
 }
 
-void database_wrapper::add_response(int job_id, const graphs::ResponseContainer &response,
-                                    long ogdf_time)
+void database_wrapper::add_response(int job_id, graphs::RequestType type,
+                                    const graphs::ResponseContainer &response, long ogdf_time)
 {
     binary_data binary;
     binary.resize(response.ByteSizeLong());
@@ -99,8 +102,11 @@ void database_wrapper::add_response(int job_id, const graphs::ResponseContainer 
 
     pqxx::work txn{m_database_connection};
 
+    // We don't want to manually maintain an enum in Postgres. Thus, we represent the RequestType as
+    // an int in the database.
     pqxx::row row_res =
-        txn.exec_params1("INSERT INTO data (binary_data) VALUES ($1) RETURNING data_id", binary);
+        txn.exec_params1("INSERT INTO data (type, binary_data) VALUES ($1, $2) RETURNING data_id",
+                         static_cast<int>(type), binary);
 
     int result_id;
     if (!(row_res[0] >> result_id))
@@ -117,22 +123,24 @@ void database_wrapper::add_response(int job_id, const graphs::ResponseContainer 
     txn.commit();
 }
 
-graphs::RequestContainer database_wrapper::get_request_data(int job_id, int user_id)
+std::pair<graphs::RequestType, graphs::RequestContainer> database_wrapper::get_request_data(
+    int job_id, int user_id)
 {
     check_connection();
 
     pqxx::work txn{m_database_connection};
 
-    pqxx::row row = txn.exec_params1("SELECT binary_data FROM data WHERE data_id = (SELECT "
+    pqxx::row row = txn.exec_params1("SELECT type, binary_data FROM data WHERE data_id = (SELECT "
                                      "request_id FROM jobs WHERE job_id = $1 AND user_id = $2)",
                                      job_id, user_id);
 
-    auto binary = row[0].as<binary_data>();
+    const auto type = static_cast<graphs::RequestType>(row[0].as<int>());
+    auto binary = row[1].as<binary_data>();
 
     auto request_container = graphs::RequestContainer();
     if (request_container.ParseFromArray(binary.data(), binary.size()))
     {
-        return request_container;
+        return {type, request_container};
     }
     else
     {
@@ -140,22 +148,24 @@ graphs::RequestContainer database_wrapper::get_request_data(int job_id, int user
     }
 }
 
-graphs::ResponseContainer database_wrapper::get_response_data(int job_id, int user_id)
+std::pair<graphs::RequestType, graphs::ResponseContainer> database_wrapper::get_response_data(
+    int job_id, int user_id)
 {
     check_connection();
 
     pqxx::work txn{m_database_connection};
 
-    pqxx::row row = txn.exec_params1("SELECT binary_data FROM data WHERE data_id = (SELECT "
+    pqxx::row row = txn.exec_params1("SELECT type, binary_data FROM data WHERE data_id = (SELECT "
                                      "response_id FROM jobs WHERE job_id = $1 AND user_id = $2)",
                                      job_id, user_id);
 
-    auto binary = row[0].as<binary_data>();
+    const auto type = static_cast<graphs::RequestType>(row[0].as<int>());
+    auto binary = row[1].as<binary_data>();
 
     auto response_container = graphs::ResponseContainer();
     if (response_container.ParseFromArray(binary.data(), binary.size()))
     {
-        return response_container;
+        return {type, response_container};
     }
     else
     {

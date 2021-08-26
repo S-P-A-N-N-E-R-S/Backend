@@ -6,9 +6,9 @@
 namespace server {
 
 std::unique_ptr<abstract_request> request_factory::build_request(
-    const graphs::RequestContainer &container)
+    graphs::RequestType type, const graphs::RequestContainer &container)
 {
-    switch (container.type())
+    switch (type)
     {
         case graphs::RequestType::SHORTEST_PATH: {
             // We know that the container contains a shortest path request

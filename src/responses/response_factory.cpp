@@ -60,7 +60,6 @@ graphs::ResponseContainer response_factory::build_response(
     graphs::ResponseContainer proto_container;
 
     proto_container.set_status(to_proto_status(response->status()));
-    proto_container.set_type(to_proto_type(response->type()));
 
     if (response->status() != status_code::OK)
     {

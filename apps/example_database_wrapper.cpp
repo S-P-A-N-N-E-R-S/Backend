@@ -19,7 +19,7 @@ int main(int argc, const char **argv)
     auto data = generate_random_dijkstra(123, 100, 1000);
     std::cout << "add_job:" << std::endl;
     server::database_wrapper persistence(connection_string);
-    persistence.add_job(1234, data);
+    persistence.add_job(1234, graphs::RequestType::GENERIC, data);
 
     auto next_jobs = persistence.get_next_jobs(5);
     std::cout << "get_next_jobs:" << std::endl;
@@ -32,19 +32,19 @@ int main(int argc, const char **argv)
     if (next_jobs.size() == 1)
     {
         std::cout << "3" << std::endl;
-        auto request = persistence.get_request_data(next_jobs[0].first, next_jobs[0].second);
+        auto [type, request] =
+            persistence.get_request_data(next_jobs[0].first, next_jobs[0].second);
 
         std::cout << "4" << std::endl;
         persistence.set_started(next_jobs[0].first);
 
         // Use handler to calculate result
-        long ogdf_time;
-        auto response = server::handler_proxy().handle(request);
+        auto [response, ogdf_time] = server::handler_proxy().handle(type, request);
 
         std::cout << "5" << std::endl;
 
         // pack result into db
-        persistence.add_response(next_jobs[0].first, response.first, response.second);
+        persistence.add_response(next_jobs[0].first, type, response, ogdf_time);
     }
 }
 
@@ -98,7 +98,6 @@ binary_data generate_random_dijkstra(unsigned int seed, int n, int m)
     (*proto_request.mutable_graphattributes())["startUid"] = "0";
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestType::GENERIC);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
     // This is important: pqxx expects a basic_string<byte>, so we directly serialize it to this and not to char* as in connection.cpp

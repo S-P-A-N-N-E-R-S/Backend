@@ -5,6 +5,8 @@
 
 #include <networking/responses/response_factory.hpp>
 
+#include "meta.pb.h"
+
 typedef std::basic_string<std::byte> binary_data;
 
 namespace server {
@@ -25,11 +27,14 @@ public:
 
     /**
      * Adds the parsed binary data of a request to the database.
+     *
      * @param user_id The ID of the user who scheduled the job
-     * @param binary A binary data object that contains the parsed request
-     * @return id of the inserted job
+     * @param type    The type of the request (defined in the accompanying meta message)
+     * @param binary  A binary data object that contains the parsed request
+     *
+     * @return ID of the inserted job
      */
-    int add_job(int user_id, const binary_data &binary);
+    int add_job(int user_id, graphs::RequestType type, const binary_data &binary);
 
     /**
      * Sets the status of a job to 'waiting', 'in progress', 'finished' or 'aborted'.
@@ -40,27 +45,36 @@ public:
 
     /**
      * Adds the result of a request parsed as binary data to the database.
-     * @param job_id The ID of the job where the result should be changed
-     * @param response A container that contains the parsed response message
+     *
+     * @param job_id    The ID of the job where the result should be changed
+     * @param type      The type of the response (will be included in the accompanying meta message)
+     * @param response  A container that contains the parsed response message
      * @param ogdf_time Runtime of the ogdf call in microseconds
      */
-    void add_response(int job_id, const graphs::ResponseContainer &response, long ogdf_time);
+    void add_response(int job_id, graphs::RequestType type,
+                      const graphs::ResponseContainer &response, long ogdf_time);
 
     /**
      * Reads the parsed data of a request from the database.
-     * @param job_id The ID of the job the request belongs to
+     *
+     * @param job_id  The ID of the job the request belongs to
      * @param user_id The ID of the user the job belongs to
-     * @return A request container which contains the parsed request data
+     *
+     * @return A pair of the original RequestType and the RequestContainer.
      */
-    graphs::RequestContainer get_request_data(int job_id, int user_id);
+    std::pair<graphs::RequestType, graphs::RequestContainer> get_request_data(int job_id,
+                                                                              int user_id);
 
     /**
      * Reads the parsed data of a finished job's response from the database.
-     * @param job_id The ID of the job the request belongs to
+     *
+     * @param job_id  The ID of the job the request belongs to
      * @param user_id The ID of the user the job belongs to
-     * @return A response container which contains the parsed response data
+     *
+     * @return A pair of the original RequestType and the ResponseContainer.
      */
-    graphs::ResponseContainer get_response_data(int job_id, int user_id);
+    std::pair<graphs::RequestType, graphs::ResponseContainer> get_response_data(int job_id,
+                                                                                int user_id);
 
     /**
      * Retrieves a list of the next available jobs from the database. Ordered by time the job was queued.

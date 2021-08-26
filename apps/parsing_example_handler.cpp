@@ -11,6 +11,8 @@
 
 #include <handling/handler_proxy.hpp>
 
+#include "meta.pb.h"
+
 /**
  * @brief Most of this is copied from parsing_example, so kudos to whoever wrote
  * that one. Only difference is, we are using handlers
@@ -62,10 +64,10 @@ int main(int argc, const char **argv)
     proto_request.mutable_graphattributes()->operator[]("startUid") = "0";
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestType::GENERIC);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
-    auto [response_container, time] = server::handler_proxy().handle(proto_request_container);
+    auto [response_container, time] =
+        server::handler_proxy().handle(graphs::RequestType::GENERIC, proto_request_container);
 
     graphs::GenericResponse parsed_resp;
     const bool ok = response_container.response().UnpackTo(&parsed_resp);
