@@ -84,11 +84,11 @@ int main(int argc, char *argv[])
 
     database_wrapper database(argv[3]);
 
-    auto request = database.get_request_data(job_id, user_id);
+    auto [type, request] = database.get_request_data(job_id, user_id);
 
-    auto response = server::handler_proxy().handle(request);
+    auto response = server::handler_proxy().handle(type, request);
 
-    database.add_response(job_id, response.first, response.second);
+    database.add_response(job_id, type, response.first, response.second);
 
     return process_flags::SUCCESS;
 }

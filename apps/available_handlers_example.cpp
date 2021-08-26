@@ -51,30 +51,11 @@ int main(int argc, const char **argv)
     tcp::socket socket(io_service);
     socket.connect(tcp::endpoint(ip::address::from_string("127.0.0.1"), 4711));
 
-    // build container
-    graphs::RequestContainer container;
-    container.set_type(graphs::RequestType::AVAILABLE_HANDLERS);
-
     // serialize & gzip it
     namespace io = boost::iostreams;
     graphs::MetaData meta;
-    std::vector<char> container_data;
-    {
-        // Generate uncompressed buffer from protobuf container
-        std::vector<char> uncompressed;
-        uncompressed.resize(container.ByteSizeLong());
-        container.SerializeToArray(uncompressed.data(), uncompressed.size());
-
-        // Boost gzip compression
-        io::filtering_streambuf<io::input> in_str_buf;
-        in_str_buf.push(io::gzip_compressor{});
-        in_str_buf.push(io::array_source{uncompressed.data(), uncompressed.size()});
-
-        // Copy compressed data into the compressed buffer
-        std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
-                  std::back_inserter(container_data));
-        meta.set_containersize(container_data.size());
-    }
+    meta.set_type(graphs::RequestType::AVAILABLE_HANDLERS);
+    meta.set_containersize(0);  // AVAILABLE_HANDLERS needs no RequestContainer
 
     uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
 
@@ -95,12 +76,6 @@ int main(int argc, const char **argv)
     if (error)
     {
         std::cout << "sending meta data failed: " << error.message() << std::endl;
-    }
-    // send real data
-    write(socket, buffer(container_data.data(), container_data.size()), error);
-    if (error)
-    {
-        std::cout << "sending real data failed: " << error.message() << std::endl;
     }
 
     // receive length

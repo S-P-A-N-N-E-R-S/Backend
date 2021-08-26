@@ -58,12 +58,11 @@ int main(int argc, const char **argv)
     proto_request.set_enduid(99);
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestType::SHORTEST_PATH);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
     server::request_factory factory;
     std::unique_ptr<server::abstract_request> request =
-        factory.build_request(proto_request_container);
+        factory.build_request(graphs::RequestType::SHORTEST_PATH, proto_request_container);
 
     auto *spr = dynamic_cast<server::shortest_path_request *>(request.get());
 

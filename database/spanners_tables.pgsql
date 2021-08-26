@@ -14,6 +14,7 @@ CREATE TYPE STATUS_TYPE AS ENUM ('Waiting', 'Running', 'Success', 'Failed', 'Abo
 -- Data can contain a request or a response message, stored in binary_data.
 CREATE TABLE data(
     data_id     SERIAL PRIMARY KEY NOT NULL,
+    type        INT     NOT NULL,
     binary_data BYTEA   NOT NULL
 );
 

@@ -80,6 +80,18 @@ void connection::handle()
             return;
         }
 
+        const auto type = meta_data.type();
+        server::response_factory res_factory;
+
+        // Process "non-job" requests immediately
+        if (type == graphs::RequestType::AVAILABLE_HANDLERS)
+        {
+            respond(yield, res_factory.build_response(handler_proxy().available_handlers()));
+            return;
+        }
+
+        // Possibly long-running requests are scheduled by scheduler later on
+
         // TODO Check if we need to decompress the received data first -> meta message
         // Gzip decompression of container
         io::filtering_streambuf<io::input> in_str_buf;
@@ -87,49 +99,21 @@ void connection::handle()
         in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
 
         // Copy compressed data into the decompressed buffer
-        std::vector<char> decompressed;
+        binary_data decompressed;
         decompressed.reserve(recv_buffer.size());
         std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
-                  std::back_inserter(decompressed));
+                  reinterpret_cast<char *>(decompressed.data()));
 
-        // Parse decompressed container
-        graphs::RequestContainer request_container;
-        if (!request_container.ParseFromArray(decompressed.data(), decompressed.size()))
-        {
-            std::cout << "[CONNECTION] Protobuf parsing error: Container\n";
-            respond_error(yield, graphs::ResponseContainer::PROTO_PARSING_ERROR);
-            return;
-        }
+        // TODO: remove hardcoded string with env variables
+        std::string connection_string =
+            "host=localhost port=5432 user=spanner_user dbname=spanner_db "
+            "password=pwd connect_timeout=10";
+        database_wrapper database(connection_string);
+        // TODO: Try-Catch to catch database or authentification errors
+        int job_id = database.add_job(0, type, decompressed);
 
-        std::unique_ptr<server::abstract_response> response;
-        // TODO: find a better way instead of manually checking for these "meta" handlers
-        if (request_container.type() == graphs::RequestType::AVAILABLE_HANDLERS)
-        {
-            response = handler_proxy().available_handlers();
-        }
-        else
-        {
-            //This is a very quick and dirty and unsave fix and I hate it so much.
-            // We absolutely should change this after RequestType was moved into MetaMessage
-            binary_data binary;
-            binary.resize(decompressed.size());
-            for (size_t i = 0; i < decompressed.size(); i++)
-            {
-                binary[i] = static_cast<std::byte>(decompressed[i]);
-            }
-
-            // TODO: remove hardcoded string with env variables
-            std::string connection_string =
-                "host=localhost port=5432 user=spanner_user dbname=spanner_db "
-                "password=pwd connect_timeout=10";
-            database_wrapper database(connection_string);
-            // TODO: Try-Catch to catch database or authentification errors
-            int job_id = database.add_job(0, binary);
-            response = std::unique_ptr<abstract_response>(nullptr);
-        }
-
-        server::response_factory res_factory;
-        respond(yield, res_factory.build_response(std::move(response)));
+        // TODO: Answer with status message here once it's defined
+        respond(yield, res_factory.build_response({}));
     });
 }
 

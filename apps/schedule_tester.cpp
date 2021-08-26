@@ -28,7 +28,7 @@ int main()
     {
         std::cout << "Tester: Generating " << i << std::endl;
         auto data = generate_random_dijkstra(11235, n, m);
-        db.add_job(1, data);
+        db.add_job(1, graphs::RequestType::GENERIC, data);
     }
 
     auto &scheduler = server::scheduler::instance();
@@ -107,7 +107,6 @@ binary_data generate_random_dijkstra(unsigned int seed, int n, int m)
     (*proto_request.mutable_graphattributes())["startUid"] = "0";
 
     graphs::RequestContainer proto_request_container;
-    proto_request_container.set_type(graphs::RequestType::GENERIC);
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
     // This is important: pqxx expects a basic_string<byte>, so we directly serialize it to this and not to char* as in connection.cpp
