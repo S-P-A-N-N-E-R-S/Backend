@@ -77,7 +77,7 @@ void database_wrapper::check_connection()
     }
 }
 
-int database_wrapper::add_job(int user_id, graphs::RequestType type, const binary_data &data)
+int database_wrapper::add_job(int user_id, graphs::RequestType type, binary_data_view data)
 {
     check_connection();
     pqxx::work txn{m_database_connection};
@@ -201,6 +201,22 @@ std::pair<graphs::RequestType, graphs::ResponseContainer> database_wrapper::get_
     {
         throw std::runtime_error("Could not parse protobuff from request!");
     }
+}
+
+std::pair<graphs::RequestType, binary_data> database_wrapper::get_response_data_raw(int job_id,
+                                                                                    int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+
+    pqxx::row row = txn.exec_params1("SELECT type, binary_data FROM data WHERE data_id = (SELECT "
+                                     "response_id FROM jobs WHERE job_id = $1 AND user_id = $2)",
+                                     job_id, user_id);
+
+    const auto type = static_cast<graphs::RequestType>(row[0].as<int>());
+    auto binary = row[1].as<binary_data>();
+    return {type, std::move(binary)};
 }
 
 std::vector<std::pair<int, int>> database_wrapper::get_next_jobs(int n)
