@@ -88,7 +88,7 @@ graphs::HandlerInformation dijkstra_handler::handler_information()
 {
     // add simple information
     auto information =
-        dijkstra_handler::createHandlerInformation("dijsktra", graphs::RequestType::GENERIC);
+        dijkstra_handler::createHandlerInformation("dijkstra", graphs::RequestType::GENERIC);
     // add field information
     dijkstra_handler::addFieldInformation(information, graphs::FieldInformation_FieldType_GRAPH,
                                           "Graph", "graph", true);

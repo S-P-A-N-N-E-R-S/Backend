@@ -14,6 +14,8 @@ class dijkstra_handler : public abstract_handler
 public:
     dijkstra_handler(std::unique_ptr<abstract_request> request);
 
+    virtual ~dijkstra_handler() = default;
+
     virtual std::pair<graphs::ResponseContainer, long> handle() override;
 
     static graphs::HandlerInformation handler_information();

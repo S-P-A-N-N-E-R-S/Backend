@@ -21,6 +21,8 @@ class abstract_handler
 public:
     virtual std::pair<graphs::ResponseContainer, long> handle() = 0;
 
+    virtual ~abstract_handler() = default;
+
 protected:
     /**
      * Shorthand function to create a HandlerInformation object with the given parameters set.
