@@ -6,6 +6,8 @@
 #include <boost/asio/spawn.hpp>
 #include <vector>
 
+#include <persistence/database_wrapper.hpp>  // for binary_data
+
 #include "container.pb.h"
 #include "meta.pb.h"
 
@@ -51,6 +53,7 @@ public:
 
 private:
     void respond(boost::asio::yield_context &yield, const graphs::ResponseContainer &container);
+    void respond(boost::asio::yield_context &yield, binary_data_view binary);
 
     void respond_error(boost::asio::yield_context &yield,
                        graphs::ResponseContainer_StatusCode code);

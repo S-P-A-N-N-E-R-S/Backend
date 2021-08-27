@@ -19,6 +19,8 @@
 
 #include <scheduler/scheduler.hpp>
 
+#include <result.pb.h>
+
 using boost::asio::async_read;
 using boost::asio::buffer;
 using boost::asio::transfer_exactly;
@@ -88,6 +90,9 @@ void connection::handle()
             "password=pwd connect_timeout=10";
         database_wrapper database(connection_string);
 
+        // TODO: change user_id from hardcoded to dynamically read from request
+        const int user_id = 0;
+
         const auto type = meta_data.type();
         server::response_factory res_factory;
 
@@ -99,8 +104,6 @@ void connection::handle()
         }
         else if (type == graphs::RequestType::STATUS)
         {
-            //ToDO: change user_id from hardcoded to dynamically read from request
-            int user_id = 1;
             auto states = database.get_status(user_id);
 
             graphs::StatusResponse status_response;
@@ -132,13 +135,43 @@ void connection::handle()
         in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
 
         // Copy compressed data into the decompressed buffer
-        binary_data decompressed;
+        std::vector<char> decompressed;
         decompressed.reserve(recv_buffer.size());
         std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
-                  reinterpret_cast<char *>(decompressed.data()));
+                  std::back_inserter(decompressed));
+        binary_data_view binary(reinterpret_cast<std::byte *>(decompressed.data()),
+                                decompressed.size());
+
+        if (type == graphs::RequestType::RESULT)
+        {
+            auto request_container = graphs::RequestContainer();
+            if (!request_container.ParseFromArray(binary.data(), binary.size()))
+            {
+                std::cout << "[CONNECTION] Protobuf parsing error: RequestContainer\n";
+                respond_error(yield, graphs::ResponseContainer::PROTO_PARSING_ERROR);
+                return;
+            }
+
+            graphs::ResultRequest res_req;
+            const bool ok = request_container.request().UnpackTo(&res_req);
+
+            if (!ok)
+            {
+                std::cout << "[CONNECTION] Protobuf unpack error: ResultRequest\n";
+                respond_error(yield, graphs::ResponseContainer::INVALID_REQUEST_ERROR);
+                return;
+            }
+
+            const int job_id = res_req.jobid();
+
+            auto [_, binary_response] = database.get_response_data_raw(job_id, user_id);
+
+            respond(yield, binary_response);
+            return;
+        }
 
         // TODO: Try-Catch to catch database or authentification errors
-        int job_id = database.add_job(0, type, decompressed);
+        int job_id = database.add_job(0, type, binary);
 
         graphs::NewJobResponse new_job_resp;
         new_job_resp.set_jobid(job_id);
@@ -163,6 +196,44 @@ void connection::respond(boost::asio::yield_context &yield,
         std::vector<char> uncompressed;
         uncompressed.resize(container.ByteSizeLong());
         container.SerializeToArray(uncompressed.data(), uncompressed.size());
+
+        // Boost gzip compression
+        io::filtering_streambuf<io::input> in_str_buf;
+        in_str_buf.push(io::gzip_compressor{});
+        in_str_buf.push(io::array_source{uncompressed.data(), uncompressed.size()});
+
+        // Copy compressed data into the compressed buffer
+        std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
+                  std::back_inserter(container_data));
+        meta.set_containersize(container_data.size());
+    }
+
+    uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
+
+    std::vector<char> meta_data;
+    meta_data.resize(meta.GetCachedSize());
+    meta.SerializeToArray(meta_data.data(), meta_data.size());
+
+    // Send data to client
+    direct_write(yield, reinterpret_cast<const char *>(&len), LENGTH_FIELD_SIZE);
+    direct_write(yield, meta_data.data(), meta_data.size());
+    direct_write(yield, container_data.data(), container_data.size());
+
+    // Connection finished
+    m_handler.remove(m_identifier);
+}
+
+void connection::respond(boost::asio::yield_context &yield, binary_data_view binary)
+{
+    namespace io = boost::iostreams;
+
+    graphs::MetaData meta;
+    std::vector<char> container_data;
+
+    {
+        std::vector<char> uncompressed(
+            reinterpret_cast<const char *>(binary.data()),
+            reinterpret_cast<const char *>(binary.data() + binary.size()));
 
         // Boost gzip compression
         io::filtering_streambuf<io::input> in_str_buf;

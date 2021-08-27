@@ -30,11 +30,11 @@ public:
      *
      * @param user_id The ID of the user who scheduled the job
      * @param type    The type of the request (defined in the accompanying meta message)
-     * @param binary  A binary data object that contains the parsed request
+     * @param binary  View to binary data that contains the parsed request
      *
      * @return ID of the inserted job
      */
-    int add_job(int user_id, graphs::RequestType type, const binary_data &binary);
+    int add_job(int user_id, graphs::RequestType type, binary_data_view binary);
 
     /**
      * Sets the status of a job to 'waiting', 'in progress', 'finished' or 'aborted'.
@@ -75,6 +75,16 @@ public:
      */
     std::pair<graphs::RequestType, graphs::ResponseContainer> get_response_data(int job_id,
                                                                                 int user_id);
+
+    /**
+     * @brief Returns the unparsed data of a finished job's response from the database
+     *
+     * @param job_id  The ID of the job the request belongs to
+     * @param user_id The ID of the user the job belongs to
+     *
+     * @return A pair of the original RequestType and the binary_data.
+     */
+    std::pair<graphs::RequestType, binary_data> get_response_data_raw(int job_id, int user_id);
 
     /**
      * Retrieves a list of the next available jobs from the database. Ordered by time the job was queued.
