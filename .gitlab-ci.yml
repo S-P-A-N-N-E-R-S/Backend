@@ -12,4 +12,4 @@ test-build:
         - mkdir build
         - cd build
         - cmake ..
-        - cmake --build .
+        - make -j$(nproc)
