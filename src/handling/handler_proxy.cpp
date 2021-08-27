@@ -24,12 +24,7 @@ std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
 
             auto &factories = handler_factories();
 
-            auto factory = factories[handler_name_finder->handler_type()];
-
-            if (factory == nullptr)
-            {
-                throw std::runtime_error("Key dijkstra not found in factories!");
-            }
+            auto factory = factories.at(handler_name_finder->handler_type());
 
             auto handler = factory->produce(std::move(request));
 

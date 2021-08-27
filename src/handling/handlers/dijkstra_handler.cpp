@@ -21,9 +21,8 @@ dijkstra_handler::dijkstra_handler(std::unique_ptr<abstract_request> request)
 std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
 {
     const auto *graph_message = m_request->graph_message();
-
     auto &graph = graph_message->graph();
-    int start_uid = std::stoi(m_request->graph_attributes().at("intAttributes.startUid"));
+    int start_uid = std::stoi(m_request->graph_attributes().at("startUid"));
 
     const auto *parsed_costs = m_request->edge_costs();
 
@@ -93,7 +92,7 @@ graphs::HandlerInformation dijkstra_handler::handler_information()
     dijkstra_handler::addFieldInformation(information, graphs::FieldInformation_FieldType_GRAPH,
                                           "Graph", "graph", true);
     dijkstra_handler::addFieldInformation(information, graphs::FieldInformation_FieldType_VERTEX_ID,
-                                          "Start node", "intAttributes.startUid", true);
+                                          "Start node", "graphAttributes.startUid", true);
     dijkstra_handler::addFieldInformation(information,
                                           graphs::FieldInformation_FieldType_EDGE_COSTS,
                                           "Edge costs", "edgeCosts", true);
