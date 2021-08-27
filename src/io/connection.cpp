@@ -99,7 +99,8 @@ void connection::handle()
         // Process "non-job" requests immediately
         if (type == graphs::RequestType::AVAILABLE_HANDLERS)
         {
-            respond(yield, res_factory.build_response(handler_proxy().available_handlers()));
+            respond(yield, graphs::RequestType::AVAILABLE_HANDLERS,
+                    res_factory.build_response(handler_proxy().available_handlers()));
             return;
         }
         else if (type == graphs::RequestType::STATUS)
@@ -122,7 +123,8 @@ void connection::handle()
             auto response = std::make_unique<server::status_response>(std::move(status_response),
                                                                       status_code::OK);
 
-            respond(yield, res_factory.build_response(std::move(response)));
+            respond(yield, graphs::RequestType::STATUS,
+                    res_factory.build_response(std::move(response)));
             return;
         }
 
@@ -164,9 +166,9 @@ void connection::handle()
 
             const int job_id = res_req.jobid();
 
-            auto [_, binary_response] = database.get_response_data_raw(job_id, user_id);
+            auto [type, binary_response] = database.get_response_data_raw(job_id, user_id);
 
-            respond(yield, binary_response);
+            respond(yield, type, binary_response);
             return;
         }
 
@@ -179,16 +181,18 @@ void connection::handle()
         auto response =
             std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
 
-        respond(yield, res_factory.build_response(std::move(response)));
+        respond(yield, graphs::RequestType::NEW_JOB_RESPONSE,
+                res_factory.build_response(std::move(response)));
     });
 }
 
-void connection::respond(boost::asio::yield_context &yield,
+void connection::respond(boost::asio::yield_context &yield, graphs::RequestType type,
                          const graphs::ResponseContainer &container)
 {
     namespace io = boost::iostreams;
 
     graphs::MetaData meta;
+    meta.set_type(type);
     std::vector<char> container_data;
 
     {
@@ -223,11 +227,13 @@ void connection::respond(boost::asio::yield_context &yield,
     m_handler.remove(m_identifier);
 }
 
-void connection::respond(boost::asio::yield_context &yield, binary_data_view binary)
+void connection::respond(boost::asio::yield_context &yield, graphs::RequestType type,
+                         binary_data_view binary)
 {
     namespace io = boost::iostreams;
 
     graphs::MetaData meta;
+    meta.set_type(type);
     std::vector<char> container_data;
 
     {
@@ -266,7 +272,7 @@ void connection::respond_error(boost::asio::yield_context &yield,
 {
     graphs::ResponseContainer response;
     response.set_status(code);
-    respond(yield, response);
+    respond(yield, graphs::RequestType::UNDEFINED_REQUEST, response);
 }
 
 bool connection::direct_read(boost::asio::yield_context &yield, char *const data, size_t length)
