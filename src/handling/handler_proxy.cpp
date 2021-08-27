@@ -16,14 +16,15 @@ std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
     switch (request->type())
     {
         case request_type::GENERIC: {
+            const auto *handler_name_finder = dynamic_cast<generic_request *>(request.get());
+            if (!handler_name_finder)
+            {
+                throw std::runtime_error("dijkstra_handler: dynamic_cast failed!");
+            }
+
             auto &factories = handler_factories();
 
-            auto factory = factories["dijkstra"];
-
-            if (factory == nullptr)
-            {
-                throw std::runtime_error("Key dijkstra not found in factories!");
-            }
+            auto factory = factories.at(handler_name_finder->handler_type());
 
             auto handler = factory->produce(std::move(request));
 
