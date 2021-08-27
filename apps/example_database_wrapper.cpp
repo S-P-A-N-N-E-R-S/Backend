@@ -10,7 +10,7 @@
 #include "networking/requests/abstract_request.hpp"
 #include "persistence/database_wrapper.hpp"
 
-binary_data generate_random_dijkstra(unsigned int seed, int n, int m);
+server::binary_data generate_random_dijkstra(unsigned int seed, int n, int m);
 
 int main(int argc, const char **argv)
 {
@@ -48,7 +48,7 @@ int main(int argc, const char **argv)
     }
 }
 
-binary_data generate_random_dijkstra(unsigned int seed, int n, int m)
+server::binary_data generate_random_dijkstra(unsigned int seed, int n, int m)
 {
     // Build a dummy Dijkstra Request
     ogdf::setSeed(seed);
@@ -101,7 +101,7 @@ binary_data generate_random_dijkstra(unsigned int seed, int n, int m)
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
     // This is important: pqxx expects a basic_string<byte>, so we directly serialize it to this and not to char* as in connection.cpp
-    binary_data binary;
+    server::binary_data binary;
     binary.resize(proto_request_container.ByteSizeLong());
     proto_request_container.SerializeToArray(binary.data(), binary.size());
 

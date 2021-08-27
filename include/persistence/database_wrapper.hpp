@@ -8,9 +8,10 @@
 #include "meta.pb.h"
 #include "status.pb.h"
 
-typedef std::basic_string<std::byte> binary_data;
-
 namespace server {
+
+using binary_data = std::basic_string<std::byte>;
+using binary_data_view = std::basic_string_view<std::byte>;
 
 enum class db_status_type { Waiting, Running, Success, Failed, Aborted };
 
