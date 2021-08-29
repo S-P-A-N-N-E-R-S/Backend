@@ -137,7 +137,7 @@ int main(int argc, const char **argv)
 
     auto resp = std::make_unique<server::generic_response>(
         "shortest_path", &spgm, &sp_node_coords, &sp_edge_costs, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, server::status_code::OK);
+        nullptr, nullptr, nullptr, nullptr, server::status_code::OK);
 
     auto abs_resp = std::unique_ptr<server::abstract_response>(
         dynamic_cast<server::abstract_response *>(resp.release()));

@@ -90,7 +90,7 @@ std::pair<graphs::ResponseContainer, long> greedy_spanner_handler::handle()
     return std::make_pair(
         rspf.build_response(std::unique_ptr<abstract_response>{new generic_response{
             "greedy_spanner", &spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr,
-            nullptr, nullptr, nullptr, nullptr, nullptr, status_code::OK}}),
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, status_code::OK}}),
         ogdf_time);
 }
 

@@ -22,6 +22,8 @@ public:
                      const attribute_map<ogdf::NodeArray<double>> *const node_double_attributes,
                      const attribute_map<ogdf::EdgeArray<int64_t>> *const edge_int_attributes,
                      const attribute_map<ogdf::EdgeArray<double>> *const edge_double_attributes,
+                     const attribute_map<int> *const scalar_int_attributes,
+                     const attribute_map<double> *const scalar_double_attributes,
                      const attribute_map<std::string> *const graph_attributes, status_code status);
     virtual ~generic_response() = default;
 

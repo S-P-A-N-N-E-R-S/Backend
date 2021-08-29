@@ -13,6 +13,8 @@ generic_response::generic_response(
     const attribute_map<ogdf::NodeArray<double>> *const node_double_attributes,
     const attribute_map<ogdf::EdgeArray<int64_t>> *const edge_int_attributes,
     const attribute_map<ogdf::EdgeArray<double>> *const edge_double_attributes,
+    const attribute_map<int> *const scalar_int_attributes,
+    const attribute_map<double> *const scalar_double_attributes,
     const attribute_map<std::string> *const graph_attributes, status_code status)
     : abstract_response{response_type::GENERIC, status}
     , m_handler_type{handler_type}
@@ -97,6 +99,26 @@ generic_response::generic_response(
 
             auto &proto_attributes = *(this->m_double_attributes[name].mutable_attributes());
             utils::serialize_edge_attribute(attributes, *graph, proto_attributes);
+        }
+    }
+
+    if (scalar_int_attributes)
+    {
+        for (const auto &[name, scalar_attr] : *scalar_int_attributes)
+        {
+            this->m_int_attributes[name] = graphs::IntAttributes{};
+            this->m_int_attributes[name].set_type(graphs::AttributeType::SCALAR);
+            this->m_int_attributes[name].add_attributes(scalar_attr);
+        }
+    }
+
+    if (scalar_double_attributes)
+    {
+        for (const auto &[name, scalar_attr] : *scalar_double_attributes)
+        {
+            this->m_double_attributes[name] = graphs::DoubleAttributes{};
+            this->m_double_attributes[name].set_type(graphs::AttributeType::SCALAR);
+            this->m_double_attributes[name].add_attributes(scalar_attr);
         }
     }
 
