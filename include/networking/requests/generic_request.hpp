@@ -40,6 +40,9 @@ public:
     const ogdf::EdgeArray<double> *edge_double_attribute(const std::string &name) const;
     ogdf::EdgeArray<double> take_edge_double_attribute(const std::string &name);
 
+    int scalar_int_attribute(const std::string &name) const;
+    double scalar_double_attribute(const std::string &name) const;
+
     const std::unordered_map<std::string, std::string> &graph_attributes() const;
 
 private:
@@ -59,6 +62,9 @@ private:
 
     AttributeMap<ogdf::EdgeArray<int64_t>> m_edge_int_attributes;
     AttributeMap<ogdf::EdgeArray<double>> m_edge_double_attributes;
+
+    AttributeMap<int> m_scalar_int_attributes;
+    AttributeMap<double> m_scalar_double_attributes;
 
     std::unordered_map<std::string, std::string> m_graph_attributes;
 };

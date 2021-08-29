@@ -81,6 +81,11 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
             utils::parse_edge_attribute(attributes_msg.attributes(), this->m_graph_message,
                                         it->second);
         }
+        else if (type == graphs::AttributeType::SCALAR)
+        {
+            const auto scalar = attributes_msg.attributes(0);
+            this->m_scalar_int_attributes[name] = scalar;
+        }
     }
 
     for (const auto &[name, attributes_msg] : proto_request.doubleattributes())
@@ -101,6 +106,11 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
 
             utils::parse_edge_attribute(attributes_msg.attributes(), this->m_graph_message,
                                         it->second);
+        }
+        else if (type == graphs::AttributeType::SCALAR)
+        {
+            const auto scalar = attributes_msg.attributes(0);
+            this->m_scalar_double_attributes[name] = scalar;
         }
     }
 }
@@ -236,6 +246,16 @@ ogdf::EdgeArray<double> generic_request::take_edge_double_attribute(const std::s
     }
 
     return {};
+}
+
+int generic_request::scalar_int_attribute(const std::string &name) const
+{
+    return this->m_scalar_int_attributes.at(name);
+}
+
+double generic_request::scalar_double_attribute(const std::string &name) const
+{
+    return this->m_scalar_double_attributes.at(name);
 }
 
 const std::unordered_map<std::string, std::string> &generic_request::graph_attributes() const
