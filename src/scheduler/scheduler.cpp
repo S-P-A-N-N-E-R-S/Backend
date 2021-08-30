@@ -128,6 +128,8 @@ void scheduler::run_thread()
                 {
                     case process_flags::SUCCESS: {
                         // Do nothing, in this case handling already updated database
+                        m_database.set_messages((*it)->job_id, db_status_type::Success,
+                                                (*it)->data_cout.get(), (*it)->data_cerr.get());
                     }
                     break;
 

@@ -19,7 +19,7 @@ std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
             const auto *handler_name_finder = dynamic_cast<generic_request *>(request.get());
             if (!handler_name_finder)
             {
-                throw std::runtime_error("dijkstra_handler: dynamic_cast failed!");
+                throw std::runtime_error("handler_proxy: dynamic_cast failed!");
             }
 
             auto &factories = handler_factories();
