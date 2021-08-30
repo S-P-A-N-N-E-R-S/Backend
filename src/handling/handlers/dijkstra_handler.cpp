@@ -1,6 +1,7 @@
 #include "handling/handlers/dijkstra_handler.hpp"
 
 #include <chrono>
+#include "networking/exceptions.hpp"
 #include "networking/responses/generic_response.hpp"
 #include "networking/responses/response_factory.hpp"
 
@@ -12,7 +13,8 @@ dijkstra_handler::dijkstra_handler(std::unique_ptr<abstract_request> request)
     if (const auto *type_check_ptr = dynamic_cast<generic_request *>(request.get());
         !type_check_ptr)
     {
-        throw std::runtime_error("dijkstra_handler: dynamic_cast failed!");
+        throw server::request_parse_error("dijkstra_handler: dynamic_cast failed!", request->type(),
+                                          "dijkstra");
     }
 
     m_request = std::unique_ptr<generic_request>{static_cast<generic_request *>(request.release())};

@@ -88,6 +88,7 @@ set(HANDLING_HEADERS
     ${CMAKE_SOURCE_DIR}/include/handling/handler_proxy.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/abstract_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/dijkstra_handler.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/greedy_spanner_handler.hpp
 )
 
 set(HANDLING_SOURCES
@@ -95,6 +96,7 @@ set(HANDLING_SOURCES
     ${CMAKE_SOURCE_DIR}/src/handling/handler_proxy.cpp
     ${CMAKE_SOURCE_DIR}/src/handling/handlers/abstract_handler.cpp
     ${CMAKE_SOURCE_DIR}/src/handling/handlers/dijkstra_handler.cpp
+    ${CMAKE_SOURCE_DIR}/src/handling/handlers/greedy_spanner_handler.cpp
 )
 
 set(handling_files "${HANDLING_HEADERS};${HANDLING_SOURCES};${proto_headers};${proto_sources}")
