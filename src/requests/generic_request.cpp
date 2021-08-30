@@ -184,90 +184,42 @@ ogdf::NodeArray<double> generic_request::take_node_costs()
 
 const ogdf::NodeArray<int64_t> *generic_request::node_int_attribute(const std::string &name) const
 {
-    auto it = this->m_node_int_attributes.find(name);
-    if (it != this->m_node_int_attributes.end())
-    {
-        return &(it->second);
-    }
-
-    return nullptr;
+    return &(this->m_node_int_attributes.at(name));
 }
 
 ogdf::NodeArray<int64_t> generic_request::take_node_int_attribute(const std::string &name)
 {
-    auto it = this->m_node_int_attributes.find(name);
-    if (it != this->m_node_int_attributes.end())
-    {
-        return std::move(it->second);
-    }
-
-    return {};
+    return std::move(this->m_node_int_attributes.at(name));
 }
 
 const ogdf::NodeArray<double> *generic_request::node_double_attribute(const std::string &name) const
 {
-    auto it = this->m_node_double_attributes.find(name);
-    if (it != this->m_node_double_attributes.end())
-    {
-        return &(it->second);
-    }
-
-    return nullptr;
+    return &(this->m_node_double_attributes.at(name));
 }
 
 ogdf::NodeArray<double> generic_request::take_node_double_attribute(const std::string &name)
 {
-    auto it = this->m_node_double_attributes.find(name);
-    if (it != this->m_node_double_attributes.end())
-    {
-        return std::move(it->second);
-    }
-
-    return {};
+    return std::move(this->m_node_double_attributes.at(name));
 }
 
 const ogdf::EdgeArray<int64_t> *generic_request::edge_int_attribute(const std::string &name) const
 {
-    auto it = this->m_edge_int_attributes.find(name);
-    if (it != this->m_edge_int_attributes.end())
-    {
-        return &(it->second);
-    }
-
-    return nullptr;
+    return &(this->m_edge_int_attributes.at(name));
 }
 
 ogdf::EdgeArray<int64_t> generic_request::take_edge_int_attribute(const std::string &name)
 {
-    auto it = this->m_edge_int_attributes.find(name);
-    if (it != this->m_edge_int_attributes.end())
-    {
-        return std::move(it->second);
-    }
-
-    return {};
+    return std::move(this->m_edge_int_attributes.at(name));
 }
 
 const ogdf::EdgeArray<double> *generic_request::edge_double_attribute(const std::string &name) const
 {
-    auto it = this->m_edge_double_attributes.find(name);
-    if (it != this->m_edge_double_attributes.end())
-    {
-        return &(it->second);
-    }
-
-    return nullptr;
+    return &(this->m_edge_double_attributes.at(name));
 }
 
 ogdf::EdgeArray<double> generic_request::take_edge_double_attribute(const std::string &name)
 {
-    auto it = this->m_edge_double_attributes.find(name);
-    if (it != this->m_edge_double_attributes.end())
-    {
-        return std::move(it->second);
-    }
-
-    return {};
+    return std::move(this->m_edge_double_attributes.at(name));
 }
 
 int generic_request::scalar_int_attribute(const std::string &name) const
