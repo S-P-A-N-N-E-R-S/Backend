@@ -83,6 +83,17 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
         }
         else if (type == graphs::AttributeType::SCALAR)
         {
+            if (const auto size = attributes_msg.attributes_size(); size != 1)
+            {
+                throw request_parse_error(std::string("Attribute ")
+                                              .append(name)
+                                              .append(" is declared scalar but ")
+                                              .append(std::to_string(size))
+                                              .append(" values were provided")
+                                              .c_str(),
+                                          this->m_type, this->m_handler_type);
+            }
+
             const auto scalar = attributes_msg.attributes(0);
             this->m_scalar_int_attributes[name] = scalar;
         }
@@ -109,6 +120,17 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
         }
         else if (type == graphs::AttributeType::SCALAR)
         {
+            if (const auto size = attributes_msg.attributes_size(); size != 1)
+            {
+                throw request_parse_error(std::string("Attribute ")
+                                              .append(name)
+                                              .append(" is declared scalar but ")
+                                              .append(std::to_string(size))
+                                              .append(" values were provided")
+                                              .c_str(),
+                                          this->m_type, this->m_handler_type);
+            }
+
             const auto scalar = attributes_msg.attributes(0);
             this->m_scalar_double_attributes[name] = scalar;
         }
