@@ -26,7 +26,7 @@ std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
     auto &graph = graph_message->graph();
     int start_uid = std::stoi(m_request->graph_attributes().at("startUid"));
 
-    const auto *og_edge_costs = m_request->edge_costs();
+    const auto *parsed_costs = m_request->edge_costs();
 
     const auto &origin = graph_message->node(start_uid);
     ogdf::NodeArray<ogdf::edge> preds;
@@ -34,7 +34,7 @@ std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    ogdf::Dijkstra<double>().call(graph, *og_edge_costs, origin, preds, dist);
+    ogdf::Dijkstra<double>().call(graph, *parsed_costs, origin, preds, dist);
 
     auto stop = std::chrono::high_resolution_clock::now();
     long ogdf_time = (std::chrono::duration_cast<std::chrono::microseconds>(stop - start)).count();
@@ -53,25 +53,25 @@ std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
     ogdf::NodeArray<ogdf::node> original_node_to_sp{graph};
 
     // add all nodes to answer (before adding edges)
-    for (auto og_node : graph_message->graph().nodes)
+    for (auto n : graph_message->graph().nodes)
     {
         const auto sp_node = spg->newNode();
-        original_node_to_sp[og_node] = sp_node;
-        sp_node_uids->operator[](sp_node) = og_node_uids[og_node];
-        sp_node_coords[sp_node] = og_node_coords->operator[](og_node);
+        original_node_to_sp[n] = sp_node;
+        (*sp_node_uids)[sp_node] = og_node_uids[n];
+        sp_node_coords[sp_node] = (*og_node_coords)[n];
     }
 
     // add edges to answer
-    for (auto pred_edge : preds)
+    for (auto n : graph_message->graph().nodes)
     {
-        // pred_edge would be nullptr if node is start or not connected to start
-        if (pred_edge)
+        auto preds_edge = preds[n];
+        if (preds_edge != nullptr)
         {
-            auto source = original_node_to_sp[pred_edge->source()];
-            auto target = original_node_to_sp[pred_edge->target()];
+            auto source = original_node_to_sp[n];
+            auto target = original_node_to_sp[preds_edge->opposite(n)];
             auto newEdge = spg->newEdge(source, target);
-            sp_edge_uids->operator[](newEdge) = graph_message->edge_uids()[pred_edge];
-            sp_edge_costs[newEdge] = og_edge_costs->operator[](pred_edge);
+            (*sp_edge_uids)[newEdge] = graph_message->edge_uids()[preds_edge];
+            sp_edge_costs[newEdge] = (*m_request->edge_costs())[preds_edge];
         }
     }
 
