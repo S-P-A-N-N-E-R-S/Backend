@@ -26,7 +26,7 @@ std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
     auto &graph = graph_message->graph();
     int start_uid = std::stoi(m_request->graph_attributes().at("startUid"));
 
-    const auto *parsed_costs = m_request->edge_costs();
+    const auto *og_edge_costs = m_request->edge_costs();
 
     const auto &origin = graph_message->node(start_uid);
     ogdf::NodeArray<ogdf::edge> preds;
@@ -34,7 +34,7 @@ std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    ogdf::Dijkstra<double>().call(graph, *parsed_costs, origin, preds, dist);
+    ogdf::Dijkstra<double>().call(graph, *og_edge_costs, origin, preds, dist);
 
     auto stop = std::chrono::high_resolution_clock::now();
     long ogdf_time = (std::chrono::duration_cast<std::chrono::microseconds>(stop - start)).count();
@@ -53,26 +53,30 @@ std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
     ogdf::NodeArray<ogdf::node> original_node_to_sp{graph};
 
     // add all nodes to answer (before adding edges)
-    for (auto n : graph_message->graph().nodes)
+    for (auto og_node : graph_message->graph().nodes)
     {
         const auto sp_node = spg->newNode();
-        original_node_to_sp[n] = sp_node;
-        (*sp_node_uids)[sp_node] = og_node_uids[n];
-        sp_node_coords[sp_node] = (*og_node_coords)[n];
+        original_node_to_sp[og_node] = sp_node;
+        sp_node_uids->operator[](sp_node) = og_node_uids[og_node];
+        sp_node_coords[sp_node] = og_node_coords->operator[](og_node);
     }
 
     // add edges to answer
-    for (auto n : graph_message->graph().nodes)
+    for (auto it = preds.begin(); it != preds.end(); it++)
     {
-        auto preds_edge = preds[n];
-        if (preds_edge != nullptr)
+        if (it.value())
         {
-            auto source = original_node_to_sp[n];
-            auto target = original_node_to_sp[preds_edge->opposite(n)];
-            auto newEdge = spg->newEdge(source, target);
-            (*sp_edge_uids)[newEdge] = graph_message->edge_uids()[preds_edge];
-            sp_edge_costs[newEdge] = (*m_request->edge_costs())[preds_edge];
-        }
+            const auto og_edge = it.value();
+            const auto og_source = it.key();
+            const auto og_target = og_edge->opposite(og_source);
+
+            const auto sp_source = original_node_to_sp[og_source];
+            const auto sp_target = original_node_to_sp[og_target];
+            const auto sp_edge = spg->newEdge(sp_source, sp_target);
+
+            sp_edge_uids->operator[](sp_edge) = graph_message->edge_uids()[og_edge];
+            sp_edge_costs[sp_edge] = og_edge_costs->operator[](og_edge);
+        };
     }
 
     server::graph_message spgm{std::move(spg), std::move(sp_node_uids), std::move(sp_edge_uids)};
