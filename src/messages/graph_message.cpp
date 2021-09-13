@@ -24,48 +24,33 @@ graph_message::graph_message(const graph_message &other)
     , m_uid_to_node(std::make_unique<std::unordered_map<uid_t, ogdf::node>>())
     , m_uid_to_edge(std::make_unique<std::unordered_map<uid_t, ogdf::edge>>())
 {
-    std::unordered_map<ogdf::node, ogdf::node> og_to_copy_node;
-    std::unordered_map<ogdf::edge, ogdf::edge> og_to_copy_edge;
+    ogdf::NodeArray<ogdf::node> og_to_copy_node(other.graph());
 
     // Copy graph manually in order to be able to access the newly inserted nodes/edges
     for (const ogdf::node &og_node : other.graph().nodes)
     {
         const ogdf::node copy_node = this->m_graph->newNode();
-        og_to_copy_node.insert({og_node, copy_node});
-    }
-
-    this->m_graph->allNodes(*(this->m_all_nodes));
-
-    for (const ogdf::edge &og_edge : other.graph().edges)
-    {
-        const ogdf::node copy_source = og_to_copy_node.at(og_edge->source());
-        const ogdf::node copy_target = og_to_copy_node.at(og_edge->target());
-        const ogdf::edge copy_edge = this->m_graph->newEdge(copy_source, copy_target);
-
-        og_to_copy_edge.insert({og_edge, copy_edge});
-    }
-
-    this->m_graph->allEdges(*(this->m_all_edges));
-
-    // TODO(leon): Merge this loop with the loop above.
-    for (const ogdf::node &og_node : other.graph().nodes)
-    {
-        const ogdf::node &copy_node = og_to_copy_node.at(og_node);
+        og_to_copy_node[og_node] = copy_node;
 
         const uid_t uid = (*(other.m_node_uids))[og_node];
         (*(this->m_node_uids))[copy_node] = uid;
         this->m_uid_to_node->insert({uid, copy_node});
     }
 
-    // TODO(leon): Merge this loop with the loop above.
+    this->m_graph->allNodes(*(this->m_all_nodes));
+
     for (const ogdf::edge &og_edge : other.graph().edges)
     {
-        const ogdf::edge &copy_edge = og_to_copy_edge.at(og_edge);
+        const ogdf::node copy_source = og_to_copy_node[og_edge->source()];
+        const ogdf::node copy_target = og_to_copy_node[og_edge->target()];
+        const ogdf::edge copy_edge = this->m_graph->newEdge(copy_source, copy_target);
 
         const uid_t uid = (*(other.m_edge_uids))[og_edge];
         (*(this->m_edge_uids))[copy_edge] = uid;
         this->m_uid_to_edge->insert({uid, copy_edge});
     }
+
+    this->m_graph->allEdges(*(this->m_all_edges));
 }
 
 graph_message::graph_message(const graphs::Graph &proto)
@@ -118,50 +103,33 @@ graph_message::graph_message(const ogdf::Graph &graph, const ogdf::NodeArray<uid
     , m_uid_to_node(std::make_unique<std::unordered_map<uid_t, ogdf::node>>())
     , m_uid_to_edge(std::make_unique<std::unordered_map<uid_t, ogdf::edge>>())
 {
-    std::unordered_map<ogdf::node, ogdf::node> og_to_copy_node;
-    std::unordered_map<ogdf::edge, ogdf::edge> og_to_copy_edge;
-
-    // ----------------- OGDF graph
+    ogdf::NodeArray<ogdf::node> og_to_copy_node(graph);
 
     // Copy graph manually in order to be able to access the newly inserted nodes/edges
     for (const ogdf::node &og_node : graph.nodes)
     {
         const ogdf::node copy_node = this->m_graph->newNode();
-        og_to_copy_node.insert({og_node, copy_node});
+        og_to_copy_node[og_node] = copy_node;
+
+        const uid_t uid = node_uids[og_node];
+        (*(this->m_node_uids))[copy_node] = uid;
+        this->m_uid_to_node->insert({uid, copy_node});
     }
 
     this->m_graph->allNodes(*(this->m_all_nodes));
 
     for (const ogdf::edge &og_edge : graph.edges)
     {
-        const ogdf::node copy_source = og_to_copy_node.at(og_edge->source());
-        const ogdf::node copy_target = og_to_copy_node.at(og_edge->target());
+        const ogdf::node copy_source = og_to_copy_node[og_edge->source()];
+        const ogdf::node copy_target = og_to_copy_node[og_edge->target()];
         const ogdf::edge copy_edge = this->m_graph->newEdge(copy_source, copy_target);
 
-        og_to_copy_edge.insert({og_edge, copy_edge});
-    }
-
-    this->m_graph->allEdges(*(this->m_all_edges));
-
-    // ----------------- Node UIDs
-    // TODO(leon): Merge this loop with the loop above.
-    for (const ogdf::node &og_node : graph.nodes)
-    {
-        const ogdf::node &copy_node = og_to_copy_node.at(og_node);
-        const uid_t uid = node_uids[og_node];
-        (*(this->m_node_uids))[copy_node] = uid;
-        this->m_uid_to_node->insert({uid, copy_node});
-    }
-
-    // ----------------- Edge UIDs
-    // TODO(leon): Merge this loop with the loop above.
-    for (const ogdf::edge &og_edge : graph.edges)
-    {
-        const ogdf::edge &copy_edge = og_to_copy_edge.at(og_edge);
         const uid_t uid = edge_uids[og_edge];
         (*(this->m_edge_uids))[copy_edge] = uid;
         this->m_uid_to_edge->insert({uid, copy_edge});
     }
+
+    this->m_graph->allEdges(*(this->m_all_edges));
 }
 
 graph_message::graph_message(std::unique_ptr<ogdf::Graph> graph,
@@ -209,25 +177,30 @@ graph_message &graph_message::operator=(const graph_message &other)
     this->m_all_nodes = std::make_unique<ogdf::Array<ogdf::node>>();
     this->m_all_edges = std::make_unique<ogdf::Array<ogdf::edge>>();
 
-    std::unordered_map<ogdf::node, ogdf::node> og_to_copy_node;
-    std::unordered_map<ogdf::edge, ogdf::edge> og_to_copy_edge;
+    ogdf::NodeArray<ogdf::node> og_to_copy_node(other.graph());
 
     // Copy graph manually in order to be able to access the newly inserted nodes/edges
     for (const ogdf::node &og_node : other.graph().nodes)
     {
         const ogdf::node copy_node = this->m_graph->newNode();
-        og_to_copy_node.insert({og_node, copy_node});
+        og_to_copy_node[og_node] = copy_node;
+
+        const uid_t uid = (*(other.m_node_uids))[og_node];
+        (*(this->m_node_uids))[copy_node] = uid;
+        this->m_uid_to_node->insert({uid, copy_node});
     }
 
     this->m_graph->allNodes(*(this->m_all_nodes));
 
     for (const ogdf::edge &og_edge : other.graph().edges)
     {
-        const ogdf::node copy_source = og_to_copy_node.at(og_edge->source());
-        const ogdf::node copy_target = og_to_copy_node.at(og_edge->target());
+        const ogdf::node copy_source = og_to_copy_node[og_edge->source()];
+        const ogdf::node copy_target = og_to_copy_node[og_edge->target()];
         const ogdf::edge copy_edge = this->m_graph->newEdge(copy_source, copy_target);
 
-        og_to_copy_edge.insert({og_edge, copy_edge});
+        const uid_t uid = other.edge_uids()[og_edge];
+        (*(this->m_edge_uids))[copy_edge] = uid;
+        this->m_uid_to_edge->insert({uid, copy_edge});
     }
 
     this->m_graph->allEdges(*(this->m_all_edges));
@@ -239,26 +212,6 @@ graph_message &graph_message::operator=(const graph_message &other)
     this->m_uid = this->make_uid();
     this->m_node_uids = std::make_unique<ogdf::NodeArray<uid_t>>(*(this->m_graph));
     this->m_edge_uids = std::make_unique<ogdf::EdgeArray<uid_t>>(*(this->m_graph));
-
-    // TODO(leon): Merge this loop with the loop above.
-    for (const ogdf::node &og_node : other.graph().nodes)
-    {
-        const ogdf::node &copy_node = og_to_copy_node.at(og_node);
-
-        const uid_t uid = (*(other.m_node_uids))[og_node];
-        (*(this->m_node_uids))[copy_node] = uid;
-        this->m_uid_to_node->insert({uid, copy_node});
-    }
-
-    // TODO(leon): Merge this loop with the loop above.
-    for (const ogdf::edge &og_edge : other.graph().edges)
-    {
-        const ogdf::edge &copy_edge = og_to_copy_edge.at(og_edge);
-
-        const uid_t uid = other.edge_uids()[og_edge];
-        (*(this->m_edge_uids))[copy_edge] = uid;
-        this->m_uid_to_edge->insert({uid, copy_edge});
-    }
 
     return *this;
 }
