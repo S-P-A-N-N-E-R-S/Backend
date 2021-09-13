@@ -3,7 +3,7 @@
 #include <ogdf/graphalg/Dijkstra.h>
 #include <boost/process.hpp>
 #include <persistence/database_wrapper.hpp>
-#include <scheduler.hpp>
+#include <scheduler/scheduler.hpp>
 #include <thread>
 
 #include "generic_container.pb.h"

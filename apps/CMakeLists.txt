@@ -1,37 +1,29 @@
 add_executable(parsing_example parsing_example.cpp)
-target_link_libraries(parsing_example PRIVATE networking)
+target_link_libraries(parsing_example PRIVATE server-lib)
 
 add_executable(server server.cpp)
-target_link_libraries(server PRIVATE networking handling scheduling persistence)
+target_link_libraries(server PRIVATE server-lib)
 
 add_executable(parsing_example_handler parsing_example_handler.cpp)
-target_link_libraries(parsing_example_handler PRIVATE networking)
-target_link_libraries(parsing_example_handler PRIVATE handling)
+target_link_libraries(parsing_example_handler PRIVATE server-lib)
 
 add_executable(schedule_tester schedule_tester.cpp)
-target_link_libraries(schedule_tester PRIVATE scheduling)
-target_link_libraries(schedule_tester PRIVATE persistence)
+target_link_libraries(schedule_tester PRIVATE server-lib)
 
 add_executable(example_database_wrapper example_database_wrapper.cpp)
-target_link_libraries(example_database_wrapper PRIVATE persistence)
-target_link_libraries(example_database_wrapper PRIVATE handling)
+target_link_libraries(example_database_wrapper PRIVATE server-lib)
 
 add_executable(generic_message_example generic_message_example.cpp)
-target_link_libraries(generic_message_example PRIVATE networking)
-target_link_libraries(generic_message_example PRIVATE handling)
+target_link_libraries(generic_message_example PRIVATE server-lib)
 
 add_executable(available_handlers_example available_handlers_example.cpp)
-target_link_libraries(available_handlers_example PRIVATE networking)
-target_link_libraries(available_handlers_example PRIVATE handling)
+target_link_libraries(available_handlers_example PRIVATE server-lib)
 
 add_executable(status_response_example status_response_example.cpp)
-target_link_libraries(status_response_example PRIVATE networking)
-target_link_libraries(status_response_example PRIVATE handling)
+target_link_libraries(status_response_example PRIVATE server-lib)
 
 add_executable(complete_transaction_example complete_transaction_example.cpp)
-target_link_libraries(complete_transaction_example PRIVATE networking)
-target_link_libraries(complete_transaction_example PRIVATE handling)
+target_link_libraries(complete_transaction_example PRIVATE server-lib)
 
 add_executable(greedy_spanner_example greedy_spanner_example.cpp)
-target_link_libraries(greedy_spanner_example PRIVATE networking)
-target_link_libraries(greedy_spanner_example PRIVATE handling)
+target_link_libraries(greedy_spanner_example PRIVATE server-lib)
