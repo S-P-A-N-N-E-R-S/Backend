@@ -89,17 +89,18 @@ set(server_files
     ${proto_sources}
 )
 
-add_library(${SERVER_NAME} STATIC "${server_files}")
+add_library(${SERVER_NAME} STATIC ${server_files})
+
 target_include_directories(${SERVER_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
 target_include_directories(${SERVER_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
+target_include_directories(${SERVER_NAME} PUBLIC ${PROTOBINDING_PATH})
 target_include_directories(${SERVER_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
-target_include_directories(${SERVER_NAME} PUBLIC "${PROTOBINDING_PATH}")
 
 target_link_libraries(${SERVER_NAME} PUBLIC OGDF)
-target_link_libraries(${SERVER_NAME} PRIVATE ${Protobuf_LIBRARIES})
 target_link_libraries(${SERVER_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(${SERVER_NAME} PRIVATE ${Boost_LIBRARIES})
-target_link_libraries(${SERVER_NAME} PRIVATE ${PQXX_LIB})
+target_link_libraries(${SERVER_NAME} PUBLIC ${Boost_LIBRARIES})
+target_link_libraries(${SERVER_NAME} INTERFACE ${PQXX_LIB})
+target_link_libraries(${SERVER_NAME} PRIVATE ${Protobuf_LIBRARIES})
 
 # Build handler_process
 add_executable(handler_process handling/handler_process.cpp)

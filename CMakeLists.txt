@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 
 project(server)
+
+option(BUILD_BENCHMARKS "Build benchmarks" OFF)
+
 set(CMAKE_CXX_STANDARD 17)
 
 # Set up Protobuf support for CMake
@@ -25,3 +28,8 @@ add_subdirectory(src)
 
 # Add executable(s)
 add_subdirectory(apps)
+
+# Build benchmarks, if desired
+if (BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif ()
