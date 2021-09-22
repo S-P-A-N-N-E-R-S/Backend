@@ -3,6 +3,7 @@
 #include <pqxx/pqxx>
 #include <string>
 
+#include <networking/messages/meta_data.hpp>
 #include <networking/responses/response_factory.hpp>
 
 #include "meta.pb.h"
@@ -14,6 +15,27 @@ using binary_data = std::basic_string<std::byte>;
 using binary_data_view = std::basic_string_view<std::byte>;
 
 enum class db_status_type { Waiting, Running, Success, Failed, Aborted };
+
+/**
+ * @brief Struct representing a entry from database table <jobs>
+ */
+struct job_entry {
+    job_entry(const pqxx::row &db_row);
+
+    int job_id;
+    std::string job_name;
+    std::string handler_type;
+    int user_id;
+    std::string time_received;
+    std::string starting_time;
+    std::string end_time;
+    size_t ogdf_runtime;
+    std::string status;
+    std::string stdout_msg;
+    std::string error_msg;
+    int request_id;
+    int response_id;
+};
 
 class database_wrapper
 {
@@ -30,11 +52,12 @@ public:
      *
      * @param user_id The ID of the user who scheduled the job
      * @param type    The type of the request (defined in the accompanying meta message)
+     * @param handler_type String to identify the handler that is used to execute the job
      * @param binary  View to binary data that contains the parsed request
      *
      * @return ID of the inserted job
      */
-    int add_job(int user_id, graphs::RequestType type, binary_data_view binary);
+    int add_job(int user_id, const meta_data &meta, binary_data_view binary);
 
     /**
      * Sets the status of a job to 'waiting', 'in progress', 'finished' or 'aborted'.
@@ -87,6 +110,35 @@ public:
     std::pair<graphs::RequestType, binary_data> get_response_data_raw(int job_id, int user_id);
 
     /**
+     * @brief Returns job data parsed into struct of type <job_entry>
+     *
+     * @param job_id  The ID of the job the request belongs to
+     * @param user_id The ID of the user the job belongs to
+     *
+     * @return Response data parsed as struct of type <job_entry>
+     */
+    job_entry get_job_entry(int job_id, int user_id);
+
+    /**
+     * @brief Returns all jobs of a user parsed into structs of type <job_entry>
+     *
+     * @param user_id The ID of the user the job belongs to
+     *
+     * @return std::vector<job_entry> containing all jobs of the given user
+     */
+    std::vector<job_entry> get_job_entries(int user_id);
+
+    /**
+     * @brief Returns the meta information of a job
+     *
+     * @param job_id  The ID of the job the request belongs to
+     * @param user_id The ID of the user the job belongs to
+     *
+     * @return struct server::meta_data
+     */
+    meta_data get_meta_data(int job_id, int user_id);
+
+    /**
      * Retrieves a list of the next available jobs from the database. Ordered by time the job was queued.
      * @param n Number of next jobs.
      * @return An ordered list of the next available, not yet started, jobs. First is job_id, second is user_id
@@ -101,7 +153,7 @@ public:
 
     /**
      * @brief Sets status and both messages of a job
-     * 
+     *
      * @param job_id id of the job
      * @param status The new status
      * @param out New entry of field stdout_msg
@@ -117,25 +169,25 @@ public:
 
     /**
      * @brief Gets the status for all jobs of a user
-     * 
-     * @param user_id 
+     *
+     * @param user_id
      * @return list of jobs and their respective states
      */
     std::vector<std::pair<int, std::string>> get_status(int user_id);
 
     /**
      * @brief Converts a db_Status_type to a string
-     * 
-     * @param status 
-     * @return status as string 
+     *
+     * @param status
+     * @return status as string
      */
     static std::string status_to_string(db_status_type status);
 
     /**
      * @brief Converts a string to a graphs::StatusType
-     * 
-     * @param status 
-     * @return status as graphs::StatusType 
+     *
+     * @param status
+     * @return status as graphs::StatusType
      */
     static graphs::StatusType string_to_graphs_status(const std::string &status);
 };

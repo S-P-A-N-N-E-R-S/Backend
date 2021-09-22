@@ -8,7 +8,7 @@ CREATE TYPE STATUS_TYPE AS ENUM ('Waiting', 'Running', 'Success', 'Failed', 'Abo
 -- CREATE TABLE users(
 --     user_id     SERIAL PRIMARY KEY  NOT NULL,
 --     role        TEXT,
---     max_storage int 
+--     max_storage int
 -- );
 
 -- Data can contain a request or a response message, stored in binary_data.
@@ -20,6 +20,8 @@ CREATE TABLE data(
 
 CREATE TABLE jobs(
     job_id      SERIAL PRIMARY KEY  NOT NULL,
+    job_name        TEXT            NOT NULL DEFAULT '',
+    handler_type    TEXT            NOT NULL DEFAULT '',
     -- Prototypical, dummy user id that is not yet linked to a user table
     user_id         INT             NOT NULL,
     time_received   TIMESTAMP       DEFAULT now(),
@@ -27,16 +29,16 @@ CREATE TABLE jobs(
     end_time        TIMESTAMP,
     ogdf_runtime    BIGINT,
     status          TEXT            NOT NULL DEFAULT 'waiting',
-    stdout_msg      TEXT,
-    error_msg       TEXT,
+    stdout_msg      TEXT            NOT NULL DEFAULT '',
+    error_msg       TEXT            NOT NULL DEFAULT '',
     request_id      INT,
     response_id     INT,
     CONSTRAINT fk_request
-        FOREIGN KEY(request_id) 
+        FOREIGN KEY(request_id)
         REFERENCES data(data_id)
         ON DELETE SET NULL,
     CONSTRAINT fk_response
-        FOREIGN KEY(response_id) 
+        FOREIGN KEY(response_id)
         REFERENCES data(data_id)
         ON DELETE SET NULL
 

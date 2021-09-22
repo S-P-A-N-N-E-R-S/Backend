@@ -14,7 +14,7 @@ public:
     template <typename T>
     using attribute_map = std::unordered_map<std::string, T>;
 
-    generic_response(const std::string &handler_type, const graph_message *const graph,
+    generic_response(const graph_message *const graph,
                      const ogdf::NodeArray<node_coordinates> *const node_coords,
                      const ogdf::EdgeArray<double> *const edge_costs,
                      const ogdf::NodeArray<double> *const vertex_costs,
@@ -28,7 +28,6 @@ public:
     graphs::GenericResponse as_proto();
 
 private:
-    std::string m_handler_type;
     graphs::Graph m_proto_graph;
 
     google::protobuf::RepeatedPtrField<graphs::VertexCoordinates> m_vertex_coords;

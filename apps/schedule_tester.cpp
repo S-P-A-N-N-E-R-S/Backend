@@ -2,6 +2,7 @@
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/graphalg/Dijkstra.h>
 #include <boost/process.hpp>
+#include <networking/messages/meta_data.hpp>
 #include <persistence/database_wrapper.hpp>
 #include <scheduler/scheduler.hpp>
 #include <thread>
@@ -28,7 +29,7 @@ int main()
     {
         std::cout << "Tester: Generating " << i << std::endl;
         auto data = generate_random_dijkstra(11235, n, m);
-        db.add_job(1, graphs::RequestType::GENERIC, data);
+        db.add_job(1, server::meta_data{graphs::RequestType::GENERIC, "dijkstra"}, data);
     }
 
     auto &scheduler = server::scheduler::instance();

@@ -8,10 +8,11 @@
 namespace server {
 
 std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
-    graphs::RequestType type, graphs::RequestContainer &requestData)
+    const meta_data &meta, graphs::RequestContainer &requestData)
 {
     server::request_factory factory;
-    std::unique_ptr<server::abstract_request> request = factory.build_request(type, requestData);
+    std::unique_ptr<server::abstract_request> request =
+        factory.build_request(meta.request_type, requestData);
     std::pair<graphs::ResponseContainer, long> response;
     switch (request->type())
     {
@@ -24,7 +25,7 @@ std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
 
             auto &factories = handler_factories();
 
-            auto factory = factories.at(handler_name_finder->handler_type());
+            auto factory = factories.at(meta.handler_type);
 
             auto handler = factory->produce(std::move(request));
 

@@ -14,8 +14,6 @@ public:
     generic_request(const graphs::GenericRequest &proto_request);
     virtual ~generic_request() = default;
 
-    const std::string &handler_type() const;
-
     const server::graph_message *graph_message() const;
     server::graph_message take_graph_message();
 
@@ -45,8 +43,6 @@ public:
 private:
     template <typename T>
     using AttributeMap = std::unordered_map<std::string, T>;
-
-    std::string m_handler_type;
 
     server::graph_message m_graph_message;
 

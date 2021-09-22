@@ -15,7 +15,6 @@
 int main(int argc, const char **argv)
 {
     graphs::GenericRequest proto_request;
-    proto_request.set_handlertype("shortest_path");
 
     auto og = std::make_unique<ogdf::Graph>();
     ogdf::randomSimpleConnectedGraph(*og, 100, 300);
@@ -136,8 +135,8 @@ int main(int argc, const char **argv)
         server::graph_message(std::move(spg), std::move(sp_node_uids), std::move(sp_edge_uids));
 
     auto resp = std::make_unique<server::generic_response>(
-        "shortest_path", &spgm, &sp_node_coords, &sp_edge_costs, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, server::status_code::OK);
+        &spgm, &sp_node_coords, &sp_edge_costs, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, server::status_code::OK);
 
     auto abs_resp = std::unique_ptr<server::abstract_response>(
         dynamic_cast<server::abstract_response *>(resp.release()));

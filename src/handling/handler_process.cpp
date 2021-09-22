@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <handling/handler_proxy.hpp>
 #include <iostream>
+#include <networking/messages/meta_data.hpp>
 #include <persistence/database_wrapper.hpp>
 #include <scheduler/process_flags.hpp>
 #include <string>
@@ -10,11 +11,11 @@
 using namespace server;
 
 /**
- * @brief 
- * 
- * @param argc 
+ * @brief
+ *
+ * @param argc
  * @param argv (job_id, user_id, db_connection_string[, memory limit])
- * @return int 
+ * @return int
  */
 int main(int argc, char *argv[])
 {
@@ -84,9 +85,10 @@ int main(int argc, char *argv[])
 
     database_wrapper database(argv[3]);
 
+    meta_data meta = database.get_meta_data(job_id, user_id);
     auto [type, request] = database.get_request_data(job_id, user_id);
 
-    auto response = server::handler_proxy().handle(type, request);
+    auto response = server::handler_proxy().handle(meta, request);
 
     database.add_response(job_id, type, response.first, response.second);
 

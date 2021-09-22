@@ -68,8 +68,8 @@ void connection::handle()
             respond_error(yield, graphs::ResponseContainer::READ_ERROR);
             return;
         }
-        graphs::MetaData meta_data;
-        if (!meta_data.ParseFromArray(recv_buffer.data(), recv_buffer.size()))
+        graphs::MetaData meta_proto;
+        if (!meta_proto.ParseFromArray(recv_buffer.data(), recv_buffer.size()))
         {
             std::cout << "[CONNECTION] Protobuf parsing error: Meta Message\n";
             respond_error(yield, graphs::ResponseContainer::PROTO_PARSING_ERROR);
@@ -77,7 +77,7 @@ void connection::handle()
         }
 
         // Get message container size from meta message and read the container
-        recv_buffer.resize(meta_data.containersize());
+        recv_buffer.resize(meta_proto.containersize());
         if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
         {
             respond_error(yield, graphs::ResponseContainer::READ_ERROR);
@@ -93,29 +93,36 @@ void connection::handle()
         // TODO: change user_id from hardcoded to dynamically read from request
         const int user_id = 0;
 
-        const auto type = meta_data.type();
+        const auto type = meta_proto.type();
         server::response_factory res_factory;
 
         // Process "non-job" requests immediately
         if (type == graphs::RequestType::AVAILABLE_HANDLERS)
         {
-            respond(yield, graphs::RequestType::AVAILABLE_HANDLERS,
+            respond(yield, meta_data{graphs::RequestType::AVAILABLE_HANDLERS},
                     res_factory.build_response(handler_proxy().available_handlers()));
             return;
         }
         else if (type == graphs::RequestType::STATUS)
         {
-            auto states = database.get_status(user_id);
+            std::vector<job_entry> jobs = database.get_job_entries(user_id);
 
             graphs::StatusResponse status_response;
             auto respStates = status_response.mutable_states();
 
-            for (auto &status : states)
+            for (const auto &job : jobs)
             {
                 graphs::StatusSingle statusSingle;
 
-                statusSingle.set_job_id(status.first);
-                statusSingle.set_status(database_wrapper::string_to_graphs_status(status.second));
+                // Use meta data of the job to get the request type
+                meta_data job_meta_data = database.get_meta_data(job.job_id, user_id);
+
+                statusSingle.set_job_id(job.job_id);
+                statusSingle.set_status(database_wrapper::string_to_graphs_status(job.status));
+                statusSingle.set_statusmessage(std::move(job.error_msg));
+                statusSingle.set_requesttype(job_meta_data.request_type);
+                statusSingle.set_handlertype(std::move(job.handler_type));
+                statusSingle.set_jobname(std::move(job.job_name));
 
                 respStates->Add(std::move(statusSingle));
             }
@@ -123,7 +130,7 @@ void connection::handle()
             auto response = std::make_unique<server::status_response>(std::move(status_response),
                                                                       status_code::OK);
 
-            respond(yield, graphs::RequestType::STATUS,
+            respond(yield, meta_data{graphs::RequestType::STATUS},
                     res_factory.build_response(std::move(response)));
             return;
         }
@@ -155,9 +162,7 @@ void connection::handle()
             }
 
             graphs::ResultRequest res_req;
-            const bool ok = request_container.request().UnpackTo(&res_req);
-
-            if (!ok)
+            if (const bool ok = request_container.request().UnpackTo(&res_req); !ok)
             {
                 std::cout << "[CONNECTION] Protobuf unpack error: ResultRequest\n";
                 respond_error(yield, graphs::ResponseContainer::INVALID_REQUEST_ERROR);
@@ -166,14 +171,15 @@ void connection::handle()
 
             const int job_id = res_req.jobid();
 
+            meta_data job_meta_data = database.get_meta_data(job_id, user_id);
             auto [type, binary_response] = database.get_response_data_raw(job_id, user_id);
 
-            respond(yield, type, binary_response);
+            respond(yield, job_meta_data, binary_response);
             return;
         }
 
         // TODO: Try-Catch to catch database or authentification errors
-        int job_id = database.add_job(0, type, binary);
+        int job_id = database.add_job(0, meta_data{type, meta_proto.handlertype()}, binary);
 
         graphs::NewJobResponse new_job_resp;
         new_job_resp.set_jobid(job_id);
@@ -181,18 +187,19 @@ void connection::handle()
         auto response =
             std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
 
-        respond(yield, graphs::RequestType::NEW_JOB_RESPONSE,
+        respond(yield, meta_data{graphs::RequestType::NEW_JOB_RESPONSE},
                 res_factory.build_response(std::move(response)));
     });
 }
 
-void connection::respond(boost::asio::yield_context &yield, graphs::RequestType type,
+void connection::respond(boost::asio::yield_context &yield, const meta_data &meta_info,
                          const graphs::ResponseContainer &container)
 {
     namespace io = boost::iostreams;
 
-    graphs::MetaData meta;
-    meta.set_type(type);
+    graphs::MetaData meta_proto;
+    meta_proto.set_type(meta_info.request_type);
+    meta_proto.set_handlertype(meta_info.handler_type);
     std::vector<char> container_data;
 
     {
@@ -209,14 +216,14 @@ void connection::respond(boost::asio::yield_context &yield, graphs::RequestType 
         // Copy compressed data into the compressed buffer
         std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
                   std::back_inserter(container_data));
-        meta.set_containersize(container_data.size());
+        meta_proto.set_containersize(container_data.size());
     }
 
-    uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
+    uint64_t len = boost::endian::native_to_big(meta_proto.ByteSizeLong());
 
     std::vector<char> meta_data;
-    meta_data.resize(meta.GetCachedSize());
-    meta.SerializeToArray(meta_data.data(), meta_data.size());
+    meta_data.resize(meta_proto.GetCachedSize());
+    meta_proto.SerializeToArray(meta_data.data(), meta_data.size());
 
     // Send data to client
     direct_write(yield, reinterpret_cast<const char *>(&len), LENGTH_FIELD_SIZE);
@@ -227,13 +234,14 @@ void connection::respond(boost::asio::yield_context &yield, graphs::RequestType 
     m_handler.remove(m_identifier);
 }
 
-void connection::respond(boost::asio::yield_context &yield, graphs::RequestType type,
+void connection::respond(boost::asio::yield_context &yield, const meta_data &meta_info,
                          binary_data_view binary)
 {
     namespace io = boost::iostreams;
 
-    graphs::MetaData meta;
-    meta.set_type(type);
+    graphs::MetaData meta_proto;
+    meta_proto.set_type(meta_info.request_type);
+    meta_proto.set_handlertype(meta_info.handler_type);
     std::vector<char> container_data;
 
     {
@@ -249,14 +257,14 @@ void connection::respond(boost::asio::yield_context &yield, graphs::RequestType 
         // Copy compressed data into the compressed buffer
         std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
                   std::back_inserter(container_data));
-        meta.set_containersize(container_data.size());
+        meta_proto.set_containersize(container_data.size());
     }
 
-    uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
+    uint64_t len = boost::endian::native_to_big(meta_proto.ByteSizeLong());
 
     std::vector<char> meta_data;
-    meta_data.resize(meta.GetCachedSize());
-    meta.SerializeToArray(meta_data.data(), meta_data.size());
+    meta_data.resize(meta_proto.GetCachedSize());
+    meta_proto.SerializeToArray(meta_data.data(), meta_data.size());
 
     // Send data to client
     direct_write(yield, reinterpret_cast<const char *>(&len), LENGTH_FIELD_SIZE);
@@ -272,7 +280,7 @@ void connection::respond_error(boost::asio::yield_context &yield,
 {
     graphs::ResponseContainer response;
     response.set_status(code);
-    respond(yield, graphs::RequestType::UNDEFINED_REQUEST, response);
+    respond(yield, meta_data{graphs::RequestType::UNDEFINED_REQUEST}, response);
 }
 
 bool connection::direct_read(boost::asio::yield_context &yield, char *const data, size_t length)

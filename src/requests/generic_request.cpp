@@ -7,7 +7,6 @@ namespace server {
 
 generic_request::generic_request(const graphs::GenericRequest &proto_request)
     : abstract_request(request_type::GENERIC)
-    , m_handler_type{proto_request.handlertype()}
     , m_graph_message{proto_request.graph()}
     , m_node_coords{}
     , m_edge_costs{}
@@ -21,7 +20,7 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
     {
         throw request_parse_error(
             "Vertex coordinates were provided but their number does not match the number of nodes",
-            this->m_type, this->m_handler_type);
+            this->m_type);
     }
     else
     {
@@ -36,7 +35,7 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
     {
         throw request_parse_error(
             "Edge costs were provided but their number does not match the number of edges",
-            this->m_type, this->m_handler_type);
+            this->m_type);
     }
     else
     {
@@ -51,7 +50,7 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
     {
         throw request_parse_error(
             "Node costs were provided but their number does not match the number of nodes",
-            this->m_type, this->m_handler_type);
+            this->m_type);
     }
     else
     {
@@ -103,11 +102,6 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
                                         it->second);
         }
     }
-}
-
-const std::string &generic_request::handler_type() const
-{
-    return this->m_handler_type;
 }
 
 const graph_message *generic_request::graph_message() const
