@@ -4,6 +4,23 @@
 
 namespace server {
 
+job_entry::job_entry(const pqxx::row &db_row)
+    : job_id{db_row[0].as<int>()}
+    , job_name{db_row[1].as<std::string>()}
+    , handler_type{db_row[2].as<std::string>()}
+    , user_id{db_row[3].as<int>()}
+    , time_received{db_row[4].as<std::string>()}
+    , starting_time{db_row[5].as<std::string>()}
+    , end_time{db_row[6].as<std::string>()}
+    , ogdf_runtime{db_row[7].as<size_t>()}
+    , status{db_row[8].as<std::string>()}
+    , stdout_msg{db_row[9].as<std::string>()}
+    , error_msg{db_row[10].as<std::string>()}
+    , request_id{db_row[11].as<int>()}
+    , response_id{db_row[12].as<int>()}
+{
+}
+
 // Default static connection string
 database_wrapper::database_wrapper(const std::string &connection_string)
     : m_connection_string(connection_string)
@@ -77,13 +94,14 @@ void database_wrapper::check_connection()
     }
 }
 
-int database_wrapper::add_job(int user_id, graphs::RequestType type, binary_data_view data)
+int database_wrapper::add_job(int user_id, const meta_data &meta, binary_data_view data)
 {
     check_connection();
     pqxx::work txn{m_database_connection};
 
-    pqxx::row row_job =
-        txn.exec_params1("INSERT INTO jobs (user_id) VALUES ($1) RETURNING job_id", user_id);
+    pqxx::row row_job = txn.exec_params1(
+        "INSERT INTO jobs (handler_type, user_id) VALUES ($1, $2) RETURNING job_id",
+        meta.handler_type, user_id);
     int job_id;
     if (!(row_job[0] >> job_id))
     {
@@ -94,7 +112,7 @@ int database_wrapper::add_job(int user_id, graphs::RequestType type, binary_data
     // an int in the database.
     pqxx::row row_request =
         txn.exec_params1("INSERT INTO data (type, binary_data) VALUES ($1, $2) RETURNING data_id",
-                         static_cast<int>(type), data);
+                         static_cast<int>(meta.request_type), data);
 
     int request_id;
     if (!(row_request[0] >> request_id))
@@ -217,6 +235,45 @@ std::pair<graphs::RequestType, binary_data> database_wrapper::get_response_data_
     const auto type = static_cast<graphs::RequestType>(row[0].as<int>());
     auto binary = row[1].as<binary_data>();
     return {type, std::move(binary)};
+}
+
+job_entry database_wrapper::get_job_entry(int job_id, int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::row row =
+        txn.exec_params1("SELECT * FROM jobs WHERE job_id = $1 AND user_id = $2)", job_id, user_id);
+
+    return job_entry{row};
+}
+
+std::vector<job_entry> database_wrapper::get_job_entries(int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result rows = txn.exec_params("SELECT * FROM jobs WHERE user_id = $1", user_id);
+
+    std::vector<job_entry> jobs;
+    for (const auto &row : rows)
+    {
+        jobs.emplace_back(row);
+    }
+
+    return jobs;
+}
+
+meta_data database_wrapper::get_meta_data(int job_id, int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::row row = txn.exec_params1("SELECT type, handler_type FROM jobs LEFT JOIN data ON "
+                                     "request_id = data_id WHERE job_id = $1 AND user_id = $2",
+                                     job_id, user_id);
+
+    return meta_data{static_cast<graphs::RequestType>(row[0].as<int>()), row[1].as<std::string>()};
 }
 
 std::vector<std::pair<int, int>> database_wrapper::get_next_jobs(int n)

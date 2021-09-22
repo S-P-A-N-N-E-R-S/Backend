@@ -6,6 +6,7 @@
 #include <ogdf/graphalg/Dijkstra.h>
 #include "generic_container.pb.h"
 
+#include <networking/messages/meta_data.hpp>
 #include <networking/requests/request_factory.hpp>
 #include <networking/responses/response_factory.hpp>
 
@@ -20,7 +21,6 @@
 int main(int argc, const char **argv)
 {
     graphs::GenericRequest proto_request;
-    proto_request.set_handlertype("dijkstra");
 
     auto og = std::make_unique<ogdf::Graph>();
     ogdf::randomSimpleConnectedGraph(*og, 100, 300);
@@ -66,8 +66,8 @@ int main(int argc, const char **argv)
     graphs::RequestContainer proto_request_container;
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
-    auto [response_container, time] =
-        server::handler_proxy().handle(graphs::RequestType::GENERIC, proto_request_container);
+    auto [response_container, time] = server::handler_proxy().handle(
+        server::meta_data{graphs::RequestType::GENERIC, "dijkstra"}, proto_request_container);
 
     graphs::GenericResponse parsed_resp;
     const bool ok = response_container.response().UnpackTo(&parsed_resp);

@@ -37,6 +37,7 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/networking/io/connection.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/graph_message.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/node_coordinates.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/messages/meta_data.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/abstract_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/available_handlers_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/generic_response.hpp

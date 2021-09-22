@@ -5,8 +5,7 @@
 namespace server {
 
 generic_response::generic_response(
-    const std::string &handler_type, const graph_message *const graph,
-    const ogdf::NodeArray<node_coordinates> *const node_coords,
+    const graph_message *const graph, const ogdf::NodeArray<node_coordinates> *const node_coords,
     const ogdf::EdgeArray<double> *const edge_costs,
     const ogdf::NodeArray<double> *const vertex_costs,
     const attribute_map<ogdf::NodeArray<int64_t>> *const node_int_attributes,
@@ -15,7 +14,6 @@ generic_response::generic_response(
     const attribute_map<ogdf::EdgeArray<double>> *const edge_double_attributes,
     const attribute_map<std::string> *const graph_attributes, status_code status)
     : abstract_response{response_type::GENERIC, status}
-    , m_handler_type{handler_type}
 {
     if (graph)
     {
@@ -111,8 +109,6 @@ graphs::GenericResponse generic_response::as_proto()
 {
     // TODO: Should be optimized once we use arena allocation
     graphs::GenericResponse proto_response;
-
-    proto_response.set_handlertype(this->m_handler_type);
 
     *(proto_response.mutable_graph()) = std::move(this->m_proto_graph);
     *(proto_response.mutable_vertexcoordinates()) = std::move(this->m_vertex_coords);

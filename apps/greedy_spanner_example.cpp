@@ -43,7 +43,6 @@ int main(int argc, const char **argv)
         graphs::RequestContainer proto_request_container;
         {
             graphs::GenericRequest proto_request;
-            proto_request.set_handlertype("greedy_spanner");
 
             auto og = std::make_unique<ogdf::Graph>();
             ogdf::randomSimpleConnectedGraph(*og, 100, 1000);
@@ -449,7 +448,7 @@ int main(int argc, const char **argv)
 
         graphs::GenericResponse resp;
         response_container.response().UnpackTo(&resp);
-        std::cout << "response handler type: " << resp.handlertype() << "\n";
+        std::cout << "response handler type: " << response_meta_data.handlertype() << "\n";
 
         const double graph_weight =
             std::accumulate(resp.edgecosts().begin(), resp.edgecosts().end(), 0.0);

@@ -7,6 +7,7 @@
 #include <ogdf/graphalg/Dijkstra.h>
 
 #include <handling/handler_proxy.hpp>
+#include <networking/messages/meta_data.hpp>
 #include "networking/requests/abstract_request.hpp"
 #include "persistence/database_wrapper.hpp"
 
@@ -19,7 +20,7 @@ int main(int argc, const char **argv)
     auto data = generate_random_dijkstra(123, 100, 1000);
     std::cout << "add_job:" << std::endl;
     server::database_wrapper persistence(connection_string);
-    persistence.add_job(1234, graphs::RequestType::GENERIC, data);
+    persistence.add_job(1234, server::meta_data{graphs::RequestType::GENERIC, "dijkstra"}, data);
 
     auto next_jobs = persistence.get_next_jobs(5);
     std::cout << "get_next_jobs:" << std::endl;
@@ -32,6 +33,8 @@ int main(int argc, const char **argv)
     if (next_jobs.size() == 1)
     {
         std::cout << "3" << std::endl;
+        server::meta_data job_meta_data =
+            persistence.get_meta_data(next_jobs[0].first, next_jobs[0].second);
         auto [type, request] =
             persistence.get_request_data(next_jobs[0].first, next_jobs[0].second);
 
@@ -39,7 +42,7 @@ int main(int argc, const char **argv)
         persistence.set_started(next_jobs[0].first);
 
         // Use handler to calculate result
-        auto [response, ogdf_time] = server::handler_proxy().handle(type, request);
+        auto [response, ogdf_time] = server::handler_proxy().handle(job_meta_data, request);
 
         std::cout << "5" << std::endl;
 
