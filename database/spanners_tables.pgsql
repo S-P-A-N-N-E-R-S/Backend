@@ -24,9 +24,9 @@ CREATE TABLE jobs(
     handler_type    TEXT            NOT NULL DEFAULT '',
     -- Prototypical, dummy user id that is not yet linked to a user table
     user_id         INT             NOT NULL,
-    time_received   TIMESTAMP       DEFAULT now(),
-    starting_time   TIMESTAMP,
-    end_time        TIMESTAMP,
+    time_received   TIMESTAMPTZ     DEFAULT now(),
+    starting_time   TIMESTAMPTZ,
+    end_time        TIMESTAMPTZ,
     ogdf_runtime    BIGINT,
     status          TEXT            NOT NULL DEFAULT 'waiting',
     stdout_msg      TEXT            NOT NULL DEFAULT '',
