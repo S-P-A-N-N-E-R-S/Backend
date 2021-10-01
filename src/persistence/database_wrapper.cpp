@@ -9,16 +9,17 @@ job_entry::job_entry(const pqxx::row &db_row)
     , job_name{db_row[1].as<std::string>()}
     , handler_type{db_row[2].as<std::string>()}
     , user_id{db_row[3].as<int>()}
-    , time_received{db_row[4].as<std::string>()}
-    , starting_time{db_row[5].as<std::string>()}
-    , end_time{db_row[6].as<std::string>()}
     , ogdf_runtime{db_row[7].as<size_t>()}
     , status{db_row[8].as<std::string>()}
     , stdout_msg{db_row[9].as<std::string>()}
     , error_msg{db_row[10].as<std::string>()}
-    , request_id{db_row[11].as<int>()}
-    , response_id{db_row[12].as<int>()}
 {
+    time_received = (db_row[4].is_null()) ? "" : db_row[4].as<std::string>();
+    starting_time = (db_row[5].is_null()) ? "" : db_row[5].as<std::string>();
+    end_time = (db_row[6].is_null()) ? "" : db_row[6].as<std::string>();
+
+    request_id = (db_row[11].is_null()) ? -1 : db_row[11].as<int>();
+    response_id = (db_row[12].is_null()) ? -1 : db_row[12].as<int>();
 }
 
 // Default static connection string

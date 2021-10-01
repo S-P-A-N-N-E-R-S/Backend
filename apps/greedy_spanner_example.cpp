@@ -109,6 +109,7 @@ int main(int argc, const char **argv)
         graphs::MetaData meta;
         meta.set_type(graphs::RequestType::GENERIC);
         meta.set_containersize(container_data.size());
+        meta.set_handlertype("greedy_spanner");
 
         uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
 

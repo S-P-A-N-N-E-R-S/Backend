@@ -27,7 +27,7 @@ CREATE TABLE jobs(
     time_received   TIMESTAMPTZ     DEFAULT now(),
     starting_time   TIMESTAMPTZ,
     end_time        TIMESTAMPTZ,
-    ogdf_runtime    BIGINT,
+    ogdf_runtime    BIGINT          NOT NULL DEFAULT 0,
     status          TEXT            NOT NULL DEFAULT 'waiting',
     stdout_msg      TEXT            NOT NULL DEFAULT '',
     error_msg       TEXT            NOT NULL DEFAULT '',
