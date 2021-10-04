@@ -94,13 +94,12 @@ void connection::handle()
         const int user_id = 0;
 
         const auto type = meta_proto.type();
-        server::response_factory res_factory;
 
         // Process "non-job" requests immediately
         if (type == graphs::RequestType::AVAILABLE_HANDLERS)
         {
             respond(yield, meta_data{graphs::RequestType::AVAILABLE_HANDLERS},
-                    res_factory.build_response(handler_proxy().available_handlers()));
+                    response_factory::build_response(handler_proxy().available_handlers()));
             return;
         }
         else if (type == graphs::RequestType::STATUS)
@@ -131,7 +130,7 @@ void connection::handle()
                                                                       status_code::OK);
 
             respond(yield, meta_data{graphs::RequestType::STATUS},
-                    res_factory.build_response(std::move(response)));
+                    response_factory::build_response(std::move(response)));
             return;
         }
 
@@ -188,7 +187,7 @@ void connection::handle()
             std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
 
         respond(yield, meta_data{graphs::RequestType::NEW_JOB_RESPONSE},
-                res_factory.build_response(std::move(response)));
+                response_factory::build_response(std::move(response)));
     });
 }
 

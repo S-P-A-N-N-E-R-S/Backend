@@ -81,9 +81,8 @@ std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
 
     server::graph_message spgm{std::move(spg), std::move(sp_node_uids), std::move(sp_edge_uids)};
 
-    response_factory rspf;
     return std::make_pair(
-        rspf.build_response(std::unique_ptr<abstract_response>{
+        response_factory::build_response(std::unique_ptr<abstract_response>{
             new generic_response{&spgm, &sp_node_coords, &sp_edge_costs, nullptr, nullptr, nullptr,
                                  nullptr, nullptr, nullptr, status_code::OK}}),
         ogdf_time);

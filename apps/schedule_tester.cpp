@@ -1,10 +1,14 @@
 #include <ogdf/basic/extended_graph_alg.h>
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/graphalg/Dijkstra.h>
-#include <boost/process.hpp>
+
+#include <networking/messages/graph_message.hpp>
 #include <networking/messages/meta_data.hpp>
 #include <persistence/database_wrapper.hpp>
 #include <scheduler/scheduler.hpp>
+
+#include <boost/process.hpp>
+
 #include <thread>
 
 #include "generic_container.pb.h"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "networking/responses/response_factory.hpp"
 #include "networking/responses/response_type.hpp"
 #include "networking/responses/status_code.hpp"
 
@@ -20,7 +21,9 @@ private:
     const response_type m_type;
     const status_code m_status;
 
-    friend class response_factory;  // To allow object creation only from the factory
+    // To allow object creation only from the factory
+    friend graphs::ResponseContainer response_factory::build_response(
+        std::unique_ptr<abstract_response>);
 };
 
 }  // namespace server
