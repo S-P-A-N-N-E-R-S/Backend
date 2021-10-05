@@ -60,9 +60,8 @@ int main(int argc, const char **argv)
     graphs::RequestContainer proto_request_container;
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
-    server::request_factory factory;
-    std::unique_ptr<server::abstract_request> request =
-        factory.build_request(graphs::RequestType::SHORTEST_PATH, proto_request_container);
+    auto request = server::request_factory::build_request(graphs::RequestType::SHORTEST_PATH,
+                                                          proto_request_container);
 
     auto *spr = dynamic_cast<server::shortest_path_request *>(request.get());
 
@@ -135,8 +134,7 @@ int main(int argc, const char **argv)
     auto abs_resp = std::unique_ptr<server::abstract_response>(
         dynamic_cast<server::abstract_response *>(resp.release()));
 
-    server::response_factory rspf;
-    auto response_container = rspf.build_response(std::move(abs_resp));
+    auto response_container = server::response_factory::build_response(std::move(abs_resp));
     std::cout << response_container.status() << "\n";
 
     std::cout << "done\n";

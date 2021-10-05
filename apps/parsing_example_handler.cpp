@@ -4,14 +4,15 @@
 #include <ogdf/basic/extended_graph_alg.h>
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/graphalg/Dijkstra.h>
-#include "generic_container.pb.h"
 
+#include <networking/messages/graph_message.hpp>
 #include <networking/messages/meta_data.hpp>
 #include <networking/requests/request_factory.hpp>
 #include <networking/responses/response_factory.hpp>
 
 #include <handling/handler_proxy.hpp>
 
+#include "generic_container.pb.h"
 #include "meta.pb.h"
 
 /**

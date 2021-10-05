@@ -10,9 +10,7 @@ namespace server {
 std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
     const meta_data &meta, graphs::RequestContainer &requestData)
 {
-    server::request_factory factory;
-    std::unique_ptr<server::abstract_request> request =
-        factory.build_request(meta.request_type, requestData);
+    auto request = request_factory::build_request(meta.request_type, requestData);
     std::pair<graphs::ResponseContainer, long> response;
     switch (request->type())
     {

@@ -86,9 +86,8 @@ std::pair<graphs::ResponseContainer, long> greedy_spanner_handler::handle()
     server::graph_message spanner_gm{std::move(spanner), std::move(spanner_node_uids),
                                      std::move(spanner_edge_uids)};
 
-    response_factory rspf;
     return std::make_pair(
-        rspf.build_response(std::unique_ptr<abstract_response>{
+        response_factory::build_response(std::unique_ptr<abstract_response>{
             new generic_response{&spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr,
                                  nullptr, nullptr, nullptr, nullptr, nullptr, status_code::OK}}),
         ogdf_time);

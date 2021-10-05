@@ -1,15 +1,16 @@
 #include <iostream>
 
-#include "generic_container.pb.h"
-
 #include <ogdf/basic/extended_graph_alg.h>
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/graphalg/Dijkstra.h>
 
 #include <handling/handler_proxy.hpp>
+#include <networking/messages/graph_message.hpp>
 #include <networking/messages/meta_data.hpp>
-#include "networking/requests/abstract_request.hpp"
-#include "persistence/database_wrapper.hpp"
+#include <networking/requests/abstract_request.hpp>
+#include <persistence/database_wrapper.hpp>
+
+#include "generic_container.pb.h"
 
 server::binary_data generate_random_dijkstra(unsigned int seed, int n, int m);
 
