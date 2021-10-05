@@ -1,4 +1,3 @@
-#include <handling/handler_list.hpp>
 #include <handling/handler_proxy.hpp>
 #include <handling/handlers/dijkstra_handler.hpp>
 #include <iostream>
@@ -23,7 +22,7 @@ std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
 
             auto &factories = handler_factories();
 
-            auto factory = factories.at(meta.handler_type);
+            const auto factory = factories.at(meta.handler_type).get();
 
             auto handler = factory->produce(std::move(request));
 
@@ -38,7 +37,6 @@ std::pair<graphs::ResponseContainer, long> handler_proxy::handle(
         }
     }
 
-    //ToDo: Store result in database and provide some kind of status update system
     return response;
 }
 

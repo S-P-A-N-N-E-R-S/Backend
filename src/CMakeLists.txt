@@ -61,6 +61,7 @@ set(SERVER_HEADERS
 set(SERVER_SOURCES
     handling/handler_factory.cpp
     handling/handler_proxy.cpp
+    handling/register_handlers.cpp
     handling/handlers/abstract_handler.cpp
     handling/handlers/dijkstra_handler.cpp
     handling/handlers/greedy_spanner_handler.cpp
