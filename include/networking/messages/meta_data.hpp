@@ -14,6 +14,8 @@ struct meta_data {
     graphs::RequestType request_type;
 
     std::string handler_type;
+
+    std::string job_name;
 };
 
 }  // namespace server

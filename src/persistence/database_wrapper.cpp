@@ -101,8 +101,8 @@ int database_wrapper::add_job(int user_id, const meta_data &meta, binary_data_vi
     pqxx::work txn{m_database_connection};
 
     pqxx::row row_job = txn.exec_params1(
-        "INSERT INTO jobs (handler_type, user_id) VALUES ($1, $2) RETURNING job_id",
-        meta.handler_type, user_id);
+        "INSERT INTO jobs (handler_type, job_name, user_id) VALUES ($1, $2, $3) RETURNING job_id",
+        meta.handler_type, meta.job_name, user_id);
     int job_id;
     if (!(row_job[0] >> job_id))
     {
@@ -270,11 +270,15 @@ meta_data database_wrapper::get_meta_data(int job_id, int user_id)
     check_connection();
 
     pqxx::work txn{m_database_connection};
-    pqxx::row row = txn.exec_params1("SELECT type, handler_type FROM jobs LEFT JOIN data ON "
-                                     "request_id = data_id WHERE job_id = $1 AND user_id = $2",
-                                     job_id, user_id);
+    pqxx::row row =
+        txn.exec_params1("SELECT type, handler_type, job_name FROM jobs LEFT JOIN data ON "
+                         "request_id = data_id WHERE job_id = $1 AND user_id = $2",
+                         job_id, user_id);
 
-    return meta_data{static_cast<graphs::RequestType>(row[0].as<int>()), row[1].as<std::string>()};
+    return meta_data{(row[0].is_null()) ? graphs::RequestType::UNDEFINED_REQUEST
+                                        : static_cast<graphs::RequestType>(row[0].as<int>()),
+                     (row[1].is_null()) ? "" : row[1].as<std::string>(),
+                     (row[2].is_null()) ? "" : row[2].as<std::string>()};
 }
 
 std::vector<std::pair<int, int>> database_wrapper::get_next_jobs(int n)

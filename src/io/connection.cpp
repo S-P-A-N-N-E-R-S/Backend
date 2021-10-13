@@ -178,7 +178,8 @@ void connection::handle()
         }
 
         // TODO: Try-Catch to catch database or authentification errors
-        int job_id = database.add_job(0, meta_data{type, meta_proto.handlertype()}, binary);
+        int job_id = database.add_job(
+            0, meta_data{type, meta_proto.handlertype(), meta_proto.jobname()}, binary);
 
         graphs::NewJobResponse new_job_resp;
         new_job_resp.set_jobid(job_id);
@@ -199,6 +200,7 @@ void connection::respond(boost::asio::yield_context &yield, const meta_data &met
     graphs::MetaData meta_proto;
     meta_proto.set_type(meta_info.request_type);
     meta_proto.set_handlertype(meta_info.handler_type);
+    meta_proto.set_jobname(meta_info.job_name);
     std::vector<char> container_data;
 
     {
@@ -241,6 +243,7 @@ void connection::respond(boost::asio::yield_context &yield, const meta_data &met
     graphs::MetaData meta_proto;
     meta_proto.set_type(meta_info.request_type);
     meta_proto.set_handlertype(meta_info.handler_type);
+    meta_proto.set_jobname(meta_info.job_name);
     std::vector<char> container_data;
 
     {

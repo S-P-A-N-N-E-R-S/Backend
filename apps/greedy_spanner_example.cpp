@@ -110,6 +110,7 @@ int main(int argc, const char **argv)
         meta.set_type(graphs::RequestType::GENERIC);
         meta.set_containersize(container_data.size());
         meta.set_handlertype("greedy_spanner");
+        meta.set_jobname("Greedy Spanner Example");
 
         uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
 
@@ -418,6 +419,7 @@ int main(int argc, const char **argv)
             std::cout << "parsing meta data failed" << std::endl;
             return 1;
         }
+        std::cout << "Received finished job: " << response_meta_data.jobname() << '\n';
 
         graphs::ResponseContainer response_container;
         recv_buffer.clear();
