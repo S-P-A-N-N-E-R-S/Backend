@@ -16,7 +16,7 @@ struct job_process {
     int user_id;
     boost::asio::io_service ios;  //Use with data to read return messages
     std::future<std::string>
-        data_cout;  // String data_cout is to write expected error messages to database (if expected,amybe let handler write this directly into db)
+        data_cout;  // String data_cout is to write expected error messages to database
     std::future<std::string>
         data_cerr;  // String data_cerr is to write unexpected errors like runtime errors or segfaults
     std::unique_ptr<boost::process::child> process;

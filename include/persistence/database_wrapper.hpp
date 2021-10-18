@@ -152,14 +152,15 @@ public:
     void set_started(int job_id);
 
     /**
-     * @brief Sets status and both messages of a job
+     * @brief Notifies databse that a job is finished (regardless if successfull or not.).
+     * Sets status and both messages of a job, end_time is set to now()
      *
      * @param job_id id of the job
      * @param status The new status
      * @param out New entry of field stdout_msg
      * @param err New entry of field error_message
      */
-    void set_messages(int job_id, const db_status_type status, const std::string &out,
+    void set_finished(int job_id, const db_status_type status, const std::string &out,
                       const std::string &err);
 
     /**
