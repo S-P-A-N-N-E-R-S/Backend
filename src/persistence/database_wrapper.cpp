@@ -165,8 +165,7 @@ void database_wrapper::add_response(int job_id, graphs::RequestType type,
 
     // If returned number of rows is zero, then the job does no longer exist, an error is thrown and we wont commit
     txn.exec_params1(
-        "UPDATE jobs SET end_time = now(), ogdf_runtime = $1, status = 'Success', response_id = $2 "
-        "WHERE job_id = $3 RETURNING job_id",
+        "UPDATE jobs SET ogdf_runtime = $1, response_id = $2 WHERE job_id = $3 RETURNING job_id",
         ogdf_time, result_id, job_id);
 
     txn.commit();
@@ -316,22 +315,22 @@ void database_wrapper::set_started(int job_id)
 
     pqxx::work txn{m_database_connection};
 
-    txn.exec_params1("UPDATE jobs SET starting_time = now(), status = 'running' WHERE job_id = $1 "
+    txn.exec_params1("UPDATE jobs SET starting_time = now(), status = 'Running' WHERE job_id = $1 "
                      "RETURNING job_id",
                      job_id);
 
     txn.commit();
 }
 
-void database_wrapper::set_messages(int job_id, const db_status_type status, const std::string &out,
+void database_wrapper::set_finished(int job_id, const db_status_type status, const std::string &out,
                                     const std::string &err)
 {
     check_connection();
 
     pqxx::work txn{m_database_connection};
 
-    txn.exec_params1("UPDATE jobs SET status = $1, stdout_msg = $2, error_msg = $3 WHERE job_id = "
-                     "$4 RETURNING job_id",
+    txn.exec_params1("UPDATE jobs SET status = $1, end_time=now(), stdout_msg = $2, error_msg = $3 "
+                     " WHERE job_id = $4 RETURNING job_id",
                      status_to_string(status), out, err, job_id);
 
     txn.commit();
