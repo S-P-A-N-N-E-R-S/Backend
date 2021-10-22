@@ -27,7 +27,7 @@ set(SERVER_NAME server-lib)
 
 set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/handling/handler_factory.hpp
-    ${CMAKE_SOURCE_DIR}/include/handling/handler_proxy.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handler_utilities.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/abstract_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/dijkstra_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/greedy_spanner_handler.hpp
@@ -59,8 +59,7 @@ set(SERVER_HEADERS
 )
 
 set(SERVER_SOURCES
-    handling/handler_factory.cpp
-    handling/handler_proxy.cpp
+    handling/handler_utilities.cpp
     handling/register_handlers.cpp
     handling/handlers/abstract_handler.cpp
     handling/handlers/dijkstra_handler.cpp

@@ -13,7 +13,7 @@
 #include <ogdf/graphalg/Dijkstra.h>
 
 #include <handling/handler_factory.hpp>
-#include <handling/handler_proxy.hpp>
+#include <handling/handler_utilities.hpp>
 
 #include <networking/messages/graph_message.hpp>
 #include <networking/requests/request_factory.hpp>

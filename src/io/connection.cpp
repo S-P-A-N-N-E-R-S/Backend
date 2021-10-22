@@ -10,7 +10,7 @@
 #include <string>
 #include <thread>
 
-#include <handling/handler_proxy.hpp>
+#include <handling/handler_utilities.hpp>
 #include <networking/io/connection_handler.hpp>
 #include <networking/requests/request_factory.hpp>
 #include <networking/responses/new_job_response.hpp>
@@ -99,7 +99,7 @@ void connection::handle()
         if (type == graphs::RequestType::AVAILABLE_HANDLERS)
         {
             respond(yield, meta_data{graphs::RequestType::AVAILABLE_HANDLERS},
-                    response_factory::build_response(handler_proxy().available_handlers()));
+                    response_factory::build_response(available_handlers()));
             return;
         }
         else if (type == graphs::RequestType::STATUS)
