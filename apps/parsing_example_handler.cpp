@@ -10,7 +10,7 @@
 #include <networking/requests/request_factory.hpp>
 #include <networking/responses/response_factory.hpp>
 
-#include <handling/handler_proxy.hpp>
+#include <handling/handler_utilities.hpp>
 
 #include "generic_container.pb.h"
 #include "meta.pb.h"
@@ -67,7 +67,7 @@ int main(int argc, const char **argv)
     graphs::RequestContainer proto_request_container;
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
-    auto [response_container, time] = server::handler_proxy().handle(
+    auto [response_container, time] = server::handle(
         server::meta_data{graphs::RequestType::GENERIC, "dijkstra"}, proto_request_container);
 
     graphs::GenericResponse parsed_resp;

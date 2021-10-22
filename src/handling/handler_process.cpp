@@ -1,6 +1,6 @@
 #include <sys/resource.h>
 #include <unistd.h>
-#include <handling/handler_proxy.hpp>
+#include <handling/handler_utilities.hpp>
 #include <iostream>
 #include <networking/messages/meta_data.hpp>
 #include <persistence/database_wrapper.hpp>
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     meta_data meta = database.get_meta_data(job_id, user_id);
     auto [type, request] = database.get_request_data(job_id, user_id);
 
-    auto response = server::handler_proxy().handle(meta, request);
+    auto response = server::handle(meta, request);
 
     database.add_response(job_id, type, response.first, response.second);
 

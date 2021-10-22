@@ -38,16 +38,6 @@ public:
     virtual graphs::HandlerInformation handler_information() const = 0;
 };
 
-using factory_map =
-    std::unordered_map<std::string, std::unique_ptr<const abstract_handler_factory>>;
-
-/**
- * @brief Allows access to the factories map. This allows access to the handlers by their respective keys
- * 
- * @return factory_map& 
- */
-factory_map &handler_factories();
-
 template <typename handler_derived>
 class handler_factory : public abstract_handler_factory
 {
@@ -85,12 +75,5 @@ public:
         return handler_derived::handler_information();
     }
 };
-
-/**
- * @brief Utility function to initialize handlers. First call to it initializes the handler factories,
- * all following calls have no effect. 
- * User does not need to call it, it gets called automatically on startup.
- */
-void init_handlers();
 
 }  // namespace server

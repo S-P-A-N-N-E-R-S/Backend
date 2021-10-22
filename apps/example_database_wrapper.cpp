@@ -4,7 +4,7 @@
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/graphalg/Dijkstra.h>
 
-#include <handling/handler_proxy.hpp>
+#include <handling/handler_utilities.hpp>
 #include <networking/messages/graph_message.hpp>
 #include <networking/messages/meta_data.hpp>
 #include <networking/requests/abstract_request.hpp>
@@ -43,7 +43,7 @@ int main(int argc, const char **argv)
         persistence.set_started(next_jobs[0].first);
 
         // Use handler to calculate result
-        auto [response, ogdf_time] = server::handler_proxy().handle(job_meta_data, request);
+        auto [response, ogdf_time] = server::handle(job_meta_data, request);
 
         std::cout << "5" << std::endl;
 

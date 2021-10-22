@@ -11,7 +11,7 @@
 #include <ogdf/graphalg/Dijkstra.h>
 
 #include <handling/handler_factory.hpp>
-#include <handling/handler_proxy.hpp>
+#include <handling/handler_utilities.hpp>
 
 #include <networking/messages/graph_message.hpp>
 #include <networking/requests/request_factory.hpp>
@@ -27,17 +27,8 @@ using ip::tcp;
 
 int main(int argc, const char **argv)
 {
-    std::cout << "List of available handlers from function:" << std::endl;
-    server::factory_map &factories = server::handler_factories();
-    for (auto iter = factories.begin(); iter != factories.end(); ++iter)
-    {
-        std::cout << iter->first;
-        auto info = factories[iter->first]->handler_information();
-        std::cout << " : " << info.name() << std::endl;
-    }
-
-    std::cout << "List of available handlers from handler_proxy:" << std::endl;
-    auto response = server::handler_proxy().available_handlers();
+    std::cout << "List of available handlers from handler_utilities:" << std::endl;
+    auto response = server::available_handlers();
     auto *ahr = static_cast<server::available_handlers_response *>(response.get());
     auto available_handlers_ptr = ahr->available_handlers();
     std::cout << "Number of handlers: " << available_handlers_ptr->handlers_size() << std::endl;
