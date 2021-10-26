@@ -41,14 +41,15 @@ namespace handler_utilities {
      * @param key the key in the factoories map
      */
     template <class handler_class>
-    void register_handler(const std::string &key)
+    void register_handler(const std::string &category = "other")
     {
+        auto key = category + "/" + handler_class::name();
         if (handler_factories().find(key) != handler_factories().end())
         {
             throw std::runtime_error("Second registration of handler with key " + key +
                                      " attempted!");
         }
-        handler_factories()[key] = std::make_unique<const handler_factory<handler_class>>();
+        handler_factories()[key] = std::make_unique<const handler_factory<handler_class>>(category);
     }
 
     /**

@@ -20,6 +20,8 @@ public:
 
     static graphs::HandlerInformation handler_information();
 
+    static std::string name();
+
 private:
     std::unique_ptr<generic_request> m_request;
 };
