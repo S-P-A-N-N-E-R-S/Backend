@@ -2,7 +2,6 @@
 
 // #####   default handler includes   #####
 
-#include <handling/handlers/convex_hull_handler.hpp>
 #include <handling/handlers/dijkstra_handler.hpp>
 
 #include <ogdf/graphalg/SpannerBasicGreedy.h>
@@ -27,7 +26,6 @@ void init_handlers()
     // ##### default handler registers   #####
 
     register_handler<dijkstra_handler>();
-    register_handler<convex_hull_handler>();
 
     register_handler<general_spanner_handler<ogdf::SpannerBerman<double>>>("spanner");
     register_handler<general_spanner_handler<ogdf::SpannerBasicGreedy<double>>>("spanner");

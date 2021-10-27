@@ -30,7 +30,6 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/handling/handler_utilities.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/abstract_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/dijkstra_handler.hpp
-    ${CMAKE_SOURCE_DIR}/include/handling/handlers/convex_hull_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/exceptions.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/io_server.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/connection_handler.hpp
@@ -63,7 +62,6 @@ set(SERVER_SOURCES
     handling/register_handlers.cpp
     handling/handlers/abstract_handler.cpp
     handling/handlers/dijkstra_handler.cpp
-    handling/handlers/convex_hull_handler.cpp
     io/io_server.cpp
     io/connection.cpp
     messages/graph_message.cpp
