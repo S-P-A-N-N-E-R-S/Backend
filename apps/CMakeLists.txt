@@ -24,6 +24,3 @@ target_link_libraries(status_response_example PRIVATE server-lib)
 
 add_executable(complete_transaction_example complete_transaction_example.cpp)
 target_link_libraries(complete_transaction_example PRIVATE server-lib)
-
-add_executable(greedy_spanner_example greedy_spanner_example.cpp)
-target_link_libraries(greedy_spanner_example PRIVATE server-lib)
