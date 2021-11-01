@@ -92,7 +92,7 @@ graphs::HandlerInformation dijkstra_handler::handler_information()
 {
     // add simple information
     auto information =
-        dijkstra_handler::createHandlerInformation("dijkstra", graphs::RequestType::GENERIC);
+        dijkstra_handler::createHandlerInformation(name(), graphs::RequestType::GENERIC);
     // add field information
     dijkstra_handler::addFieldInformation(information, graphs::FieldInformation_FieldType_GRAPH,
                                           "Graph", "graph", true);
@@ -114,6 +114,11 @@ graphs::HandlerInformation dijkstra_handler::handler_information()
         information, graphs::ResultInformation_HandlerReturnType_VERTEX_COORDINATES,
         "vertexCoordinates");
     return information;
+}
+
+std::string dijkstra_handler::name()
+{
+    return "dijkstra";
 }
 
 }  // namespace server

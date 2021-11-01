@@ -96,8 +96,8 @@ std::pair<graphs::ResponseContainer, long> greedy_spanner_handler::handle()
 graphs::HandlerInformation greedy_spanner_handler::handler_information()
 {
     // add simple information
-    auto information = greedy_spanner_handler::createHandlerInformation(
-        "greedy_spanner", graphs::RequestType::GENERIC);
+    auto information =
+        greedy_spanner_handler::createHandlerInformation(name(), graphs::RequestType::GENERIC);
     // add field information
     greedy_spanner_handler::addFieldInformation(
         information, graphs::FieldInformation_FieldType_GRAPH, "Graph", "graph", true);
@@ -120,6 +120,11 @@ graphs::HandlerInformation greedy_spanner_handler::handler_information()
         information, graphs::ResultInformation_HandlerReturnType_VERTEX_COORDINATES,
         "vertexCoordinates");
     return information;
+}
+
+std::string greedy_spanner_handler::name()
+{
+    return "greedy_spanner";
 }
 
 }  // namespace server

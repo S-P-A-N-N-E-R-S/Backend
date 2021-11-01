@@ -26,6 +26,22 @@ struct has_handler_information {
     static const bool value = decltype(internal_test_dummy<handler_class>(nullptr))::value;
 };
 
+// Dummy struct to assert existence of name method
+template <class handler_class>
+struct has_name {
+    template <typename signature, signature>
+    struct equal_type_check;
+
+    template <typename handler>
+    static std::true_type internal_test_dummy(
+        equal_type_check<std::string (*)(), &handler::name> *);
+
+    template <typename handler>
+    static std::false_type internal_test_dummy(...);
+
+    static const bool value = decltype(internal_test_dummy<handler_class>(nullptr))::value;
+};
+
 // Forward declaration
 class abstract_handler;
 
@@ -52,7 +68,16 @@ class handler_factory : public abstract_handler_factory
                   "handler_derived must provide a static method with signature: "
                   "graphs::HandlerInformation handler_information()");
 
+    static_assert(has_name<handler_derived>::value,
+                  "handler_derived must provide a static method with signature: "
+                  "std::string name()");
+
 public:
+    handler_factory(const std::string &category)
+        : category(category)
+    {
+    }
+
     /**
      * @brief Produces a handler of type E and hands ownership over to caller
      * 
@@ -72,8 +97,15 @@ public:
      */
     virtual graphs::HandlerInformation handler_information() const override
     {
-        return handler_derived::handler_information();
+        auto information = handler_derived::handler_information();
+
+        information.set_name(category + "/" + handler_derived::name());
+
+        return information;
     }
+
+private:
+    const std::string category;
 };
 
 }  // namespace server
