@@ -153,7 +153,7 @@ graphs::HandlerInformation general_spanner_handler<spanner_algorithm>::handler_i
 template <class spanner_algorithm>
 std::string general_spanner_handler<spanner_algorithm>::name()
 {
-    return "General Spanner: " + boost::core::demangle((typeid(spanner_algorithm).name()));
+    return boost::core::demangle((typeid(spanner_algorithm).name()));
 }
 
 }  // namespace server

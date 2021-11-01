@@ -30,6 +30,7 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/handling/handler_utilities.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/abstract_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/dijkstra_handler.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/general_spanner_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/greedy_spanner_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/exceptions.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/io_server.hpp

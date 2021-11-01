@@ -110,7 +110,7 @@ int main(int argc, const char **argv)
         graphs::MetaData meta;
         meta.set_type(graphs::RequestType::GENERIC);
         meta.set_containersize(container_data.size());
-        meta.set_handlertype("dijkstra");
+        meta.set_handlertype("other/dijkstra");
         meta.set_jobname("Complete Transaction Example Job");
 
         uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());

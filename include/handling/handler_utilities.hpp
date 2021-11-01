@@ -41,14 +41,20 @@ namespace handler_utilities {
      * @param key the key in the factoories map
      */
     template <class handler_class>
-    void register_handler(const std::string &key)
+    void register_handler(const std::string &category = "other")
     {
-        if (handler_factories().find(key) != handler_factories().end())
+        static_assert(has_name<handler_class>::value,
+                      "handler_class must provide a static method with signature: "
+                      "std::string name()");
+
+        auto key = category + "/" + handler_class::name();
+        const auto [_, ok] = handler_factories().emplace(
+            key, std::make_unique<const handler_factory<handler_class>>(category));
+        if (!ok)
         {
             throw std::runtime_error("Second registration of handler with key " + key +
                                      " attempted!");
         }
-        handler_factories()[key] = std::make_unique<const handler_factory<handler_class>>();
     }
 
     /**
