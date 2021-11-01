@@ -43,6 +43,10 @@ namespace handler_utilities {
     template <class handler_class>
     void register_handler(const std::string &category = "other")
     {
+        static_assert(has_name<handler_class>::value,
+                      "handler_class must provide a static method with signature: "
+                      "std::string name()");
+
         auto key = category + "/" + handler_class::name();
         if (handler_factories().find(key) != handler_factories().end())
         {
