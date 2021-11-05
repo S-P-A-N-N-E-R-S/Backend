@@ -24,3 +24,6 @@ target_link_libraries(status_response_example PRIVATE server-lib)
 
 add_executable(complete_transaction_example complete_transaction_example.cpp)
 target_link_libraries(complete_transaction_example PRIVATE server-lib)
+
+add_executable(test_userbase test_userbase.cpp)
+target_link_libraries(test_userbase PRIVATE server-lib)

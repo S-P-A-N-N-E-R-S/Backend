@@ -1,15 +1,14 @@
+DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS data CASCADE;
 DROP TABLE IF EXISTS jobs CASCADE;
-DROP TYPE IF EXISTS STATUS_TYPE;
 
-CREATE TYPE STATUS_TYPE AS ENUM ('Waiting', 'Running', 'Success', 'Failed', 'Aborted');
-
--- Prototypical representation. Will be changed depending on userauth etc.
--- CREATE TABLE users(
---     user_id     SERIAL PRIMARY KEY  NOT NULL,
---     role        TEXT,
---     max_storage int
--- );
+CREATE TABLE users(
+    user_id     SERIAL PRIMARY KEY NOT NULL,
+    user_name   TEXT NOT NULL UNIQUE,
+    pw_hash     TEXT NOT NULL,
+    salt        TEXT NOT NULL,
+    role        int NOT NULL    -- refers to server::user_role enum
+);
 
 -- Data can contain a request or a response message, stored in binary_data.
 CREATE TABLE data(
@@ -48,5 +47,9 @@ CREATE TABLE jobs(
     CONSTRAINT fk_response
         FOREIGN KEY(response_id)
         REFERENCES data(data_id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id)
+        REFERENCES users(user_id)
         ON DELETE SET NULL
 );

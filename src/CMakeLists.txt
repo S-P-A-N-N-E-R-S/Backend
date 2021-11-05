@@ -54,6 +54,7 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/networking/requests/request_type.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/utils.hpp
     ${CMAKE_SOURCE_DIR}/include/persistence/database_wrapper.hpp
+    ${CMAKE_SOURCE_DIR}/include/persistence/user.hpp
     ${CMAKE_SOURCE_DIR}/include/scheduler/process_flags.hpp
     ${CMAKE_SOURCE_DIR}/include/scheduler/scheduler.hpp
 )
@@ -68,6 +69,7 @@ set(SERVER_SOURCES
     messages/graph_message.cpp
     messages/node_coordinates.cpp
     persistence/database_wrapper.cpp
+    persistence/user.cpp
     responses/abstract_response.cpp
     responses/available_handlers_response.cpp
     responses/generic_response.cpp

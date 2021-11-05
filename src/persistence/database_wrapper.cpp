@@ -388,13 +388,70 @@ std::vector<std::pair<int, std::string>> database_wrapper::get_status(int user_i
     return states;
 }
 
-// /**
-//  * For Dispatcher <-> Persistence communication (user side).
-//  * Lists job according to a filter (i.e. user, status, date, ...). Only Metadata are returned
-//  * @param filter a filter for the jobs
-//  * @returns list of the jobs
-//  */
-// JobMetadataContainer[] get_jobs(FilterInterface filter);
-// TODO: Not implementet yet, not needed yet. Define filter functions.
+bool database_wrapper::create_user(user &u)
+{
+    check_connection();
+    pqxx::work txn{m_database_connection};
+
+    // pqxx prepared statements protect from sql injections, so no escaping needed here
+    // (https://libpqxx.readthedocs.io/en/stable/a01383.html)
+
+    pqxx::result rows = txn.exec_params("SELECT user_id FROM users WHERE user_name = $1", u.name);
+
+    if (rows.size() != 0)
+    {
+        return false;
+    }
+
+    auto row_request = txn.exec_params1("INSERT INTO users (user_name, pw_hash, salt, role) VALUES "
+                                        "($1, $2, $3, $4) RETURNING user_id",
+                                        u.name, u.pw_hash, u.salt, static_cast<int>(u.role));
+
+    if (!(row_request[0] >> u.user_id))
+    {
+        throw row_access_error("Can't access user_id");
+    }
+
+    txn.commit();
+
+    return true;
+}
+
+std::optional<user> database_wrapper::get_user(const std::string &name)
+{
+    check_connection();
+
+    // pqxx prepared statements protect from sql injections, so no escaping needed here
+    // (https://libpqxx.readthedocs.io/en/stable/a01383.html)
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result result = txn.exec_params(
+        "SELECT user_id, user_name, pw_hash, salt, role FROM users WHERE user_name = $1", name);
+
+    if (result.size() != 1)
+    {
+        return std::nullopt;
+    }
+
+    pqxx::row row = result[0];
+    return std::optional<user>{user::from_row(row)};
+}
+
+std::optional<user> database_wrapper::get_user(int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result result = txn.exec_params(
+        "SELECT user_id, user_name, pw_hash, salt, role FROM users WHERE user_id = $1", user_id);
+
+    if (result.size() != 1)
+    {
+        return std::nullopt;
+    }
+
+    pqxx::row row = result[0];
+    return std::optional<user>{user::from_row(row)};
+}
 
 }  // namespace server
