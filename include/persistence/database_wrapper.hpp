@@ -1,10 +1,12 @@
 #pragma once
 
+#include <optional>
 #include <pqxx/pqxx>
 #include <string>
 
 #include <networking/messages/meta_data.hpp>
 #include <networking/responses/response_factory.hpp>
+#include <persistence/user.hpp>
 
 #include "meta.pb.h"
 #include "status.pb.h"
@@ -191,6 +193,33 @@ public:
      * @return status as graphs::StatusType
      */
     static graphs::StatusType string_to_graphs_status(const std::string &status);
+
+    /**
+     * @brief Tries to create the user u in the database and writes its database-id into
+     * the field user_id.
+     * 
+     * @param u the user to create. The user_id field is ignored for creation and overwritten
+     * with the new id
+     * @return true if user was created in database, false if a user with the username already 
+     * exists
+     */
+    bool create_user(user &u);
+
+    /**
+     * @brief Tries to get the user with the corresponding user_name from the database
+     * 
+     * @param name 
+     * @return std::optional<user> to the user if it exists in database
+     */
+    std::optional<user> get_user(const std::string &name);
+
+    /**
+     * @brief Tries to get the user with the corresponding user_id from the database
+     * 
+     * @param name 
+     * @return std::optional<user> to the user if it exists in database
+     */
+    std::optional<user> get_user(int user_id);
 };
 
 }  // end namespace server
