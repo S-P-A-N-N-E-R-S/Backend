@@ -6,7 +6,6 @@
 
 #include <networking/messages/meta_data.hpp>
 #include <networking/responses/response_factory.hpp>
-#include <persistence/user.hpp>
 
 #include "meta.pb.h"
 #include "status.pb.h"
@@ -15,6 +14,10 @@ namespace server {
 
 using binary_data = std::basic_string<std::byte>;
 using binary_data_view = std::basic_string_view<std::byte>;
+
+// Forward declarations, defined in "persistence/user.hpp"
+struct user;
+enum class user_role;
 
 /**
  * @brief Struct representing a entry from database table <jobs>

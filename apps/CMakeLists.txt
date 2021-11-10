@@ -27,3 +27,6 @@ target_link_libraries(complete_transaction_example PRIVATE server-lib)
 
 add_executable(test_userbase test_userbase.cpp)
 target_link_libraries(test_userbase PRIVATE server-lib)
+
+add_executable(argon2_example argon2_example.cpp)
+target_link_libraries(argon2_example PRIVATE server-lib)
