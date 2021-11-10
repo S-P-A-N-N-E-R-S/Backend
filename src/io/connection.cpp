@@ -91,7 +91,7 @@ void connection::handle()
         database_wrapper database(connection_string);
 
         // TODO: change user_id from hardcoded to dynamically read from request
-        const int user_id = 0;
+        const int user_id = 1;
 
         const auto type = meta_proto.type();
 
@@ -179,7 +179,7 @@ void connection::handle()
 
         // TODO: Try-Catch to catch database or authentification errors
         int job_id = database.add_job(
-            0, meta_data{type, meta_proto.handlertype(), meta_proto.jobname()}, binary);
+            user_id, meta_data{type, meta_proto.handlertype(), meta_proto.jobname()}, binary);
 
         graphs::NewJobResponse new_job_resp;
         new_job_resp.set_jobid(job_id);

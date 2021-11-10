@@ -56,4 +56,53 @@ int main(int argc, const char **argv)
     {
         std::cout << "User with id -1 exists\n";
     }
+
+    db.change_user_role(u1.user_id, server::user_role::User);
+    db.change_user_auth(u1.user_id, "password", "stone salt");
+
+    u_db = db.get_user(u1.user_id);
+
+    std::cout << u_db->user_id << " " << u_db->name << " " << u_db->pw_hash << " " << u_db->salt
+              << " " << (u_db->role == server::user_role::User ? "User" : "Error") << "\n";
+
+    if (!db.change_user_role(-1, server::user_role::Admin))
+    {
+        std::cout << "Could not change role of user with id -1\n";
+    }
+    else
+    {
+        std::cout << "Error: Changed role of user with id -1\n";
+    }
+
+    if (!db.change_user_auth(-1, "try", "this"))
+    {
+        std::cout << "Could not change auth of user with id -1\n";
+    }
+    else
+    {
+        std::cout << "Error: Changed auth of user with id -1\n";
+    }
+
+    db.delete_user(u1.user_id);
+    db.delete_user(u2.user_id);
+
+    u_db = db.get_user(u1.user_id);
+    if (!u_db)
+    {
+        std::cout << "u1 was deleted\n";
+    }
+    else
+    {
+        std::cout << "u1 wasn't deleted\n";
+    }
+
+    u_db = db.get_user(u2.user_id);
+    if (!u_db)
+    {
+        std::cout << "u2 was deleted\n";
+    }
+    else
+    {
+        std::cout << "u2 wasn't deleted\n";
+    }
 }

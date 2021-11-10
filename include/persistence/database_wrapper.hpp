@@ -220,6 +220,33 @@ public:
      * @return std::optional<user> to the user if it exists in database
      */
     std::optional<user> get_user(int user_id);
+
+    /**
+     * @brief Changes the hashed password and the salt in the database.
+     * 
+     * @param user_id Id of the user in the database
+     * @param pw_new The hash of the new password together with the salt
+     * @param salt_new The new salt
+     * @return true if a user with user_id was found, else if not.
+     */
+    bool change_user_auth(int user_id, const std::string &pw_hash, const std::string &salt);
+
+    /**
+     * @brief Changes the role of a user in the database.
+     * 
+     * @param user_id Id of the user in the database
+     * @param role New role of the user.
+     * @return true if a user with user_id was found, else if not.
+     */
+    bool change_user_role(int user_id, user_role role);
+
+    /**
+     * @brief Deletes a user and all of its associated jobs and request/response data
+     * 
+     * @param user_id Id of the user in the database
+     * @return true if a user with user_id was found, else if not.
+     */
+    bool delete_user(int user_id);
 };
 
 }  // end namespace server

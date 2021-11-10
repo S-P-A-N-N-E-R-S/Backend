@@ -67,7 +67,7 @@ public:
     void set_sleep(int64_t sleep);
 
     /**
-     * @brief Starts the schedullr
+     * @brief Starts the scheduler
      */
     void start();
 
@@ -79,7 +79,7 @@ public:
     bool running();
 
     /**
-     * @brief Stops the scheduler
+     * @brief Stops the scheduler.
      * 
      * @param force true: all running jobs are cancelled. false: running jobs are allowed 
      * to exit normally
@@ -90,7 +90,14 @@ public:
      * @brief Stops execution of a task. If it is already running, terminate it. If not, 
      * change status in database to aborted so that it never gets scheduled
      */
-    void cancel_task(int job_id, int user_id);
+    void cancel_job(int job_id, int user_id);
+
+    /**
+     * @brief Cancels all running jobs of the user with id user_id. No updates are written into the database
+     * 
+     * @param user_id 
+     */
+    void cancel_user_jobs(int user_id);
 
 private:
     scheduler(const std::string &exec_path, size_t process_limit,
