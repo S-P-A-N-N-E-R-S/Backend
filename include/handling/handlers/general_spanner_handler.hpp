@@ -26,7 +26,7 @@ public:
 
     /**
      * @brief Constructs a consistent name from the template parameter
-     * 
+     *
      * @return std::string the name
      */
     static std::string name();
@@ -83,9 +83,10 @@ std::pair<graphs::ResponseContainer, long> general_spanner_handler<spanner_algor
         throw std::runtime_error("Precondition for spanner not ok: " + error);
     }
 
+    auto start = std::chrono::high_resolution_clock::now();
     auto return_type = spanner_algorithm_instance.call(ga, stretch, *spanner, in_spanner);
-
-    long ogdf_time = spanner_algorithm_instance.getTimeNeeded() * 1000;
+    auto stop = std::chrono::high_resolution_clock::now();
+    long ogdf_time = (std::chrono::duration_cast<std::chrono::microseconds>(stop - start)).count();
 
     const auto &og_node_uids = graph_message->node_uids();
     const auto *og_node_coords = m_request->node_coords();
