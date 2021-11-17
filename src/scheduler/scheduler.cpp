@@ -215,13 +215,13 @@ void scheduler::stop_scheduler(bool force)
     }
 }
 
-void scheduler::cancel_task(int job_id, int user_id)
+void scheduler::cancel_job(int job_id, int user_id)
 {
     std::lock_guard<std::mutex> lock_g(m_mutex);
-    //for (size_t i = 0; i < m_processes.size(); i++)
-    for (auto it = m_processes.begin(); it != m_processes.end();)
+
+    for (auto it = m_processes.begin(); it != m_processes.end(); it++)
     {
-        if ((*it)->job_id == job_id && (*it)->user_id == (*it)->user_id)
+        if ((*it)->job_id == job_id && (*it)->user_id == user_id)
         {
             if ((*it)->process->running())
             {
@@ -231,7 +231,6 @@ void scheduler::cancel_task(int job_id, int user_id)
                                         "Aborted by Request");
 
                 m_processes.erase(it);
-                //delete_process(i--);
             }
             //If it is not running anymore, we do not need to abort it. Exit status will be checked next time during run_thread
             return;
@@ -239,6 +238,27 @@ void scheduler::cancel_task(int job_id, int user_id)
     }
 
     m_database.set_finished(job_id, db_status_type::Aborted, "", "Preemptive abort");
+}
+
+void scheduler::cancel_user_jobs(int user_id)
+{
+    std::lock_guard<std::mutex> lock_g(m_mutex);
+
+    for (auto it = m_processes.begin(); it != m_processes.end();)
+    {
+        if ((*it)->user_id == user_id)
+        {
+            if ((*it)->process->running())
+            {
+                (*it)->process->terminate();
+            }
+            m_processes.erase(it);
+        }
+        else
+        {
+            it++;
+        }
+    }
 }
 
 }  // namespace server

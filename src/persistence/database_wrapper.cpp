@@ -1,4 +1,5 @@
 #include <persistence/database_wrapper.hpp>
+#include <scheduler/scheduler.hpp>
 
 #include "networking/exceptions.hpp"
 
@@ -111,9 +112,9 @@ int database_wrapper::add_job(int user_id, const meta_data &meta, binary_data_vi
 
     // We don't want to manually maintain an enum in Postgres. Thus, we represent the RequestType as
     // an int in the database.
-    pqxx::row row_request =
-        txn.exec_params1("INSERT INTO data (type, binary_data) VALUES ($1, $2) RETURNING data_id",
-                         static_cast<int>(meta.request_type), data);
+    pqxx::row row_request = txn.exec_params1(
+        "INSERT INTO data (job_id, type, binary_data) VALUES ($1, $2, $3) RETURNING data_id",
+        job_id, static_cast<int>(meta.request_type), data);
 
     int request_id;
     if (!(row_request[0] >> request_id))
@@ -153,9 +154,9 @@ void database_wrapper::add_response(int job_id, graphs::RequestType type,
 
     // We don't want to manually maintain an enum in Postgres. Thus, we represent the RequestType as
     // an int in the database.
-    pqxx::row row_res =
-        txn.exec_params1("INSERT INTO data (type, binary_data) VALUES ($1, $2) RETURNING data_id",
-                         static_cast<int>(type), binary);
+    pqxx::row row_res = txn.exec_params1(
+        "INSERT INTO data (job_id, type, binary_data) VALUES ($1, $2, $3) RETURNING data_id",
+        job_id, static_cast<int>(type), binary);
 
     int result_id;
     if (!(row_res[0] >> result_id))
@@ -271,7 +272,7 @@ meta_data database_wrapper::get_meta_data(int job_id, int user_id)
     pqxx::work txn{m_database_connection};
     pqxx::row row =
         txn.exec_params1("SELECT type, handler_type, job_name FROM jobs LEFT JOIN data ON "
-                         "request_id = data_id WHERE job_id = $1 AND user_id = $2",
+                         "request_id = data_id WHERE jobs.job_id = $1 AND user_id = $2",
                          job_id, user_id);
 
     return meta_data{(row[0].is_null()) ? graphs::RequestType::UNDEFINED_REQUEST
@@ -452,6 +453,75 @@ std::optional<user> database_wrapper::get_user(int user_id)
 
     pqxx::row row = result[0];
     return std::optional<user>{user::from_row(row)};
+}
+
+bool database_wrapper::change_user_role(int user_id, user_role role)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+
+    pqxx::result result =
+        txn.exec_params("UPDATE users SET role=$1 WHERE user_id = $2 RETURNING user_id",
+                        static_cast<int>(role), user_id);
+
+    if (result.size() != 1)
+    {
+        return false;
+    }
+
+    txn.commit();
+    return true;
+}
+
+bool database_wrapper::change_user_auth(int user_id, const std::string &pw_hash,
+                                        const std::string &salt)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+
+    pqxx::result result =
+        txn.exec_params("UPDATE users SET pw_hash=$1, salt=$2 WHERE user_id = $3 RETURNING user_id",
+                        pw_hash, salt, user_id);
+
+    if (result.size() != 1)
+    {
+        return false;
+    }
+
+    txn.commit();
+    return true;
+}
+
+bool database_wrapper::delete_user(int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+
+    pqxx::result rows = txn.exec_params("SELECT user_id FROM users WHERE user_name = $1", user_id);
+
+    if (rows.size() != 0)
+    {
+        return false;
+    }
+
+    //empty the queue of user jobs
+    txn.exec_params0("UPDATE jobs SET status=$1 WHERE user_id=$2 AND status=$3",
+                     status_to_string(db_status_type::Aborted), user_id,
+                     status_to_string(db_status_type::Waiting));
+
+    txn.commit();
+
+    scheduler::instance().cancel_user_jobs(user_id);
+
+    pqxx::work txn2{m_database_connection};
+
+    txn2.exec_params0("DELETE FROM users WHERE user_id=$1", user_id);
+
+    txn2.commit();
+    return true;
 }
 
 }  // namespace server

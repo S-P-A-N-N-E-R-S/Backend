@@ -13,6 +13,7 @@ CREATE TABLE users(
 -- Data can contain a request or a response message, stored in binary_data.
 CREATE TABLE data(
     data_id     SERIAL PRIMARY KEY NOT NULL,
+    job_id      INT     NOT NULL,
     -- Type of the request, eg 'generic' or some special request
     type        INT     NOT NULL,
     binary_data BYTEA   NOT NULL
@@ -51,5 +52,13 @@ CREATE TABLE jobs(
     CONSTRAINT fk_user
         FOREIGN KEY(user_id)
         REFERENCES users(user_id)
-        ON DELETE SET NULL
+        ON DELETE CASCADE
 );
+
+ALTER TABLE data ADD
+    CONSTRAINT fk_job
+        FOREIGN KEY(job_id)
+        REFERENCES jobs(job_id)
+        ON DELETE CASCADE;
+
+INSERT INTO users (user_name, pw_hash, salt, role) VALUES ('Standard User', '', '', 0);
