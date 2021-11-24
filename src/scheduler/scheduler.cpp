@@ -1,5 +1,4 @@
 #include <boost/filesystem.hpp>
-#include <iostream>
 #include <scheduler/process_flags.hpp>
 #include <scheduler/scheduler.hpp>
 #include <stdexcept>
