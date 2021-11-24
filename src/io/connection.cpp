@@ -111,19 +111,7 @@ void connection::handle()
 
             for (const auto &job : jobs)
             {
-                graphs::StatusSingle statusSingle;
-
-                // Use meta data of the job to get the request type
-                meta_data job_meta_data = database.get_meta_data(job.job_id, user_id);
-
-                statusSingle.set_job_id(job.job_id);
-                statusSingle.set_status(database_wrapper::string_to_graphs_status(job.status));
-                statusSingle.set_statusmessage(std::move(job.error_msg));
-                statusSingle.set_requesttype(job_meta_data.request_type);
-                statusSingle.set_handlertype(std::move(job.handler_type));
-                statusSingle.set_jobname(std::move(job.job_name));
-
-                respStates->Add(std::move(statusSingle));
+                respStates->Add(database.get_status_data(job.job_id, user_id));
             }
 
             auto response = std::make_unique<server::status_response>(std::move(status_response),
@@ -172,6 +160,14 @@ void connection::handle()
 
             meta_data job_meta_data = database.get_meta_data(job_id, user_id);
             auto [type, binary_response] = database.get_response_data_raw(job_id, user_id);
+
+            // Add latest status information to the algorithm response
+            graphs::ResponseContainer status_container;
+            *(status_container.mutable_statusdata()) = database.get_status_data(job_id, user_id);
+            size_t old_len = binary_response.size();
+            binary_response.resize(old_len + status_container.ByteSizeLong());
+            status_container.SerializeToArray(binary_response.data() + old_len,
+                                              binary_response.size());
 
             respond(yield, job_meta_data, binary_response);
             return;

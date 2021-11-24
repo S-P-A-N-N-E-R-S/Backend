@@ -2,6 +2,9 @@
 #include <scheduler/scheduler.hpp>
 
 #include "networking/exceptions.hpp"
+#include "networking/utils.hpp"
+
+#include <google/protobuf/util/time_util.h>
 
 namespace server {
 
@@ -15,9 +18,23 @@ job_entry::job_entry(const pqxx::row &db_row)
     , stdout_msg{db_row[9].as<std::string>()}
     , error_msg{db_row[10].as<std::string>()}
 {
-    time_received = (db_row[4].is_null()) ? "" : db_row[4].as<std::string>();
-    starting_time = (db_row[5].is_null()) ? "" : db_row[5].as<std::string>();
-    end_time = (db_row[6].is_null()) ? "" : db_row[6].as<std::string>();
+    if (!db_row[4].is_null())
+    {
+        time_received = db_row[4].as<std::string>();
+        utils::pqxx_timestampz_to_iso8601(time_received);
+    }
+
+    if (!db_row[5].is_null())
+    {
+        starting_time = db_row[5].as<std::string>();
+        utils::pqxx_timestampz_to_iso8601(starting_time);
+    }
+
+    if (!db_row[6].is_null())
+    {
+        end_time = db_row[6].as<std::string>();
+        utils::pqxx_timestampz_to_iso8601(end_time);
+    }
 
     request_id = (db_row[11].is_null()) ? -1 : db_row[11].as<int>();
     response_id = (db_row[12].is_null()) ? -1 : db_row[12].as<int>();
@@ -244,7 +261,7 @@ job_entry database_wrapper::get_job_entry(int job_id, int user_id)
 
     pqxx::work txn{m_database_connection};
     pqxx::row row =
-        txn.exec_params1("SELECT * FROM jobs WHERE job_id = $1 AND user_id = $2)", job_id, user_id);
+        txn.exec_params1("SELECT * FROM jobs WHERE job_id = $1 AND user_id = $2", job_id, user_id);
 
     return job_entry{row};
 }
@@ -387,6 +404,40 @@ std::vector<std::pair<int, std::string>> database_wrapper::get_status(int user_i
     }
 
     return states;
+}
+
+graphs::StatusSingle database_wrapper::get_status_data(int job_id, int user_id)
+{
+    graphs::StatusSingle status_single;
+
+    // Use meta data of the job to get the request type
+    job_entry job = get_job_entry(job_id, user_id);
+    meta_data job_meta_data = get_meta_data(job.job_id, user_id);
+
+    status_single.set_job_id(job.job_id);
+    status_single.set_status(database_wrapper::string_to_graphs_status(job.status));
+    status_single.set_statusmessage(std::move(job.error_msg));
+    status_single.set_requesttype(job_meta_data.request_type);
+    status_single.set_handlertype(std::move(job.handler_type));
+    status_single.set_jobname(std::move(job.job_name));
+    status_single.set_ogdfruntime(job.ogdf_runtime);
+
+    if (job.time_received != "")
+    {
+        google::protobuf::util::TimeUtil::FromString(job.time_received,
+                                                     status_single.mutable_timereceived());
+    }
+    if (job.starting_time != "")
+    {
+        google::protobuf::util::TimeUtil::FromString(job.starting_time,
+                                                     status_single.mutable_startingtime());
+    }
+    if (job.end_time != "")
+    {
+        google::protobuf::util::TimeUtil::FromString(job.end_time, status_single.mutable_endtime());
+    }
+
+    return status_single;
 }
 
 bool database_wrapper::create_user(user &u)
