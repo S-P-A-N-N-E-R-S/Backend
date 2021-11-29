@@ -16,8 +16,6 @@ namespace server {
 using binary_data = std::basic_string<std::byte>;
 using binary_data_view = std::basic_string_view<std::byte>;
 
-enum class db_status_type { Waiting, Running, Success, Failed, Aborted };
-
 /**
  * @brief Struct representing a entry from database table <jobs>
  */
@@ -32,7 +30,7 @@ struct job_entry {
     std::string starting_time;
     std::string end_time;
     size_t ogdf_runtime;
-    std::string status;
+    graphs::StatusType status;
     std::string stdout_msg;
     std::string error_msg;
     int request_id;
@@ -64,9 +62,9 @@ public:
     /**
      * Sets the status of a job to 'waiting', 'in progress', 'finished' or 'aborted'.
      * @param job_id The ID of the job where the status should be changed.
-     * @param status A status string.
+     * @param status A status.
      */
-    void set_status(int job_id, const db_status_type status);
+    void set_status(int job_id, graphs::StatusType status);
 
     /**
      * Adds the result of a request parsed as binary data to the database.
@@ -162,21 +160,8 @@ public:
      * @param out New entry of field stdout_msg
      * @param err New entry of field error_message
      */
-    void set_finished(int job_id, const db_status_type status, const std::string &out,
+    void set_finished(int job_id, graphs::StatusType status, const std::string &out,
                       const std::string &err);
-
-    /**
-     * @brief Gets the status of a single job of a user
-     */
-    std::string get_status(int job_id, int user_id);
-
-    /**
-     * @brief Gets the status for all jobs of a user
-     *
-     * @param user_id
-     * @return list of jobs and their respective states
-     */
-    std::vector<std::pair<int, std::string>> get_status(int user_id);
 
     /**
      * @brief Gets all status information of a job
@@ -186,22 +171,6 @@ public:
      * @return graphs::StatusSingle
      */
     graphs::StatusSingle get_status_data(int job_id, int user_id);
-
-    /**
-     * @brief Converts a db_Status_type to a string
-     *
-     * @param status
-     * @return status as string
-     */
-    static std::string status_to_string(db_status_type status);
-
-    /**
-     * @brief Converts a string to a graphs::StatusType
-     *
-     * @param status
-     * @return status as graphs::StatusType
-     */
-    static graphs::StatusType string_to_graphs_status(const std::string &status);
 
     /**
      * @brief Tries to create the user u in the database and writes its database-id into

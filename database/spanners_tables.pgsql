@@ -34,7 +34,7 @@ CREATE TABLE jobs(
     -- pure runtime of the call to the ogdf algorithm
     ogdf_runtime    BIGINT          NOT NULL DEFAULT 0,
     -- status of the request at this moment
-    status          TEXT            NOT NULL DEFAULT 'waiting',
+    status          INT            NOT NULL,
     -- Everything the algorithm printed on stdout (if not terminated)
     stdout_msg      TEXT            NOT NULL DEFAULT '',
     -- Everything the algorithm printed on stderr (if not terminated) 

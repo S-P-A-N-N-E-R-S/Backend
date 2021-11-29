@@ -61,13 +61,13 @@ int main()
 
     sleep(status_seconds);
 
-    auto states = db.get_status(1);
+    auto states = db.get_job_entries(1);
 
     std::cout << "States after " << status_seconds << " seconds:\n";
 
     for (auto &status : states)
     {
-        std::cout << status.first << ": " << status.second << "\n";
+        std::cout << status.job_id << ": " << status.status << "\n";
     }
     std::cout << std::endl;
 
