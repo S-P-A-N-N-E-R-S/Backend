@@ -127,19 +127,19 @@ void scheduler::run_thread()
                 {
                     case process_flags::SUCCESS: {
                         // Do nothing, in this case handling already updated database
-                        m_database.set_finished((*it)->job_id, db_status_type::Success,
+                        m_database.set_finished((*it)->job_id, graphs::StatusType::SUCCESS,
                                                 (*it)->data_cout.get(), (*it)->data_cerr.get());
                     }
                     break;
 
                     case process_flags::SEGFAULT: {
-                        m_database.set_finished((*it)->job_id, db_status_type::Failed,
+                        m_database.set_finished((*it)->job_id, graphs::StatusType::FAILED,
                                                 (*it)->data_cout.get(), "Segfault");
                     }
                     break;
 
                     default: {
-                        m_database.set_finished((*it)->job_id, db_status_type::Failed,
+                        m_database.set_finished((*it)->job_id, graphs::StatusType::FAILED,
                                                 (*it)->data_cout.get(), (*it)->data_cerr.get());
                     }
                     break;
@@ -151,7 +151,7 @@ void scheduler::run_thread()
             {
                 (*it)->process->terminate();
 
-                m_database.set_finished((*it)->job_id, db_status_type::Aborted, "", "Timeout");
+                m_database.set_finished((*it)->job_id, graphs::StatusType::ABORTED, "", "Timeout");
 
                 it = m_processes.erase(it);
             }
@@ -207,7 +207,7 @@ void scheduler::stop_scheduler(bool force)
                 p->process->terminate();
             }
 
-            m_database.set_finished(p->job_id, db_status_type::Aborted, "",
+            m_database.set_finished(p->job_id, graphs::StatusType::ABORTED, "",
                                     "Global scheduler stop");
         }
         m_processes.clear();
@@ -226,7 +226,7 @@ void scheduler::cancel_job(int job_id, int user_id)
             {
                 (*it)->process->terminate();
 
-                m_database.set_finished((*it)->job_id, db_status_type::Aborted, "",
+                m_database.set_finished((*it)->job_id, graphs::StatusType::ABORTED, "",
                                         "Aborted by Request");
 
                 m_processes.erase(it);
@@ -236,7 +236,7 @@ void scheduler::cancel_job(int job_id, int user_id)
         }
     }
 
-    m_database.set_finished(job_id, db_status_type::Aborted, "", "Preemptive abort");
+    m_database.set_finished(job_id, graphs::StatusType::ABORTED, "", "Preemptive abort");
 }
 
 void scheduler::cancel_user_jobs(int user_id)
