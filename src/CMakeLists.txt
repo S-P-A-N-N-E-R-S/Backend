@@ -103,6 +103,7 @@ target_link_libraries(${SERVER_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(${SERVER_NAME} PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(${SERVER_NAME} INTERFACE ${PQXX_LIB})
 target_link_libraries(${SERVER_NAME} PRIVATE ${Protobuf_LIBRARIES})
+target_link_libraries(${SERVER_NAME} PRIVATE ${OPENSSL_LIBRARIES})
 
 # Build handler_process
 add_executable(handler_process handling/handler_process.cpp)

@@ -4,6 +4,7 @@
 #include <array>
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl.hpp>
 #include <vector>
 
 #include <networking/messages/meta_data.hpp>
@@ -36,14 +37,14 @@ public:
      * @param socket Underlying socket of the connection.
      */
     explicit connection(size_t id, connection_handler &handler,
-                        boost::asio::ip::tcp::socket socket);
+                        boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket);
 
     connection(const connection &) = delete;
     connection &operator=(const connection &) = delete;
     connection(connection &&rhs) = delete;
     connection &operator=(connection &&rhs) = delete;
 
-    ~connection();
+    ~connection() = default;
 
     /**
      * @brief Handles receiving and responding.
@@ -69,7 +70,7 @@ private:
 
     connection_handler &m_handler;
 
-    boost::asio::ip::tcp::socket m_sock;
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> m_sock;
 };
 
 }  // namespace server

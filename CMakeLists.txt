@@ -13,6 +13,13 @@ set(PROTO_PATH ${CMAKE_SOURCE_DIR}/lib/protocol/protos)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem iostreams coroutine)
 
+# Set up OpenSSL
+find_package(OpenSSL REQUIRED)
+if(OPENSSL_FOUND)
+    link_directories(${OPENSSL_LIBRARIES})
+    include_directories(${OPENSSL_INCLUDE_DIR})
+endif(OPENSSL_FOUND)
+
 # Set up OGDF
 add_subdirectory(lib/ogdf)
 

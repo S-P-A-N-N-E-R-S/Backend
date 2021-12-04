@@ -2,6 +2,7 @@
 #define IO_SERVER_IO_SERVER_HPP
 
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <future>
 
 #include <networking/io/connection_handler.hpp>
@@ -56,6 +57,8 @@ private:
     server_status m_status = STOPPED;
 
     boost::asio::io_context m_ctx;
+
+    boost::asio::ssl::context m_ssl_ctx;
 
     boost::asio::ip::tcp::acceptor m_acceptor;
 
