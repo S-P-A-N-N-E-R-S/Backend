@@ -26,7 +26,9 @@ using boost::asio::buffer;
 using boost::asio::transfer_exactly;
 using boost::asio::ip::tcp;
 using boost::system::error_code;
+#ifndef UNENCRYPTED_CONNECTION
 using ssl_socket = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
+#endif
 
 namespace server {
 
@@ -34,6 +36,14 @@ namespace {
     constexpr int LENGTH_FIELD_SIZE = 8;
 }
 
+#ifdef UNENCRYPTED_CONNECTION
+connection::connection(size_t id, connection_handler &handler, tcp::socket sock)
+    : m_identifier{id}
+    , m_handler{handler}
+    , m_sock{std::move(sock)}
+{
+}
+#else
 connection::connection(size_t id, connection_handler &handler, ssl_socket sock)
     : m_identifier{id}
     , m_handler{handler}
@@ -43,9 +53,10 @@ connection::connection(size_t id, connection_handler &handler, ssl_socket sock)
     m_sock.handshake(boost::asio::ssl::stream_base::server, error);
     if (error)
     {
-        throw std::runtime_error{"Failed to perform handshake."};
+        throw std::runtime_error{"Failed to perform handshake"};
     }
 }
+#endif
 
 // connection::~connection()
 // {

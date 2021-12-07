@@ -29,6 +29,17 @@ class connection_handler;
 class connection
 {
 public:
+#ifdef UNENCRYPTED_CONNECTION
+    /**
+     * @brief Ctor of a connection instance
+     * @param id Identifier of the connection in the corresponding <server::connection_handler>.
+     *          Used to destruct the connection when handling is finished
+     * @param connection_handler Reference to the lifetime managing <server::connection_handler>.
+     * @param socket Underlying socket of the connection.
+     */
+    explicit connection(size_t id, connection_handler &handler,
+                        boost::asio::ip::tcp::socket socket);
+#else
     /**
      * @brief Ctor of a connection instance
      * @param id Identifier of the connection in the corresponding <server::connection_handler>.
@@ -38,6 +49,7 @@ public:
      */
     explicit connection(size_t id, connection_handler &handler,
                         boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket);
+#endif
 
     connection(const connection &) = delete;
     connection &operator=(const connection &) = delete;
@@ -69,10 +81,13 @@ private:
     size_t m_identifier;
 
     connection_handler &m_handler;
-
+#        ifdef UNENCRYPTED_CONNECTION
+    boost::asio::ip::tcp::socket m_sock;
+#        else
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> m_sock;
+#        endif
 };
 
 }  // namespace server
 
-#endif
+#    endif
