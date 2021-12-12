@@ -10,6 +10,8 @@
 
 // #####   add your own handler includes below   #####
 
+#include <handling/handlers/mst_handler.hpp>
+
 // #####   end of handler includes   #####
 
 namespace server::handler_utilities {
@@ -31,6 +33,8 @@ void init_handlers()
     register_handler<general_spanner_handler<ogdf::SpannerBasicGreedy<double>>>("spanner");
 
     // #####   register your own handlers below  #####
+
+	register_handler<mst_handler>();
 
     // #####   end of handler registering   #####
 }
