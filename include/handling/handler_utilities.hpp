@@ -48,12 +48,13 @@ namespace handler_utilities {
                       "std::string name()");
 
         auto key = category + "/" + handler_class::name();
-        if (handler_factories().find(key) != handler_factories().end())
+        const auto [_, ok] = handler_factories().emplace(
+            key, std::make_unique<const handler_factory<handler_class>>(category));
+        if (!ok)
         {
             throw std::runtime_error("Second registration of handler with key " + key +
                                      " attempted!");
         }
-        handler_factories()[key] = std::make_unique<const handler_factory<handler_class>>(category);
     }
 
     /**
