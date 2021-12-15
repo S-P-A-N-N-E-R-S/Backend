@@ -81,13 +81,13 @@ private:
     size_t m_identifier;
 
     connection_handler &m_handler;
-#        ifdef UNENCRYPTED_CONNECTION
+#ifdef UNENCRYPTED_CONNECTION
     boost::asio::ip::tcp::socket m_sock;
-#        else
+#else
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> m_sock;
-#        endif
+#endif
 };
 
 }  // namespace server
 
-#    endif
+#endif
