@@ -3,6 +3,10 @@ image: jsangmeister/spanners-base:latest
 variables:
     GIT_SUBMODULE_STRATEGY: recursive
 
+test-ci:
+    script:
+        - uname -a
+
 check-formatting:
     script:
         - find src include apps \( -iname *.hpp -o -iname *.cpp \) | xargs clang-format -style=file -n -Werror
