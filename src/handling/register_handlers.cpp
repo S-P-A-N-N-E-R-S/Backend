@@ -8,6 +8,8 @@
 #include <ogdf/graphalg/SpannerBerman.h>
 #include <handling/handlers/general_spanner_handler.hpp>
 
+#include <handling/handlers/kruskal_handler.hpp>
+
 // #####   add your own handler includes below   #####
 
 // #####   end of handler includes   #####
@@ -29,6 +31,8 @@ void init_handlers()
 
     register_handler<general_spanner_handler<ogdf::SpannerBerman<double>>>("spanner");
     register_handler<general_spanner_handler<ogdf::SpannerBasicGreedy<double>>>("spanner");
+
+    register_handler<kruskal_handler>("Minimum Spanning Trees");
 
     // #####   register your own handlers below  #####
 
