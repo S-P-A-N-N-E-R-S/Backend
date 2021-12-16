@@ -5,15 +5,4 @@ variables:
 
 test-ci:
     script:
-        - uname -a
-
-check-formatting:
-    script:
-        - find src include apps \( -iname *.hpp -o -iname *.cpp \) | xargs clang-format -style=file -n -Werror
-
-test-build:
-    script:
-        - mkdir build
-        - cd build
-        - cmake ..
-        - make -j$(nproc)
+        - lsb_release -a
