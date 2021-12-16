@@ -105,8 +105,8 @@ void io_server::accept()
                     duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
                 try
                 {
-                    m_connections.add(
-                        id, std::make_unique<connection>(id, m_connections, std::move(sock)));
+                    m_connections.add(id, std::unique_ptr<connection>(
+                                              new connection(id, m_connections, std::move(sock))));
                 }
                 catch (std::runtime_error &err)
                 {
