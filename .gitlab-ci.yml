@@ -5,4 +5,5 @@ variables:
 
 test-ci:
     script:
-        - lsb_release -a
+        - cat /etc/issue
+        - cat /etc/os-release
