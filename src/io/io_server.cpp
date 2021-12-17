@@ -14,6 +14,12 @@ using boost::asio::ssl::stream;
 using boost::system::error_code;
 
 #ifdef SPANNERS_UNENCRYPTED_CONNECTION
+using socket_ptr = std::unique_ptr<boost::asio::ip::tcp::socket>;
+#else
+using socket_ptr = std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >;
+#endif
+
+#ifdef SPANNERS_UNENCRYPTED_CONNECTION
 io_server::io_server(unsigned short listening_port)
     : m_ctx{1}
     , m_acceptor{m_ctx, tcp::endpoint{tcp::v6(), listening_port}}
@@ -89,13 +95,15 @@ void io_server::accept()
         while (m_status == RUNNING)
         {
 #ifdef SPANNERS_UNENCRYPTED_CONNECTION
-            tcp::socket sock{m_ctx};
+            socket_ptr sock = std::make_unique<boost::asio::ip::tcp::socket>(m_ctx);
             error_code err;
-            m_acceptor.async_accept(sock, yield[err]);
+            m_acceptor.async_accept(*sock, yield[err]);
 #else
-            stream<tcp::socket> sock{m_ctx, m_ssl_ctx};
+            socket_ptr sock =
+                std::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(
+                    m_ctx, m_ssl_ctx);
             error_code err;
-            m_acceptor.async_accept(sock.next_layer(), yield[err]);
+            m_acceptor.async_accept(sock->next_layer(), yield[err]);
 #endif
 
             if (!err)

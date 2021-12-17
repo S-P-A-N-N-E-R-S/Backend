@@ -34,31 +34,24 @@ namespace {
     constexpr int LENGTH_FIELD_SIZE = 8;
 }
 
-#ifdef SPANNERS_UNENCRYPTED_CONNECTION
-connection::connection(size_t id, connection_handler &handler, tcp::socket sock)
+connection::connection(size_t id, connection_handler &handler, socket_ptr sock)
     : m_identifier{id}
     , m_handler{handler}
     , m_sock{std::move(sock)}
 {
-}
-#else
-connection::connection(size_t id, connection_handler &handler, stream<tcp::socket> sock)
-    : m_identifier{id}
-    , m_handler{handler}
-    , m_sock{std::move(sock)}
-{
+#ifndef SPANNERS_UNENCRYPTED_CONNECTION
     error_code error;
-    m_sock.handshake(boost::asio::ssl::stream_base::server, error);
+    m_sock->handshake(boost::asio::ssl::stream_base::server, error);
     if (error)
     {
         throw std::runtime_error{"Failed to perform handshake"};
     }
-}
 #endif
+}
 
 void connection::handle()
 {
-    boost::asio::spawn(m_sock.get_executor(), [this](boost::asio::yield_context yield) {
+    boost::asio::spawn(m_sock->get_executor(), [this](boost::asio::yield_context yield) {
         namespace io = boost::iostreams;
 
         std::vector<char> recv_buffer;
@@ -295,7 +288,7 @@ void connection::respond_error(boost::asio::yield_context &yield,
 bool connection::direct_read(boost::asio::yield_context &yield, char *const data, size_t length)
 {
     error_code error;
-    async_read(m_sock, buffer(data, length), transfer_exactly(length), yield[error]);
+    async_read(*m_sock, buffer(data, length), transfer_exactly(length), yield[error]);
     if (error)
         std::cout << "[CONNECTION] Read error: " << error << '\n';
     return !error;
@@ -306,7 +299,7 @@ void connection::direct_write(boost::asio::yield_context &yield, const char *dat
     do
     {
         error_code error;
-        size_t bytes_sent = async_write(m_sock, buffer(data, length), yield[error]);
+        size_t bytes_sent = async_write(*m_sock, buffer(data, length), yield[error]);
         if (!error)
         {
             data += bytes_sent;
