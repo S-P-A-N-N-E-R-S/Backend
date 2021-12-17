@@ -29,7 +29,7 @@ class connection_handler;
 class connection
 {
 public:
-#ifdef UNENCRYPTED_CONNECTION
+#ifdef SPANNERS_UNENCRYPTED_CONNECTION
     /**
      * @brief Ctor of a connection instance
      * @param id Identifier of the connection in the corresponding <server::connection_handler>.
@@ -81,7 +81,7 @@ private:
     size_t m_identifier;
 
     connection_handler &m_handler;
-#ifdef UNENCRYPTED_CONNECTION
+#ifdef SPANNERS_UNENCRYPTED_CONNECTION
     boost::asio::ip::tcp::socket m_sock;
 #else
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> m_sock;

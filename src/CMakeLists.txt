@@ -112,5 +112,5 @@ target_link_libraries(handler_process PRIVATE ${SERVER_NAME})
 # Set a preprocessor macro to disable TLS encryption
 OPTION(UNENCRYPTED_CONNECTION "Disable TLS encryption" OFF)
 IF(UNENCRYPTED_CONNECTION)
-    target_compile_definitions(${SERVER_NAME} PUBLIC UNENCRYPTED_CONNECTION)
+    target_compile_definitions(${SERVER_NAME} PUBLIC SPANNERS_UNENCRYPTED_CONNECTION)
 ENDIF(UNENCRYPTED_CONNECTION)

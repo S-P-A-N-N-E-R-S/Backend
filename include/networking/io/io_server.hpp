@@ -19,7 +19,7 @@ class io_server
     enum server_status { STOPPED, RUNNING };
 
 public:
-#ifdef UNENCRYPTED_CONNECTION
+#ifdef SPANNERS_UNENCRYPTED_CONNECTION
     explicit io_server(unsigned short listening_port);
 #else
     io_server(unsigned short listening_port, const std::string &cert_path,
@@ -63,7 +63,7 @@ private:
 
     boost::asio::io_context m_ctx;
 
-#ifndef UNENCRYPTED_CONNECTION
+#ifndef SPANNERS_UNENCRYPTED_CONNECTION
     boost::asio::ssl::context m_ssl_ctx;
 #endif
 
