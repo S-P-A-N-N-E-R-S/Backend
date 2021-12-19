@@ -3,8 +3,6 @@
 #include <boost/asio/spawn.hpp>
 #include <chrono>
 #include <iostream>
-#include <string_view>
-
 #include <networking/io/connection.hpp>
 
 namespace server {
@@ -12,12 +10,6 @@ namespace server {
 using boost::asio::ip::tcp;
 using boost::asio::ssl::stream;
 using boost::system::error_code;
-
-#ifdef SPANNERS_UNENCRYPTED_CONNECTION
-using socket_ptr = std::unique_ptr<boost::asio::ip::tcp::socket>;
-#else
-using socket_ptr = std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >;
-#endif
 
 #ifdef SPANNERS_UNENCRYPTED_CONNECTION
 io_server::io_server(unsigned short listening_port)

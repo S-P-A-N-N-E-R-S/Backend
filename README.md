@@ -8,7 +8,7 @@
 * cmake (>= 3.16)
 * pqxx (>= 7.5)
 * asio (>= 1.18)
-* OpenSSL dev library
+* OpenSSL dev library (>= 1.1.1l)
 
 #### Cloning
 Clone the repository with submodules:

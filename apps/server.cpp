@@ -13,7 +13,7 @@ int main(int argc, const char **argv)
 
     if (argc < 3)
     {
-        std::cerr << "[ERROR] No TLS certificat and key file given" << std::endl;
+        std::cerr << "[ERROR] No TLS certificate and key file given" << std::endl;
         return -1;
     }
 
