@@ -86,16 +86,16 @@ void io_server::accept()
 
         while (m_status == RUNNING)
         {
-#ifdef SPANNERS_UNENCRYPTED_CONNECTION
+#ifndef SPANNERS_UNENCRYPTED_CONNECTION
+            socket_ptr sock =
+                std::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>(m_ctx,
+                                                                                         m_ssl_ctx);
+            error_code err;
+            m_acceptor.async_accept(sock->next_layer(), yield[err]);
+#else
             socket_ptr sock = std::make_unique<boost::asio::ip::tcp::socket>(m_ctx);
             error_code err;
             m_acceptor.async_accept(*sock, yield[err]);
-#else
-            socket_ptr sock =
-                std::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(
-                    m_ctx, m_ssl_ctx);
-            error_code err;
-            m_acceptor.async_accept(sock->next_layer(), yield[err]);
 #endif
 
             if (!err)

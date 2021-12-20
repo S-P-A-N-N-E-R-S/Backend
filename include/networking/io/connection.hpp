@@ -18,10 +18,10 @@ namespace server {
 
 class connection_handler;
 
-#ifdef SPANNERS_UNENCRYPTED_CONNECTION
-using socket_ptr = std::unique_ptr<boost::asio::ip::tcp::socket>;
+#ifndef SPANNERS_UNENCRYPTED_CONNECTION
+using socket_ptr = std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>;
 #else
-using socket_ptr = std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >;
+using socket_ptr = std::unique_ptr<boost::asio::ip::tcp::socket>;
 #endif
 
 /**
