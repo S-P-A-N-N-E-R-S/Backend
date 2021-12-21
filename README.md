@@ -8,6 +8,7 @@
 * cmake (>= 3.16)
 * pqxx (>= 7.5)
 * asio (>= 1.18)
+* OpenSSL dev library (>= 1.1.1l)
 
 #### Cloning
 Clone the repository with submodules:
@@ -67,10 +68,25 @@ initdb -D /var/lib/postgres/data
 * `\dt` shows the tables in  the database
 
 ## Compile the Backend
+### Server with TLS encryption
+Compiling with TLS enabled requires a signed certificate and a key file in PEM encoding:
 ```bash
 mkdir build
 cd build
 cmake ..
+make -j8  # or however many cores you have
+```
+Run the application with two command line arguments:
+```./apps/server <certificate-path> <key-path>```
+
+
+### Server without TLS encryption:
+The server can be build without TLS encryption e.g. for local use
+Running the server application without TLS does not require any command line arguments
+```bash
+mkdir build
+cd build
+cmake -DUNENCRYPTED_CONNECTION=ON ..
 make -j8  # or however many cores you have
 ```
 

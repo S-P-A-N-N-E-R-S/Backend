@@ -2,6 +2,7 @@
 #define IO_SERVER_IO_SERVER_HPP
 
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <future>
 
 #include <networking/io/connection_handler.hpp>
@@ -18,7 +19,12 @@ class io_server
     enum server_status { STOPPED, RUNNING };
 
 public:
+#ifdef SPANNERS_UNENCRYPTED_CONNECTION
     explicit io_server(unsigned short listening_port);
+#else
+    io_server(unsigned short listening_port, const std::string &cert_path,
+              const std::string &key_path);
+#endif
 
     io_server(const io_server &) = delete;
     io_server &operator=(const io_server &) = delete;
@@ -56,6 +62,10 @@ private:
     server_status m_status = STOPPED;
 
     boost::asio::io_context m_ctx;
+
+#ifndef SPANNERS_UNENCRYPTED_CONNECTION
+    boost::asio::ssl::context m_ssl_ctx;
+#endif
 
     boost::asio::ip::tcp::acceptor m_acceptor;
 

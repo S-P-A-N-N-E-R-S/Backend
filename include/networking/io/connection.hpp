@@ -4,6 +4,8 @@
 #include <array>
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl.hpp>
+#include <memory>
 #include <vector>
 
 #include <networking/messages/meta_data.hpp>
@@ -15,6 +17,12 @@
 namespace server {
 
 class connection_handler;
+
+#ifndef SPANNERS_UNENCRYPTED_CONNECTION
+using socket_ptr = std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>;
+#else
+using socket_ptr = std::unique_ptr<boost::asio::ip::tcp::socket>;
+#endif
 
 /**
  * @brief Representaion of a tcp connection communicating with gzip compressed protobuf messages.
@@ -35,15 +43,14 @@ public:
      * @param connection_handler Reference to the lifetime managing <server::connection_handler>.
      * @param socket Underlying socket of the connection.
      */
-    explicit connection(size_t id, connection_handler &handler,
-                        boost::asio::ip::tcp::socket socket);
+    explicit connection(size_t id, connection_handler &handler, socket_ptr sock);
 
     connection(const connection &) = delete;
     connection &operator=(const connection &) = delete;
     connection(connection &&rhs) = delete;
     connection &operator=(connection &&rhs) = delete;
 
-    ~connection();
+    ~connection() = default;
 
     /**
      * @brief Handles receiving and responding.
@@ -69,7 +76,7 @@ private:
 
     connection_handler &m_handler;
 
-    boost::asio::ip::tcp::socket m_sock;
+    socket_ptr m_sock;
 };
 
 }  // namespace server
