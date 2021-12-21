@@ -1,6 +1,9 @@
 #pragma once
+
 #include <pqxx/pqxx>
 #include <string>
+
+#include <persistence/database_wrapper.hpp>
 
 namespace server {
 
@@ -18,8 +21,8 @@ struct user {
      */
     int user_id;
     std::string name;
-    std::string pw_hash;
-    std::string salt;
+    binary_data pw_hash;
+    binary_data salt;
     user_role role;
 
     /**

@@ -1,4 +1,6 @@
 #include <persistence/database_wrapper.hpp>
+
+#include <persistence/user.hpp>
 #include <scheduler/scheduler.hpp>
 
 #include "networking/exceptions.hpp"

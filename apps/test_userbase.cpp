@@ -2,6 +2,12 @@
 
 #include <networking/exceptions.hpp>
 #include <persistence/database_wrapper.hpp>
+#include <persistence/user.hpp>
+
+server::binary_data to_binary_data(const std::string &string)
+{
+    return server::binary_data{reinterpret_cast<const std::byte *>(string.data()), string.size()};
+}
 
 int main(int argc, const char **argv)
 {
@@ -9,8 +15,10 @@ int main(int argc, const char **argv)
                                     "password=pwd connect_timeout=10";
     server::database_wrapper db(connection_string);
 
-    server::user u1{-1, "user1", "12345", "sea salt", server::user_role::Admin};
-    server::user u2{-1, "user2", "qwert", "kala namak", server::user_role::User};
+    server::user u1{-1, "user1", to_binary_data("12345"), to_binary_data("sea salt"),
+                    server::user_role::Admin};
+    server::user u2{-1, "user2", to_binary_data("qwert"), to_binary_data("kala namak"),
+                    server::user_role::User};
 
     db.create_user(u1);
     db.create_user(u2);
@@ -29,13 +37,17 @@ int main(int argc, const char **argv)
 
     auto u_db = db.get_user(u1.name);
 
-    std::cout << u_db->user_id << " " << u_db->name << " " << u_db->pw_hash << " " << u_db->salt
-              << " " << (u_db->role == server::user_role::Admin ? "Admin" : "Error") << "\n";
+    std::cout << u_db->user_id << " " << u_db->name << " "
+              << reinterpret_cast<char *>(u_db->pw_hash.data()) << " "
+              << reinterpret_cast<char *>(u_db->salt.data()) << " "
+              << (u_db->role == server::user_role::Admin ? "User" : "Error") << "\n";
 
     u_db = db.get_user(u2.user_id);
 
-    std::cout << u_db->user_id << " " << u_db->name << " " << u_db->pw_hash << " " << u_db->salt
-              << " " << (u_db->role == server::user_role::User ? "User" : "Error") << "\n";
+    std::cout << u_db->user_id << " " << u_db->name << " "
+              << reinterpret_cast<char *>(u_db->pw_hash.data()) << " "
+              << reinterpret_cast<char *>(u_db->salt.data()) << " "
+              << (u_db->role == server::user_role::User ? "User" : "Error") << "\n";
 
     u_db = db.get_user("Not-A-User");
     if (!u_db)
@@ -62,7 +74,9 @@ int main(int argc, const char **argv)
 
     u_db = db.get_user(u1.user_id);
 
-    std::cout << u_db->user_id << " " << u_db->name << " " << u_db->pw_hash << " " << u_db->salt
+    std::cout << u_db->user_id << " " << u_db->name << " "
+              << reinterpret_cast<char *>(u_db->pw_hash.data()) << " "
+              << reinterpret_cast<char *>(u_db->salt.data()) << " "
               << " " << (u_db->role == server::user_role::User ? "User" : "Error") << "\n";
 
     if (!db.change_user_role(-1, server::user_role::Admin))

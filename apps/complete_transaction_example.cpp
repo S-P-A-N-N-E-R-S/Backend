@@ -112,6 +112,8 @@ int main(int argc, const char **argv)
         meta.set_containersize(container_data.size());
         meta.set_handlertype("other/dijkstra");
         meta.set_jobname("Complete Transaction Example Job");
+        meta.mutable_user()->set_name("Standard User");
+        meta.mutable_user()->set_password("pass");
 
         uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
 
@@ -222,6 +224,8 @@ int main(int argc, const char **argv)
             graphs::MetaData meta;
             meta.set_type(graphs::RequestType::STATUS);
             meta.set_containersize(0);  // STATUS needs no RequestContainer
+            meta.mutable_user()->set_name("Standard User");
+            meta.mutable_user()->set_password("pass");
 
             uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
 
@@ -363,6 +367,8 @@ int main(int argc, const char **argv)
         graphs::MetaData meta;
         meta.set_type(graphs::RequestType::RESULT);
         meta.set_containersize(container_data.size());
+        meta.mutable_user()->set_name("Standard User");
+        meta.mutable_user()->set_password("pass");
 
         uint64_t len = boost::endian::native_to_big(meta.ByteSizeLong());
 

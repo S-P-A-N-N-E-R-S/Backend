@@ -30,6 +30,12 @@ if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL
     target_compile_options(OGDF PRIVATE -Wno-stringop-overread)
 endif()
 
+add_custom_target(
+    Argon2 ALL
+    COMMAND make
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/lib/Argon2
+)
+
 # Add sources for library
 add_subdirectory(src)
 

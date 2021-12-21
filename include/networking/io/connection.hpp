@@ -12,6 +12,7 @@
 #include <persistence/database_wrapper.hpp>  // for binary_data
 
 #include "container.pb.h"
+#include "error.pb.h"
 #include "meta.pb.h"
 
 namespace server {
@@ -60,13 +61,17 @@ public:
     void handle();
 
 private:
+    template <class Serializable>
     void respond(boost::asio::yield_context &yield, const meta_data &meta_info,
-                 const graphs::ResponseContainer &container);
+                 const Serializable &container);
+
+    /// Overload when responding with a message retrieved directly from the database
     void respond(boost::asio::yield_context &yield, const meta_data &meta_info,
-                 binary_data_view binary);
+                 const binary_data &binary);
 
     void respond_error(boost::asio::yield_context &yield,
                        graphs::ResponseContainer_StatusCode code);
+    void respond_error(boost::asio::yield_context &yield, graphs::ErrorType error_type);
 
     bool direct_read(boost::asio::yield_context &yield, char *const data, size_t length);
 

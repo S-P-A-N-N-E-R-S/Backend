@@ -4,3 +4,6 @@
 [submodule "lib/ogdf"]
 	path = lib/ogdf
 	url = ../ogdf.git
+[submodule "lib/Argon2"]
+	path = lib/Argon2
+	url = ../Argon2.git

@@ -5,8 +5,8 @@ DROP TABLE IF EXISTS jobs CASCADE;
 CREATE TABLE users(
     user_id     SERIAL PRIMARY KEY NOT NULL,
     user_name   TEXT NOT NULL UNIQUE,
-    pw_hash     TEXT NOT NULL,
-    salt        TEXT NOT NULL,
+    pw_hash     BYTEA NOT NULL,
+    salt        BYTEA NOT NULL,
     role        int NOT NULL    -- refers to server::user_role enum
 );
 
@@ -61,4 +61,10 @@ ALTER TABLE data ADD
         REFERENCES jobs(job_id)
         ON DELETE CASCADE;
 
-INSERT INTO users (user_name, pw_hash, salt, role) VALUES ('Standard User', '', '', 0);
+INSERT INTO users (user_name, pw_hash, salt, role)
+    VALUES (
+        'Standard User',
+        decode('7a2ea96d7fff2b3e9bf0e2a53da6ad15627ab34cbbfa0b63fe2784d1e5ac7e1d', 'hex'),
+        decode('5e14f4c2fe5ec70c2ba410e7aa0471ce', 'hex'),
+        0
+    );
