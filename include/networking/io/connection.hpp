@@ -61,6 +61,11 @@ public:
     void handle();
 
 private:
+    void handle_internal(boost::asio::yield_context &yield);
+
+    template <typename MESSAGE_TYPE>
+    MESSAGE_TYPE read_message(boost::asio::yield_context &yield, size_t len);
+
     template <class Serializable>
     void respond(boost::asio::yield_context &yield, const meta_data &meta_info,
                  const Serializable &container);

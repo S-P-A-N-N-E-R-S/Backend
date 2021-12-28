@@ -77,74 +77,72 @@ connection::connection(size_t id, connection_handler &handler, socket_ptr sock)
 void connection::handle()
 {
     boost::asio::spawn(m_sock->get_executor(), [this](boost::asio::yield_context yield) {
-        namespace io = boost::iostreams;
-
-        std::vector<char> recv_buffer;
-        size_t recv_size;
-
-        // Read size of meta message
-        if (!direct_read(yield, reinterpret_cast<char *const>(&recv_size), LENGTH_FIELD_SIZE))
+        try
         {
-            respond_error(yield, graphs::ResponseContainer::READ_ERROR);
+            handle_internal(yield);
+        }
+        catch (graphs::ResponseContainer::StatusCode &error)
+        {
+            // Catch error codes from parsing
+            std::cout << "[ERROR] " << error << '\n';
+            respond_error(yield, error);
             return;
         }
-        boost::endian::big_to_native_inplace(recv_size);
-        recv_buffer.resize(recv_size);
-
-        // Read and parse meta message
-        if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
+        catch (std::exception &ex)
         {
-            respond_error(yield, graphs::ResponseContainer::READ_ERROR);
+            // Catch exception wrapped into a boost::wrapexcept<...>
+            std::cout << "[ERROR]" << ex.what() << '\n';
+            respond_error(yield, graphs::ResponseContainer::ERROR);
             return;
         }
-        graphs::MetaData meta_proto;
-        if (!meta_proto.ParseFromArray(recv_buffer.data(), recv_buffer.size()))
-        {
-            std::cout << "[CONNECTION] Protobuf parsing error: Meta Message\n";
-            respond_error(yield, graphs::ResponseContainer::PROTO_PARSING_ERROR);
-            return;
-        }
+    });
+}
 
-        // Get message container size from meta message and read the container
-        recv_buffer.resize(meta_proto.containersize());
-        if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
-        {
-            respond_error(yield, graphs::ResponseContainer::READ_ERROR);
-            return;
-        }
+void connection::handle_internal(boost::asio::yield_context &yield)
+{
+    // Read size of meta message
+    size_t recv_size;
+    if (!direct_read(yield, reinterpret_cast<char *const>(&recv_size), LENGTH_FIELD_SIZE))
+    {
+        respond_error(yield, graphs::ResponseContainer::READ_ERROR);
+        return;
+    }
+    boost::endian::big_to_native_inplace(recv_size);
 
-        // TODO: remove hardcoded string with env variables
-        std::string connection_string =
-            "host=localhost port=5432 user=spanner_user dbname=spanner_db "
-            "password=pwd connect_timeout=10";
-        database_wrapper database(connection_string);
+    // Read and parse meta message
+    graphs::MetaData meta_proto = read_message<graphs::MetaData>(yield, recv_size);
 
-        const auto user = database.get_user(meta_proto.user().name());
-        if (!user)
-        {
-            // TODO: Log this incident
-            respond_error(yield, graphs::ErrorType::UNAUTHORIZED);
-            return;
-        }
+    // TODO: remove hardcoded string with env variables
+    // Use authentication
+    std::string connection_string = "host=localhost port=5432 user=spanner_user dbname=spanner_db "
+                                    "password=pwd connect_timeout=10";
+    database_wrapper database(connection_string);
 
-        if (!check_password(meta_proto.user().password(), user->salt, user->pw_hash))
-        {
-            // TODO: Log this incident
-            respond_error(yield, graphs::ErrorType::UNAUTHORIZED);
-            return;
-        }
+    const auto user = database.get_user(meta_proto.user().name());
+    if (!user)
+    {
+        // TODO: Log this incident
+        respond_error(yield, graphs::ErrorType::UNAUTHORIZED);
+        return;
+    }
 
-        const auto type = meta_proto.type();
+    if (!check_password(meta_proto.user().password(), user->salt, user->pw_hash))
+    {
+        // TODO: Log this incident
+        respond_error(yield, graphs::ErrorType::UNAUTHORIZED);
+        return;
+    }
 
-        // Process "non-job" requests immediately
-        if (type == graphs::RequestType::AVAILABLE_HANDLERS)
-        {
+    // Reuquest handling
+    const auto type = meta_proto.type();
+    switch (type)
+    {
+        case graphs::RequestType::AVAILABLE_HANDLERS: {
             respond(yield, meta_data{graphs::RequestType::AVAILABLE_HANDLERS},
                     response_factory::build_response(available_handlers()));
-            return;
+            break;
         }
-        else if (type == graphs::RequestType::STATUS)
-        {
+        case graphs::RequestType::STATUS: {
             std::vector<job_entry> jobs = database.get_job_entries(user->user_id);
 
             graphs::StatusResponse status_response;
@@ -160,41 +158,16 @@ void connection::handle()
 
             respond(yield, meta_data{graphs::RequestType::STATUS},
                     response_factory::build_response(std::move(response)));
-            return;
+            break;
         }
-
-        // Possibly long-running requests are scheduled by scheduler later on
-
-        // TODO Check if we need to decompress the received data first -> meta message
-        // Gzip decompression of container
-        io::filtering_streambuf<io::input> in_str_buf;
-        in_str_buf.push(io::gzip_decompressor{});
-        in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
-
-        // Copy compressed data into the decompressed buffer
-        std::vector<char> decompressed;
-        decompressed.reserve(recv_buffer.size());
-        std::copy(std::istreambuf_iterator<char>{&in_str_buf}, {},
-                  std::back_inserter(decompressed));
-        binary_data_view binary(reinterpret_cast<std::byte *>(decompressed.data()),
-                                decompressed.size());
-
-        if (type == graphs::RequestType::RESULT)
-        {
-            auto request_container = graphs::RequestContainer();
-            if (!request_container.ParseFromArray(binary.data(), binary.size()))
-            {
-                std::cout << "[CONNECTION] Protobuf parsing error: RequestContainer\n";
-                respond_error(yield, graphs::ResponseContainer::PROTO_PARSING_ERROR);
-                return;
-            }
+        case graphs::RequestType::RESULT: {
+            graphs::RequestContainer request_container =
+                read_message<graphs::RequestContainer>(yield, meta_proto.containersize());
 
             graphs::ResultRequest res_req;
             if (const bool ok = request_container.request().UnpackTo(&res_req); !ok)
             {
-                std::cout << "[CONNECTION] Protobuf unpack error: ResultRequest\n";
-                respond_error(yield, graphs::ResponseContainer::INVALID_REQUEST_ERROR);
-                return;
+                throw graphs::ResponseContainer::INVALID_REQUEST_ERROR;
             }
 
             const int job_id = res_req.jobid();
@@ -212,22 +185,81 @@ void connection::handle()
                                               binary_response.size());
 
             respond(yield, job_meta_data, binary_response);
-            return;
+            break;
         }
+        default: {
+            namespace io = boost::iostreams;
 
-        // TODO: Try-Catch to catch database
-        int job_id = database.add_job(
-            user->user_id, meta_data{type, meta_proto.handlertype(), meta_proto.jobname()}, binary);
+            std::vector<char> recv_buffer;
+            recv_buffer.resize(meta_proto.containersize());
+            if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
+            {
+                throw graphs::ResponseContainer::READ_ERROR;
+            }
 
-        graphs::NewJobResponse new_job_resp;
-        new_job_resp.set_jobid(job_id);
+            io::filtering_streambuf<io::input> in_str_buf;
+            in_str_buf.push(io::gzip_decompressor{});
+            in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
 
-        auto response =
-            std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
+            // Copy compressed data into the decompressed buffer
+            std::vector<char> decompressed;
+            decompressed.reserve(recv_buffer.size());
+            decompressed.assign(std::istreambuf_iterator<char>{&in_str_buf}, {});
+            binary_data_view binary(reinterpret_cast<std::byte *>(decompressed.data()),
+                                    decompressed.size());
 
-        respond(yield, meta_data{graphs::RequestType::NEW_JOB_RESPONSE},
-                response_factory::build_response(std::move(response)));
-    });
+            int job_id = database.add_job(
+                user->user_id, meta_data{type, meta_proto.handlertype(), meta_proto.jobname()},
+                binary);
+
+            graphs::NewJobResponse new_job_resp;
+            new_job_resp.set_jobid(job_id);
+
+            auto response =
+                std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
+
+            respond(yield, meta_data{graphs::RequestType::NEW_JOB_RESPONSE},
+                    response_factory::build_response(std::move(response)));
+            break;
+        }
+    }
+}
+
+template <typename MESSAGE_TYPE>
+MESSAGE_TYPE connection::read_message(boost::asio::yield_context &yield, size_t len)
+{
+    std::vector<char> recv_buffer;
+    try
+    {
+        recv_buffer.resize(len);
+    }
+    catch (std::bad_alloc &)
+    {
+        throw graphs::ResponseContainer::READ_ERROR;
+    }
+
+    if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
+    {
+        throw graphs::ResponseContainer::READ_ERROR;
+    }
+
+    if constexpr (!std::is_same_v<MESSAGE_TYPE, graphs::MetaData>)
+    {
+        // Other messages are compressed using GZIP compression
+        namespace io = boost::iostreams;
+
+        io::filtering_streambuf<io::input> in_str_buf;
+        in_str_buf.push(io::gzip_decompressor{});
+        in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
+        recv_buffer.assign(std::istreambuf_iterator<char>{&in_str_buf}, {});
+    }
+
+    MESSAGE_TYPE msg;
+    if (!msg.ParseFromArray(recv_buffer.data(), recv_buffer.size()))
+    {
+        throw graphs::ResponseContainer::PROTO_PARSING_ERROR;
+    }
+    return msg;
 }
 
 template <class Serializable>
