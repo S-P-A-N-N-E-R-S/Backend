@@ -83,14 +83,18 @@ void connection::handle()
         }
         catch (graphs::ResponseContainer::StatusCode &error)
         {
-            // Catch error codes from parsing
+            std::cout << "[ERROR] " << error << '\n';
+            respond_error(yield, error);
+            return;
+        }
+        catch (graphs::ErrorType &error)
+        {
             std::cout << "[ERROR] " << error << '\n';
             respond_error(yield, error);
             return;
         }
         catch (std::exception &ex)
         {
-            // Catch exception wrapped into a boost::wrapexcept<...>
             std::cout << "[ERROR]" << ex.what() << '\n';
             respond_error(yield, graphs::ResponseContainer::ERROR);
             return;
@@ -122,15 +126,13 @@ void connection::handle_internal(boost::asio::yield_context &yield)
     if (!user)
     {
         // TODO: Log this incident
-        respond_error(yield, graphs::ErrorType::UNAUTHORIZED);
-        return;
+        throw graphs::ErrorType::UNAUTHORIZED;
     }
 
     if (!check_password(meta_proto.user().password(), user->salt, user->pw_hash))
     {
         // TODO: Log this incident
-        respond_error(yield, graphs::ErrorType::UNAUTHORIZED);
-        return;
+        throw graphs::ErrorType::UNAUTHORIZED;
     }
 
     // Reuquest handling
