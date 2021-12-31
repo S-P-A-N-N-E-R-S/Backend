@@ -6,6 +6,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl.hpp>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include <networking/messages/meta_data.hpp>
@@ -61,8 +62,6 @@ public:
     void handle();
 
 private:
-    void handle_internal(boost::asio::yield_context &yield);
-
     template <typename MESSAGE_TYPE>
     MESSAGE_TYPE read_message(boost::asio::yield_context &yield, size_t len);
 
@@ -87,6 +86,27 @@ private:
     connection_handler &m_handler;
 
     socket_ptr m_sock;
+
+    // === MESSAGE HANDLING ===
+    // Contains information used by the specific message handlers
+    struct handler_context {
+        const server::user &user;
+        database_wrapper &db;
+        const graphs::MetaData &meta;
+    };
+
+    using handler_t =
+        std::function<void(connection *, boost::asio::yield_context &, handler_context)>;
+    using handler_map_t = std::unordered_map<graphs::RequestType, handler_t>;
+
+    void handle_internal(boost::asio::yield_context &yield);
+
+    void handle_available_handlers(boost::asio::yield_context &yield, handler_context ctx);
+    void handle_status(boost::asio::yield_context &yield, handler_context ctx);
+    void handle_result(boost::asio::yield_context &yield, handler_context ctx);
+    void handle_new_job(boost::asio::yield_context &yield, handler_context ctx);
+
+    static const handler_map_t message_handlers;  // Initialized in connection.cpp
 };
 
 }  // namespace server

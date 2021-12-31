@@ -59,6 +59,13 @@ namespace {
     }
 }  // namespace
 
+// Static member must be initialized out-of-class, see e.g.
+// https://www.stroustrup.com/bs_faq2.html#in-class
+const connection::handler_map_t connection::message_handlers{
+    {graphs::RequestType::AVAILABLE_HANDLERS, &connection::handle_available_handlers},
+    {graphs::RequestType::STATUS, &connection::handle_status},
+    {graphs::RequestType::RESULT, &connection::handle_result}};
+
 connection::connection(size_t id, connection_handler &handler, socket_ptr sock)
     : m_identifier{id}
     , m_handler{handler}
@@ -135,96 +142,20 @@ void connection::handle_internal(boost::asio::yield_context &yield)
         throw graphs::ErrorType::UNAUTHORIZED;
     }
 
-    // Reuquest handling
-    const auto type = meta_proto.type();
-    switch (type)
-    {
-        case graphs::RequestType::AVAILABLE_HANDLERS: {
-            respond(yield, meta_data{graphs::RequestType::AVAILABLE_HANDLERS},
-                    response_factory::build_response(available_handlers()));
-            break;
+    const auto it = connection::message_handlers.find(meta_proto.type());
+
+    // Find and use correct handler. If no handler matches, we assume it is a new job.
+    const handler_t message_handler = [it] {
+        if (it == connection::message_handlers.end())
+        {
+            return handler_t{&connection::handle_new_job};
         }
-        case graphs::RequestType::STATUS: {
-            std::vector<job_entry> jobs = database.get_job_entries(user->user_id);
 
-            graphs::StatusResponse status_response;
-            auto respStates = status_response.mutable_states();
+        return it->second;
+    }();
 
-            for (const auto &job : jobs)
-            {
-                respStates->Add(database.get_status_data(job.job_id, user->user_id));
-            }
-
-            auto response = std::make_unique<server::status_response>(std::move(status_response),
-                                                                      status_code::OK);
-
-            respond(yield, meta_data{graphs::RequestType::STATUS},
-                    response_factory::build_response(std::move(response)));
-            break;
-        }
-        case graphs::RequestType::RESULT: {
-            graphs::RequestContainer request_container =
-                read_message<graphs::RequestContainer>(yield, meta_proto.containersize());
-
-            graphs::ResultRequest res_req;
-            if (const bool ok = request_container.request().UnpackTo(&res_req); !ok)
-            {
-                throw graphs::ResponseContainer::INVALID_REQUEST_ERROR;
-            }
-
-            const int job_id = res_req.jobid();
-
-            meta_data job_meta_data = database.get_meta_data(job_id, user->user_id);
-            auto [type, binary_response] = database.get_response_data_raw(job_id, user->user_id);
-
-            // Add latest status information to the algorithm response
-            graphs::ResponseContainer status_container;
-            *(status_container.mutable_statusdata()) =
-                database.get_status_data(job_id, user->user_id);
-            size_t old_len = binary_response.size();
-            binary_response.resize(old_len + status_container.ByteSizeLong());
-            status_container.SerializeToArray(binary_response.data() + old_len,
-                                              binary_response.size());
-
-            respond(yield, job_meta_data, binary_response);
-            break;
-        }
-        default: {
-            namespace io = boost::iostreams;
-
-            std::vector<char> recv_buffer;
-            recv_buffer.resize(meta_proto.containersize());
-            if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
-            {
-                throw graphs::ResponseContainer::READ_ERROR;
-            }
-
-            io::filtering_streambuf<io::input> in_str_buf;
-            in_str_buf.push(io::gzip_decompressor{});
-            in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
-
-            // Copy compressed data into the decompressed buffer
-            std::vector<char> decompressed;
-            decompressed.reserve(recv_buffer.size());
-            decompressed.assign(std::istreambuf_iterator<char>{&in_str_buf}, {});
-            binary_data_view binary(reinterpret_cast<std::byte *>(decompressed.data()),
-                                    decompressed.size());
-
-            int job_id = database.add_job(
-                user->user_id, meta_data{type, meta_proto.handlertype(), meta_proto.jobname()},
-                binary);
-
-            graphs::NewJobResponse new_job_resp;
-            new_job_resp.set_jobid(job_id);
-
-            auto response =
-                std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
-
-            respond(yield, meta_data{graphs::RequestType::NEW_JOB_RESPONSE},
-                    response_factory::build_response(std::move(response)));
-            break;
-        }
-    }
+    // `user` has already been checked to contain a value
+    message_handler(this, yield, handler_context{*user, database, meta_proto});
 }
 
 template <typename MESSAGE_TYPE>
@@ -388,6 +319,92 @@ void connection::direct_write(boost::asio::yield_context &yield, const char *dat
             std::cout << "[CONNECTION] Sent " << bytes_sent << " bytes" << std::endl;
         }
     } while (length > 0);
+}
+
+void connection::handle_available_handlers(boost::asio::yield_context &yield, handler_context ctx)
+{
+    respond(yield, meta_data{graphs::RequestType::AVAILABLE_HANDLERS},
+            response_factory::build_response(available_handlers()));
+}
+
+void connection::handle_status(boost::asio::yield_context &yield, handler_context ctx)
+{
+    std::vector<job_entry> jobs = ctx.db.get_job_entries(ctx.user.user_id);
+
+    graphs::StatusResponse status_response;
+    auto respStates = status_response.mutable_states();
+
+    for (const auto &job : jobs)
+    {
+        respStates->Add(ctx.db.get_status_data(job.job_id, ctx.user.user_id));
+    }
+
+    auto response =
+        std::make_unique<server::status_response>(std::move(status_response), status_code::OK);
+
+    respond(yield, meta_data{graphs::RequestType::STATUS},
+            response_factory::build_response(std::move(response)));
+}
+
+void connection::handle_result(boost::asio::yield_context &yield, handler_context ctx)
+{
+    graphs::RequestContainer request_container =
+        read_message<graphs::RequestContainer>(yield, ctx.meta.containersize());
+
+    graphs::ResultRequest res_req;
+    if (const bool ok = request_container.request().UnpackTo(&res_req); !ok)
+    {
+        throw graphs::ResponseContainer::INVALID_REQUEST_ERROR;
+    }
+
+    const int job_id = res_req.jobid();
+
+    meta_data job_meta_data = ctx.db.get_meta_data(job_id, ctx.user.user_id);
+    auto [type, binary_response] = ctx.db.get_response_data_raw(job_id, ctx.user.user_id);
+
+    // Add latest status information to the algorithm response
+    graphs::ResponseContainer status_container;
+    *(status_container.mutable_statusdata()) = ctx.db.get_status_data(job_id, ctx.user.user_id);
+    size_t old_len = binary_response.size();
+    binary_response.resize(old_len + status_container.ByteSizeLong());
+    status_container.SerializeToArray(binary_response.data() + old_len, binary_response.size());
+
+    respond(yield, job_meta_data, binary_response);
+}
+
+void connection::handle_new_job(boost::asio::yield_context &yield, handler_context ctx)
+{
+    namespace io = boost::iostreams;
+
+    std::vector<char> recv_buffer;
+    recv_buffer.resize(ctx.meta.containersize());
+    if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
+    {
+        throw graphs::ResponseContainer::READ_ERROR;
+    }
+
+    io::filtering_streambuf<io::input> in_str_buf;
+    in_str_buf.push(io::gzip_decompressor{});
+    in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
+
+    // Copy compressed data into the decompressed buffer
+    std::vector<char> decompressed;
+    decompressed.reserve(recv_buffer.size());
+    decompressed.assign(std::istreambuf_iterator<char>{&in_str_buf}, {});
+    binary_data_view binary(reinterpret_cast<std::byte *>(decompressed.data()),
+                            decompressed.size());
+
+    int job_id = ctx.db.add_job(
+        ctx.user.user_id, meta_data{ctx.meta.type(), ctx.meta.handlertype(), ctx.meta.jobname()},
+        binary);
+
+    graphs::NewJobResponse new_job_resp;
+    new_job_resp.set_jobid(job_id);
+
+    auto response = std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
+
+    respond(yield, meta_data{graphs::RequestType::NEW_JOB_RESPONSE},
+            response_factory::build_response(std::move(response)));
 }
 
 }  // namespace server
