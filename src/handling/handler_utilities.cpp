@@ -6,6 +6,21 @@
 
 namespace server {
 
+namespace {
+    void copy_static_attributes(const graphs::RequestContainer &request_container,
+                                graphs::ResponseContainer &response_container)
+    {
+        graphs::GenericRequest proto_request;
+        request_container.request().UnpackTo(&proto_request);
+
+        graphs::GenericResponse proto_response;
+        response_container.response().UnpackTo(&proto_response);
+        *proto_response.mutable_staticattributes() = proto_request.staticattributes();
+
+        response_container.mutable_response()->PackFrom(proto_response);
+    }
+}  // namespace
+
 std::pair<graphs::ResponseContainer, long> handle(const meta_data &meta,
                                                   graphs::RequestContainer &requestData)
 {
@@ -21,12 +36,14 @@ std::pair<graphs::ResponseContainer, long> handle(const meta_data &meta,
             }
 
             auto &factories = handler_utilities::handler_factories();
-
             const auto factory = factories.at(meta.handler_type).get();
-
             auto handler = factory->produce(std::move(request));
 
             response = handler->handle();
+
+            // We need to manually copy over static attributes because we cannot rely on the handler
+            // doing so
+            copy_static_attributes(requestData, std::get<0>(response));
 
             break;
         }
