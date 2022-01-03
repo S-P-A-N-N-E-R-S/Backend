@@ -19,12 +19,6 @@ namespace server {
 
 class connection_handler;
 
-#ifndef SPANNERS_UNENCRYPTED_CONNECTION
-using socket_ptr = std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>;
-#else
-using socket_ptr = std::unique_ptr<boost::asio::ip::tcp::socket>;
-#endif
-
 /**
  * @brief Representaion of a tcp connection communicating with gzip compressed protobuf messages.
  *
@@ -37,6 +31,12 @@ using socket_ptr = std::unique_ptr<boost::asio::ip::tcp::socket>;
 class connection
 {
 public:
+#ifndef SPANNERS_UNENCRYPTED_CONNECTION
+    using socket_ptr = std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>;
+#else
+    using socket_ptr = std::unique_ptr<boost::asio::ip::tcp::socket>;
+#endif
+
     /**
      * @brief Ctor of a connection instance
      * @param id Identifier of the connection in the corresponding <server::connection_handler>.
@@ -61,6 +61,21 @@ public:
     void handle();
 
 private:
+    void handle_internal(boost::asio::yield_context &yield);
+
+    void handle_available_handlers(boost::asio::yield_context &yield);
+
+    void handle_status(boost::asio::yield_context &yield, database_wrapper &db, const user &user);
+
+    void handle_result(boost::asio::yield_context &yield, database_wrapper &db,
+                       const graphs::MetaData &meta, const user &user);
+
+    void handle_new_job(boost::asio::yield_context &yield, database_wrapper &db,
+                        const graphs::MetaData &meta, const user &user);
+
+    template <typename MESSAGE_TYPE>
+    MESSAGE_TYPE read_message(boost::asio::yield_context &yield, size_t len);
+
     template <class Serializable>
     void respond(boost::asio::yield_context &yield, const meta_data &meta_info,
                  const Serializable &container);
