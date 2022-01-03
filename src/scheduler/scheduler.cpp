@@ -45,6 +45,7 @@ scheduler::scheduler(const std::string &exec_path, size_t process_limit,
 scheduler::~scheduler()
 {
     stop_scheduler(true);
+    m_thread.join();
 }
 
 void scheduler::set_time_limit(int64_t time_limit)
