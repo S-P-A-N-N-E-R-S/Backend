@@ -67,7 +67,7 @@ int main(int argc, const char **argv)
     graphs::RequestContainer proto_request_container;
     proto_request_container.mutable_request()->PackFrom(proto_request);
 
-    auto [response_container, time] = server::handle(
+    auto [_, time, response_container] = server::handle(
         server::meta_data{graphs::RequestType::GENERIC, "dijkstra"}, proto_request_container);
 
     graphs::GenericResponse parsed_resp;

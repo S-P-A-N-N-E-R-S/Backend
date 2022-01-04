@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
     auto response = server::handle(meta, request);
 
-    database.add_response(job_id, type, response.first, response.second);
+    database.add_response(job_id, type, response.response_proto, response.ogdf_time);
 
     return process_flags::SUCCESS;
 }

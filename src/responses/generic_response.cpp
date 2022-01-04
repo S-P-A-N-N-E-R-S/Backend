@@ -117,6 +117,7 @@ graphs::GenericResponse generic_response::as_proto()
     *(proto_response.mutable_intattributes()) = std::move(this->m_int_attributes);
     *(proto_response.mutable_doubleattributes()) = std::move(this->m_double_attributes);
     *(proto_response.mutable_graphattributes()) = std::move(this->m_graph_attributes);
+    *(proto_response.mutable_staticattributes()) = std::move(this->m_static_attributes);
 
     return proto_response;
 }
