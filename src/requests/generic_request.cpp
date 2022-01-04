@@ -13,6 +13,8 @@ generic_request::generic_request(const graphs::GenericRequest &proto_request)
     , m_node_costs{}
     , m_graph_attributes{proto_request.graphattributes().begin(),
                          proto_request.graphattributes().end()}
+    , m_static_attributes{proto_request.staticattributes().begin(),
+                          proto_request.staticattributes().end()}
 {
     // --- Parse node and edge costs as well as node coordinates if they were given.
     if (proto_request.vertexcoordinates_size() != 0 &&
@@ -235,6 +237,11 @@ ogdf::EdgeArray<double> generic_request::take_edge_double_attribute(const std::s
 const std::unordered_map<std::string, std::string> &generic_request::graph_attributes() const
 {
     return this->m_graph_attributes;
+}
+
+const std::unordered_map<std::string, std::string> &generic_request::static_attributes() const
+{
+    return this->m_static_attributes;
 }
 
 }  // namespace server

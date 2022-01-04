@@ -40,6 +40,8 @@ public:
 
     const std::unordered_map<std::string, std::string> &graph_attributes() const;
 
+    const std::unordered_map<std::string, std::string> &static_attributes() const;
+
 private:
     template <typename T>
     using AttributeMap = std::unordered_map<std::string, T>;
@@ -57,6 +59,8 @@ private:
     AttributeMap<ogdf::EdgeArray<double>> m_edge_double_attributes;
 
     std::unordered_map<std::string, std::string> m_graph_attributes;
+
+    std::unordered_map<std::string, std::string> m_static_attributes;
 };
 
 }  // namespace server

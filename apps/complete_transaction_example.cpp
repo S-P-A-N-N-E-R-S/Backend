@@ -85,6 +85,7 @@ int main(int argc, const char **argv)
 
             // Hardcoded for testing purposes only
             proto_request.mutable_graphattributes()->operator[]("startUid") = "0";
+            proto_request.mutable_staticattributes()->operator[]("crs") = "foo-crs";
 
             proto_request_container.mutable_request()->PackFrom(proto_request);
         }
@@ -465,5 +466,11 @@ int main(int argc, const char **argv)
 
         std::cout << "parsed graph nof nodes: " << resp.graph().vertexlist_size() << "\n";
         std::cout << "cost of shortest path tree: " << path_cost << "\n";
+
+        std::cout << "entries in static attributes:\n";
+        for (auto it = resp.staticattributes().begin(); it != resp.staticattributes().end(); ++it)
+        {
+            std::cout << it->first << ": " << it->second << "\n";
+        }
     }
 }

@@ -37,6 +37,12 @@ private:
     google::protobuf::Map<std::string, graphs::IntAttributes> m_int_attributes;
     google::protobuf::Map<std::string, graphs::DoubleAttributes> m_double_attributes;
     google::protobuf::Map<std::string, std::string> m_graph_attributes;
+
+    /*
+     * The Protobuf representation `GenericResponse` also contains a `staticAttributes` field.
+     * Since this field is not to meant to be set by the users but rather to be copied straight
+     * from the corresponding request.
+     */
 };
 
 }  // namespace server
