@@ -16,7 +16,7 @@ public:
 
     virtual ~dijkstra_handler() = default;
 
-    virtual std::pair<graphs::ResponseContainer, long> handle() override;
+    virtual handle_return handle() override;
 
     static graphs::HandlerInformation handler_information();
 

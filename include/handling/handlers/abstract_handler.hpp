@@ -9,8 +9,15 @@
 
 namespace server {
 
-// Forward Declaration
-struct resultObject;
+/**
+ * @brief Structure to store information which is returned from handlers and handler utilities
+ * 
+ */
+struct handle_return {
+    std::unique_ptr<abstract_response> response_abstract;
+    long ogdf_time;
+    graphs::ResponseContainer response_proto;
+};
 
 /**
  * @brief Class template for handler classes
@@ -19,7 +26,7 @@ struct resultObject;
 class abstract_handler
 {
 public:
-    virtual std::pair<graphs::ResponseContainer, long> handle() = 0;
+    virtual handle_return handle() = 0;
 
     virtual ~abstract_handler() = default;
 

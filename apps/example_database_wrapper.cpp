@@ -43,7 +43,7 @@ int main(int argc, const char **argv)
         persistence.set_started(next_jobs[0].first);
 
         // Use handler to calculate result
-        auto [response, ogdf_time] = server::handle(job_meta_data, request);
+        auto [_, ogdf_time, response] = server::handle(job_meta_data, request);
 
         std::cout << "5" << std::endl;
 

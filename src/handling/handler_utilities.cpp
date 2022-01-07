@@ -1,31 +1,26 @@
 #include <handling/handler_utilities.hpp>
 #include <handling/handlers/dijkstra_handler.hpp>
 #include <iostream>
+#include <networking/exceptions.hpp>
 #include <networking/requests/request_factory.hpp>
 #include <networking/responses/available_handlers_response.hpp>
+#include <networking/responses/generic_response.hpp>
 
 namespace server {
 
-namespace {
-    void copy_static_attributes(const graphs::RequestContainer &request_container,
-                                graphs::ResponseContainer &response_container)
-    {
-        graphs::GenericRequest proto_request;
-        request_container.request().UnpackTo(&proto_request);
+void copy_static_attributes(const graphs::RequestContainer &request_container,
+                            generic_response &response)
+{
+    graphs::GenericRequest proto_request;
+    request_container.request().UnpackTo(&proto_request);
 
-        graphs::GenericResponse proto_response;
-        response_container.response().UnpackTo(&proto_response);
-        *proto_response.mutable_staticattributes() = proto_request.staticattributes();
+    response.m_static_attributes = proto_request.staticattributes();
+}
 
-        response_container.mutable_response()->PackFrom(proto_response);
-    }
-}  // namespace
-
-std::pair<graphs::ResponseContainer, long> handle(const meta_data &meta,
-                                                  graphs::RequestContainer &requestData)
+handle_return handle(const meta_data &meta, graphs::RequestContainer &requestData)
 {
     auto request = request_factory::build_request(meta.request_type, requestData);
-    std::pair<graphs::ResponseContainer, long> response;
+    handle_return response;
     switch (request->type())
     {
         case request_type::GENERIC: {
@@ -41,16 +36,29 @@ std::pair<graphs::ResponseContainer, long> handle(const meta_data &meta,
 
             response = handler->handle();
 
-            // We need to manually copy over static attributes because we cannot rely on the handler
-            // doing so
-            copy_static_attributes(requestData, std::get<0>(response));
+            if (!response.response_abstract)
+            {
+                throw response_error("response_abstract is nullptr!",
+                                     response_type::UNDEFINED_RESPONSE, meta.handler_type);
+            }
+
+            if (response.response_abstract->type() == response_type::GENERIC)
+            {
+                auto response_generic =
+                    static_cast<generic_response *>(response.response_abstract.get());
+
+                // We need to manually copy over static attributes because we cannot rely on the handler
+                // doing so
+                copy_static_attributes(requestData, *response_generic);
+                response.response_proto =
+                    response_factory::build_response(std::move(response.response_abstract));
+                response.response_abstract = nullptr;
+            }
 
             break;
         }
         default: {
-            //ToDo: Real error handling
-            std::cout << "No valid request Type" << std::endl;
-            break;
+            throw request_parse_error("No matching request type!", request_type::UNDEFINED_REQUEST);
         }
     }
 

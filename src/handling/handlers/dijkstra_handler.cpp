@@ -20,7 +20,7 @@ dijkstra_handler::dijkstra_handler(std::unique_ptr<abstract_request> request)
     m_request = std::unique_ptr<generic_request>{static_cast<generic_request *>(request.release())};
 }
 
-std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
+handle_return dijkstra_handler::handle()
 {
     const auto *graph_message = m_request->graph_message();
     auto &graph = graph_message->graph();
@@ -81,11 +81,10 @@ std::pair<graphs::ResponseContainer, long> dijkstra_handler::handle()
 
     server::graph_message spgm{std::move(spg), std::move(sp_node_uids), std::move(sp_edge_uids)};
 
-    return std::make_pair(
-        response_factory::build_response(std::unique_ptr<abstract_response>{
-            new generic_response{&spgm, &sp_node_coords, &sp_edge_costs, nullptr, nullptr, nullptr,
-                                 nullptr, nullptr, nullptr, status_code::OK}}),
-        ogdf_time);
+    return {std::unique_ptr<abstract_response>{
+                new generic_response{&spgm, &sp_node_coords, &sp_edge_costs, nullptr, nullptr,
+                                     nullptr, nullptr, nullptr, nullptr, status_code::OK}},
+            ogdf_time};
 }
 
 graphs::HandlerInformation dijkstra_handler::handler_information()

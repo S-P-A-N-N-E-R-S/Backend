@@ -14,7 +14,7 @@ public:
 
     kruskal_handler(std::unique_ptr<abstract_request> request);
 
-    virtual std::pair<graphs::ResponseContainer, long> handle() override;
+    virtual handle_return handle() override;
 
 private:
     std::unique_ptr<generic_request> m_request;

@@ -27,6 +27,9 @@ public:
 
     graphs::GenericResponse as_proto();
 
+    friend void copy_static_attributes(const graphs::RequestContainer &request_container,
+                                       generic_response &response);
+
 private:
     graphs::Graph m_proto_graph;
 
@@ -37,12 +40,7 @@ private:
     google::protobuf::Map<std::string, graphs::IntAttributes> m_int_attributes;
     google::protobuf::Map<std::string, graphs::DoubleAttributes> m_double_attributes;
     google::protobuf::Map<std::string, std::string> m_graph_attributes;
-
-    /*
-     * The Protobuf representation `GenericResponse` also contains a `staticAttributes` field.
-     * Since this field is not to meant to be set by the users but rather to be copied straight
-     * from the corresponding request.
-     */
+    google::protobuf::Map<std::string, std::string> m_static_attributes;
 };
 
 }  // namespace server

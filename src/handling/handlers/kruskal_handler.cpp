@@ -47,7 +47,7 @@ kruskal_handler::kruskal_handler(std::unique_ptr<abstract_request> request)
     m_request = std::unique_ptr<generic_request>{static_cast<generic_request *>(request.release())};
 }
 
-std::pair<graphs::ResponseContainer, long> kruskal_handler::handle()
+handle_return kruskal_handler::handle()
 {
     const graph_message *graph_message = m_request->graph_message();
     const ogdf::Graph &og_graph = graph_message->graph();
@@ -84,11 +84,10 @@ std::pair<graphs::ResponseContainer, long> kruskal_handler::handle()
     server::graph_message mst_graph_message{std::move(mst_graph), std::move(mst_node_uids),
                                             std::move(mst_edge_uids)};
 
-    return std::make_pair(
-        response_factory::build_response(std::unique_ptr<abstract_response>{
-            new generic_response{&mst_graph_message, &mst_node_coords, &mst_weights, nullptr,
-                                 nullptr, nullptr, nullptr, nullptr, nullptr, status_code::OK}}),
-        ogdf_time);
+    return {std::unique_ptr<abstract_response>{
+                new generic_response{&mst_graph_message, &mst_node_coords, &mst_weights, nullptr,
+                                     nullptr, nullptr, nullptr, nullptr, nullptr, status_code::OK}},
+            ogdf_time};
 }
 
 }  // namespace server

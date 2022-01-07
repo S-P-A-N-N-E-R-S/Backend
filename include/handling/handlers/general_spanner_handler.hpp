@@ -20,7 +20,7 @@ public:
 
     virtual ~general_spanner_handler() = default;
 
-    virtual std::pair<graphs::ResponseContainer, long> handle() override;
+    virtual handle_return handle() override;
 
     static graphs::HandlerInformation handler_information();
 
@@ -51,7 +51,7 @@ general_spanner_handler<spanner_algorithm>::general_spanner_handler(
 }
 
 template <class spanner_algorithm>
-std::pair<graphs::ResponseContainer, long> general_spanner_handler<spanner_algorithm>::handle()
+handle_return general_spanner_handler<spanner_algorithm>::handle()
 {
     const auto *graph_message = m_request->graph_message();
     auto &graph = graph_message->graph();
@@ -114,11 +114,10 @@ std::pair<graphs::ResponseContainer, long> general_spanner_handler<spanner_algor
     server::graph_message spanner_gm{std::move(spanner), std::move(spanner_node_uids),
                                      std::move(spanner_edge_uids)};
 
-    return std::make_pair(
-        response_factory::build_response(std::unique_ptr<abstract_response>{
-            new generic_response{&spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr,
-                                 nullptr, nullptr, nullptr, nullptr, nullptr, status_code::OK}}),
-        ogdf_time);
+    return {std::unique_ptr<abstract_response>{new generic_response{
+                &spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr, nullptr, nullptr,
+                nullptr, nullptr, nullptr, status_code::OK}},
+            ogdf_time};
 }
 
 template <class spanner_algorithm>
