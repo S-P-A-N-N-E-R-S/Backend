@@ -9,12 +9,12 @@
 namespace server {
 
 void copy_static_attributes(const graphs::RequestContainer &request_container,
-                            generic_response *response)
+                            generic_response &response)
 {
     graphs::GenericRequest proto_request;
     request_container.request().UnpackTo(&proto_request);
 
-    response->m_static_attributes = proto_request.staticattributes();
+    response.m_static_attributes = proto_request.staticattributes();
 }
 
 handle_return handle(const meta_data &meta, graphs::RequestContainer &requestData)
@@ -36,6 +36,12 @@ handle_return handle(const meta_data &meta, graphs::RequestContainer &requestDat
 
             response = handler->handle();
 
+            if (!response.response_abstract)
+            {
+                throw response_error("response_abstract is nullptr!",
+                                     response_type::UNDEFINED_RESPONSE, meta.handler_type);
+            }
+
             if (response.response_abstract->type() == response_type::GENERIC)
             {
                 auto response_generic =
@@ -43,7 +49,7 @@ handle_return handle(const meta_data &meta, graphs::RequestContainer &requestDat
 
                 // We need to manually copy over static attributes because we cannot rely on the handler
                 // doing so
-                copy_static_attributes(requestData, response_generic);
+                copy_static_attributes(requestData, *response_generic);
                 response.response_proto =
                     response_factory::build_response(std::move(response.response_abstract));
                 response.response_abstract = nullptr;

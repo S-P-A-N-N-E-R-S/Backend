@@ -28,7 +28,7 @@ public:
     graphs::GenericResponse as_proto();
 
     friend void copy_static_attributes(const graphs::RequestContainer &request_container,
-                                       generic_response *response);
+                                       generic_response &response);
 
 private:
     graphs::Graph m_proto_graph;
