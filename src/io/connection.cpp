@@ -1,6 +1,5 @@
 #include <networking/io/connection.hpp>
 
-#include <algorithm>
 #include <boost/asio/completion_condition.hpp>
 #include <boost/endian/conversion.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -8,18 +7,14 @@
 #include <iostream>
 #include <iterator>
 #include <string>
-#include <thread>
 #include "argon2.h"
 
 #include <handling/handler_utilities.hpp>
 #include <networking/io/connection_handler.hpp>
+#include <networking/io/request_handling.hpp>
 #include <networking/requests/request_factory.hpp>
-#include <networking/responses/new_job_response.hpp>
-#include <networking/responses/response_factory.hpp>
-#include <networking/responses/status_response.hpp>
 #include <persistence/database_wrapper.hpp>
 #include <persistence/user.hpp>
-
 #include <scheduler/scheduler.hpp>
 
 #include <result.pb.h>
@@ -30,6 +25,13 @@ using boost::asio::transfer_exactly;
 using boost::asio::ip::tcp;
 using boost::asio::ssl::stream;
 using boost::system::error_code;
+using graphs::ErrorMessage;
+using graphs::ErrorType;
+using graphs::MetaData;
+using graphs::RequestContainer;
+using graphs::RequestType;
+using graphs::ResponseContainer;
+using namespace server::request_handling;
 
 namespace server {
 
@@ -81,13 +83,13 @@ void connection::handle()
         {
             handle_internal(yield);
         }
-        catch (graphs::ResponseContainer::StatusCode &error)
+        catch (ResponseContainer::StatusCode &error)
         {
             std::cout << "[ERROR] " << error << '\n';
             respond_error(yield, error);
             return;
         }
-        catch (graphs::ErrorType &error)
+        catch (ErrorType &error)
         {
             std::cout << "[ERROR] " << error << '\n';
             respond_error(yield, error);
@@ -96,7 +98,7 @@ void connection::handle()
         catch (std::exception &ex)
         {
             std::cout << "[ERROR]" << ex.what() << '\n';
-            respond_error(yield, graphs::ResponseContainer::ERROR);
+            respond_error(yield, ResponseContainer::ERROR);
             return;
         }
     });
@@ -108,12 +110,12 @@ void connection::handle_internal(boost::asio::yield_context &yield)
     size_t recv_size;
     if (!direct_read(yield, reinterpret_cast<char *const>(&recv_size), LENGTH_FIELD_SIZE))
     {
-        throw graphs::ResponseContainer::READ_ERROR;
+        throw ResponseContainer::READ_ERROR;
     }
     boost::endian::big_to_native_inplace(recv_size);
 
     // Read and parse meta message
-    graphs::MetaData meta_proto = read_message<graphs::MetaData>(yield, recv_size);
+    MetaData meta_proto = read_message<MetaData>(yield, recv_size);
 
     // TODO: remove hardcoded string with env variables
     // User authentication
@@ -125,145 +127,61 @@ void connection::handle_internal(boost::asio::yield_context &yield)
     if (!user)
     {
         // TODO: Log this incident
-        throw graphs::ErrorType::UNAUTHORIZED;
+        throw ErrorType::UNAUTHORIZED;
     }
 
     if (!check_password(meta_proto.user().password(), user->salt, user->pw_hash))
     {
         // TODO: Log this incident
-        throw graphs::ErrorType::UNAUTHORIZED;
+        throw ErrorType::UNAUTHORIZED;
     }
 
     // Reuquest handling
-    const auto type = meta_proto.type();
-    switch (type)
+    switch (meta_proto.type())
     {
-        case graphs::RequestType::AVAILABLE_HANDLERS: {
-            handle_available_handlers(yield);
+        case RequestType::AVAILABLE_HANDLERS: {
+            auto [response_meta, response] = handle_available_handlers();
+            respond(yield, response_meta, response);
             break;
         }
-        case graphs::RequestType::STATUS: {
-            handle_status(yield, database, *user);
+        case RequestType::STATUS: {
+            auto [response_meta, response] = handle_status(database, *user);
+            respond(yield, response_meta, response);
             break;
         }
-        case graphs::RequestType::RESULT: {
-            handle_result(yield, database, meta_proto, *user);
+        case RequestType::RESULT: {
+            RequestContainer request =
+                read_message<RequestContainer>(yield, meta_proto.containersize());
+
+            auto [response_meta, response] = handle_result(database, meta_proto, request, *user);
+            respond(yield, response_meta, response);
             break;
         }
         default: {
-            handle_new_job(yield, database, meta_proto, *user);
+            std::vector<char> buffer;
+            buffer.resize(meta_proto.containersize());
+            if (!direct_read(yield, buffer.data(), buffer.size()))
+            {
+                throw ResponseContainer::READ_ERROR;
+            }
+
+            auto [response_meta, response] = handle_new_job(database, meta_proto, buffer, *user);
+            respond(yield, response_meta, response);
             break;
         }
     }
-}
-
-void connection::handle_available_handlers(boost::asio::yield_context &yield)
-{
-    respond(yield, meta_data{graphs::RequestType::AVAILABLE_HANDLERS},
-            response_factory::build_response(available_handlers()));
-}
-
-void connection::handle_status(boost::asio::yield_context &yield, database_wrapper &db,
-                               const user &user)
-{
-    std::vector<job_entry> jobs = db.get_job_entries(user.user_id);
-
-    graphs::StatusResponse status_response;
-    auto respStates = status_response.mutable_states();
-
-    for (const auto &job : jobs)
-    {
-        respStates->Add(db.get_status_data(job.job_id, user.user_id));
-    }
-
-    auto response =
-        std::make_unique<server::status_response>(std::move(status_response), status_code::OK);
-
-    respond(yield, meta_data{graphs::RequestType::STATUS},
-            response_factory::build_response(std::move(response)));
-}
-
-void connection::handle_result(boost::asio::yield_context &yield, database_wrapper &db,
-                               const graphs::MetaData &meta, const user &user)
-{
-    graphs::RequestContainer request_container =
-        read_message<graphs::RequestContainer>(yield, meta.containersize());
-
-    graphs::ResultRequest res_req;
-    if (const bool ok = request_container.request().UnpackTo(&res_req); !ok)
-    {
-        throw graphs::ResponseContainer::INVALID_REQUEST_ERROR;
-    }
-
-    const int job_id = res_req.jobid();
-
-    meta_data job_meta_data = db.get_meta_data(job_id, user.user_id);
-    auto [type, binary_response] = db.get_response_data_raw(job_id, user.user_id);
-
-    // Add latest status information to the algorithm response
-    graphs::ResponseContainer status_container;
-    *(status_container.mutable_statusdata()) = db.get_status_data(job_id, user.user_id);
-    size_t old_len = binary_response.size();
-    binary_response.resize(old_len + status_container.ByteSizeLong());
-    status_container.SerializeToArray(binary_response.data() + old_len, binary_response.size());
-
-    respond(yield, job_meta_data, binary_response);
-}
-
-void connection::handle_new_job(boost::asio::yield_context &yield, database_wrapper &db,
-                                const graphs::MetaData &meta, const user &user)
-{
-    namespace io = boost::iostreams;
-
-    std::vector<char> recv_buffer;
-    recv_buffer.resize(meta.containersize());
-    if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
-    {
-        throw graphs::ResponseContainer::READ_ERROR;
-    }
-
-    io::filtering_streambuf<io::input> in_str_buf;
-    in_str_buf.push(io::gzip_decompressor{});
-    in_str_buf.push(io::array_source{recv_buffer.data(), recv_buffer.size()});
-
-    // Copy compressed data into the decompressed buffer
-    std::vector<char> decompressed;
-    decompressed.reserve(recv_buffer.size());
-    decompressed.assign(std::istreambuf_iterator<char>{&in_str_buf}, {});
-    binary_data_view binary(reinterpret_cast<std::byte *>(decompressed.data()),
-                            decompressed.size());
-
-    int job_id = db.add_job(user.user_id,
-                            meta_data{meta.type(), meta.handlertype(), meta.jobname()}, binary);
-
-    graphs::NewJobResponse new_job_resp;
-    new_job_resp.set_jobid(job_id);
-
-    auto response = std::make_unique<new_job_response>(std::move(new_job_resp), status_code::OK);
-
-    respond(yield, meta_data{graphs::RequestType::NEW_JOB_RESPONSE},
-            response_factory::build_response(std::move(response)));
 }
 
 template <typename MESSAGE_TYPE>
 MESSAGE_TYPE connection::read_message(boost::asio::yield_context &yield, size_t len)
 {
-    std::vector<char> recv_buffer;
-    try
-    {
-        recv_buffer.resize(len);
-    }
-    catch (std::bad_alloc &)
-    {
-        throw graphs::ResponseContainer::READ_ERROR;
-    }
-
+    std::vector<char> recv_buffer(len);
     if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
     {
-        throw graphs::ResponseContainer::READ_ERROR;
+        throw ResponseContainer::READ_ERROR;
     }
 
-    if constexpr (!std::is_same_v<MESSAGE_TYPE, graphs::MetaData>)
+    if constexpr (!std::is_same_v<MESSAGE_TYPE, MetaData>)
     {
         // Other messages are compressed using GZIP compression
         namespace io = boost::iostreams;
@@ -277,7 +195,7 @@ MESSAGE_TYPE connection::read_message(boost::asio::yield_context &yield, size_t 
     MESSAGE_TYPE msg;
     if (!msg.ParseFromArray(recv_buffer.data(), recv_buffer.size()))
     {
-        throw graphs::ResponseContainer::PROTO_PARSING_ERROR;
+        throw ResponseContainer::PROTO_PARSING_ERROR;
     }
     return msg;
 }
@@ -288,7 +206,7 @@ void connection::respond(boost::asio::yield_context &yield, const meta_data &met
 {
     namespace io = boost::iostreams;
 
-    graphs::MetaData meta_proto;
+    MetaData meta_proto;
     meta_proto.set_type(meta_info.request_type);
     meta_proto.set_handlertype(meta_info.handler_type);
     meta_proto.set_jobname(meta_info.job_name);
@@ -331,7 +249,7 @@ void connection::respond(boost::asio::yield_context &yield, const meta_data &met
 {
     namespace io = boost::iostreams;
 
-    graphs::MetaData meta_proto;
+    MetaData meta_proto;
     meta_proto.set_type(meta_info.request_type);
     meta_proto.set_handlertype(meta_info.handler_type);
     meta_proto.set_jobname(meta_info.job_name);
@@ -369,18 +287,18 @@ void connection::respond(boost::asio::yield_context &yield, const meta_data &met
 }
 
 void connection::respond_error(boost::asio::yield_context &yield,
-                               graphs::ResponseContainer_StatusCode code)
+                               ResponseContainer::StatusCode code)
 {
-    graphs::ResponseContainer response;
+    ResponseContainer response;
     response.set_status(code);
-    respond(yield, meta_data{graphs::RequestType::ERROR}, response);
+    respond(yield, meta_data{RequestType::ERROR}, response);
 }
 
-void connection::respond_error(boost::asio::yield_context &yield, graphs::ErrorType error_type)
+void connection::respond_error(boost::asio::yield_context &yield, ErrorType error_type)
 {
-    graphs::ErrorMessage msg;
+    ErrorMessage msg;
     msg.set_type(error_type);
-    respond(yield, meta_data{graphs::RequestType::ERROR}, msg);
+    respond(yield, meta_data{RequestType::ERROR}, msg);
 }
 
 bool connection::direct_read(boost::asio::yield_context &yield, char *const data, size_t length)

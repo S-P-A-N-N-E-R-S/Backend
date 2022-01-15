@@ -1,7 +1,6 @@
 #ifndef IO_SERVER_CONNECTION_HPP
 #define IO_SERVER_CONNECTION_HPP
 
-#include <array>
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl.hpp>
@@ -63,16 +62,6 @@ public:
 private:
     void handle_internal(boost::asio::yield_context &yield);
 
-    void handle_available_handlers(boost::asio::yield_context &yield);
-
-    void handle_status(boost::asio::yield_context &yield, database_wrapper &db, const user &user);
-
-    void handle_result(boost::asio::yield_context &yield, database_wrapper &db,
-                       const graphs::MetaData &meta, const user &user);
-
-    void handle_new_job(boost::asio::yield_context &yield, database_wrapper &db,
-                        const graphs::MetaData &meta, const user &user);
-
     template <typename MESSAGE_TYPE>
     MESSAGE_TYPE read_message(boost::asio::yield_context &yield, size_t len);
 
@@ -85,7 +74,7 @@ private:
                  const binary_data &binary);
 
     void respond_error(boost::asio::yield_context &yield,
-                       graphs::ResponseContainer_StatusCode code);
+                       graphs::ResponseContainer::StatusCode code);
     void respond_error(boost::asio::yield_context &yield, graphs::ErrorType error_type);
 
     bool direct_read(boost::asio::yield_context &yield, char *const data, size_t length);
