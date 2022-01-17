@@ -20,6 +20,9 @@ if(OPENSSL_FOUND)
     include_directories(${OPENSSL_INCLUDE_DIR})
 endif(OPENSSL_FOUND)
 
+find_library(PQXX_LIB pqxx REQUIRED)
+find_library(PQ_LIB pq REQUIRED)
+
 # Set up OGDF
 add_subdirectory(lib/ogdf)
 
@@ -41,6 +44,9 @@ add_subdirectory(src)
 
 # Add executable(s)
 add_subdirectory(apps)
+
+# Add CLI tool
+add_subdirectory(spannersctl)
 
 # Build benchmarks, if desired
 if (BUILD_BENCHMARKS)

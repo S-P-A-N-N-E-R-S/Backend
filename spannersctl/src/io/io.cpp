@@ -65,6 +65,5 @@ json io::receive()
     }
 
     return json::parse(resp);
-
 }
 }  // namespace cli
