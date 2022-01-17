@@ -4,6 +4,9 @@
 #include <fstream>
 #include <iostream>
 
+using boost::program_options::variable_value;
+using boost::program_options::variables_map;
+
 namespace server {
 
 config_parser &config_parser::instance()
@@ -59,13 +62,14 @@ void config_parser::set_options()
         add(config_options::DB_TIMEOUT, 10, "database timeout in seconds");
         add(config_options::SCHEDULER_EXEC_PATH, std::string{"./src/handler_process"},
             "absolute path to the handler_process executable");
-        add(config_options::SCHEDULER_PROCESS_LIMIT, 4,
+        add(config_options::SCHEDULER_PROCESS_LIMIT, size_t{4},
             "maximum number of concurrent worker processes allowed by the scheduler");
-        add(config_options::SCHEDULER_TIME_LIMIT, 0, "scheduler time limit in milliseconds");
-        add(config_options::SCHEDULER_RESOURCE_LIMIT, 0,
+        add(config_options::SCHEDULER_TIME_LIMIT, int64_t{0},
+            "scheduler time limit in milliseconds");
+        add(config_options::SCHEDULER_RESOURCE_LIMIT, int64_t{0},
             "scheduler resource limit in bytes (if zero or negative, no resource limits are "
             "enforced)");
-        add(config_options::SCHEDULER_SLEEP, 1000, "scheduler sleep in milliseconds");
+        add(config_options::SCHEDULER_SLEEP, int64_t{1000}, "scheduler sleep in milliseconds");
         add(config_options::TLS_CERT_PATH, std::string{}, "path to signed TLS certificate");
         add(config_options::TLS_KEY_PATH, std::string{}, "path to key file");
     }
@@ -205,6 +209,15 @@ void config_parser::process_generic_options()
 const boost::program_options::variables_map &config()
 {
     return config_parser::instance().m_config_map;
+}
+
+void modify_config(const std::string &key, variable_value new_value)
+{
+    // This cast is valid because boost::program_options::variables_map inherits from
+    // std::map<std::string, boost::program_options::variable_value>
+    auto &mutable_config_map = static_cast<std::map<std::string, variable_value> &>(
+        config_parser::instance().m_config_map);
+    mutable_config_map[key] = std::move(new_value);
 }
 
 const boost::program_options::variable_value &config(const char *option)

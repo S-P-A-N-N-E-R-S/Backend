@@ -18,9 +18,17 @@ int main(int argc, const char **argv)
     std::string connection_string = server::get_db_connection_string();
     server::database_wrapper db(connection_string);
 
-    server::user u1{-1, "user1", to_binary_data("12345"), to_binary_data("sea salt"),
+    server::user u1{-1,
+                    "user1",
+                    to_binary_data("12345"),
+                    to_binary_data("sea salt"),
+                    false,
                     server::user_role::Admin};
-    server::user u2{-1, "user2", to_binary_data("qwert"), to_binary_data("kala namak"),
+    server::user u2{-1,
+                    "user2",
+                    to_binary_data("qwert"),
+                    to_binary_data("kala namak"),
+                    false,
                     server::user_role::User};
 
     db.create_user(u1);

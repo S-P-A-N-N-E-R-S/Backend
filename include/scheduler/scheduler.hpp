@@ -40,31 +40,59 @@ public:
 
     /**
      * @brief Set the time limit in milliseconds. Can be used while scheduler is used in a thread. In this case, every task above time limit is cancelled.
-     * 
+     *
      * @param time_limit If > 0,  this sets the time limit in milliseconds. Otherwise, no time limits are enforced (and possible prior limit is removed)
      */
     void set_time_limit(int64_t time_limit);
 
     /**
+     * @brief Get the current time limit in milliseconds
+     *
+     * @return m_time_limit int64_t
+     */
+    int64_t get_time_limit() const;
+
+    /**
      * @brief Set the memory resource limit in bytes. Can be used while scheduler is used in a thread. In this case, every new task will obey the limit.
-     * 
+     *
      * @param ressource_limit If > 0, this sets the memory resource limit in bytes. Otherwise, no resource limits are enforced (and possible prior limit is removed)
      */
     void set_resource_limit(rlim64_t resource_limit);
 
     /**
+     * @brief Get the current resource limit in milliseconds
+     *
+     * @return m_resource_limit rlim64_t
+     */
+    rlim64_t get_resource_limit() const;
+
+    /**
      * @brief Set the maximum nuber of processes. Can be used while scheduler is used in a thread. In this case, no new processes are spawned while too many processes are active
-     * 
+     *
      * @param process_limit Number of processes to schedule parallel
      */
     void set_process_limit(size_t process_limit);
 
     /**
+     * @brief Get the current process limit in milliseconds
+     *
+     * @return m_process_limit size_t
+     */
+    size_t get_process_limit() const;
+
+    /**
      * @brief Set the waiting intervall between scheduling jobs to minimize while(true) overhead.
-     * 
+     *
      * @param sleep Time to sleep between two scheduling actions in milliseconds.
      */
     void set_sleep(int64_t sleep);
+
+    /**
+     * @brief Get the current sleep intervall in milliseconds
+     *
+     * @return m_sleep int64_t
+     */
+    int64_t get_sleep() const;
 
     /**
      * @brief Starts the scheduler
@@ -72,30 +100,30 @@ public:
     void start();
 
     /**
-     * @brief 
-     * 
+     * @brief
+     *
      * @return true if scheduler runs
      */
     bool running();
 
     /**
      * @brief Stops the scheduler.
-     * 
-     * @param force true: all running jobs are cancelled. false: running jobs are allowed 
+     *
+     * @param force true: all running jobs are cancelled. false: running jobs are allowed
      * to exit normally
      */
     void stop_scheduler(bool force);
 
     /**
-     * @brief Stops execution of a task. If it is already running, terminate it. If not, 
+     * @brief Stops execution of a task. If it is already running, terminate it. If not,
      * change status in database to aborted so that it never gets scheduled
      */
     void cancel_job(int job_id, int user_id);
 
     /**
      * @brief Cancels all running jobs of the user with id user_id. No updates are written into the database
-     * 
-     * @param user_id 
+     *
+     * @param user_id
      */
     void cancel_user_jobs(int user_id);
 
@@ -108,7 +136,7 @@ private:
     int64_t m_time_limit;
     rlim64_t m_resource_limit;
 
-    std::mutex m_mutex;
+    mutable std::mutex m_mutex;
     std::unordered_set<std::unique_ptr<job_process>> m_processes;
 
     std::string m_database_connection_string;

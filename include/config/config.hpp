@@ -63,6 +63,8 @@ public:
     void parse(int argc, const char **argv);
 
     friend const boost::program_options::variables_map &config();
+    friend void modify_config(const std::string &key,
+                              boost::program_options::variable_value new_value);
     friend const boost::program_options::variable_value &config(const char *option);
 
     friend const std::string &get_db_connection_string();
@@ -103,6 +105,14 @@ private:
  * @return Map of key value option pairs. Key represents the option name and value the corresponding value.
  */
 const boost::program_options::variables_map &config();
+
+/**
+ * @brief Modify the value of a config key or create a new entry if not present
+ *
+ * @param key const std::string& representing the key of the config attribute to update
+ * @param new_value boost::program_options::variable_value the new value for the config attribute
+ */
+void modify_config(const std::string &key, boost::program_options::variable_value new_value);
 
 /**
  * @brief Gets a single option

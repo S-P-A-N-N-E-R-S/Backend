@@ -35,8 +35,10 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/kruskal_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/exceptions.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/io_server.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/io/client_server.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/io/management_server.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/connection_handler.hpp
-    ${CMAKE_SOURCE_DIR}/include/networking/io/connection.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/io/client_connection.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/request_handling.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/graph_message.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/node_coordinates.hpp
@@ -72,7 +74,9 @@ set(SERVER_SOURCES
     handling/handlers/dijkstra_handler.cpp
     handling/handlers/kruskal_handler.cpp
     io/io_server.cpp
-    io/connection.cpp
+    io/client_server.cpp
+    io/management_server.cpp
+    io/client_connection.cpp
     io/request_handling.cpp
     messages/graph_message.cpp
     messages/node_coordinates.cpp

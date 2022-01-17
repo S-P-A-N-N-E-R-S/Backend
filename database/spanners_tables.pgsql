@@ -7,6 +7,7 @@ CREATE TABLE users(
     user_name   TEXT NOT NULL UNIQUE,
     pw_hash     BYTEA NOT NULL,
     salt        BYTEA NOT NULL,
+    blocked     BOOLEAN NOT NULL DEFAULT FALSE,
     role        int NOT NULL    -- refers to server::user_role enum
 );
 
@@ -37,7 +38,7 @@ CREATE TABLE jobs(
     status          INT            NOT NULL,
     -- Everything the algorithm printed on stdout (if not terminated)
     stdout_msg      TEXT            NOT NULL DEFAULT '',
-    -- Everything the algorithm printed on stderr (if not terminated) 
+    -- Everything the algorithm printed on stderr (if not terminated)
     error_msg       TEXT            NOT NULL DEFAULT '',
     request_id      INT,
     response_id     INT,

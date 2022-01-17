@@ -11,9 +11,9 @@ scheduler &scheduler::instance()
 {
     static scheduler instance =
         scheduler(config(config_options::SCHEDULER_EXEC_PATH).as<std::string>(),
-                  config(config_options::SCHEDULER_PROCESS_LIMIT).as<int>(),
-                  config(config_options::SCHEDULER_TIME_LIMIT).as<int>(),
-                  config(config_options::SCHEDULER_RESOURCE_LIMIT).as<int>(),
+                  config(config_options::SCHEDULER_PROCESS_LIMIT).as<size_t>(),
+                  config(config_options::SCHEDULER_TIME_LIMIT).as<int64_t>(),
+                  config(config_options::SCHEDULER_RESOURCE_LIMIT).as<int64_t>(),
                   server::get_db_connection_string());
     return instance;
 }
@@ -30,7 +30,7 @@ scheduler::scheduler(const std::string &exec_path, size_t process_limit, int64_t
     , m_thread_started(false)
     , m_thread_halted(false)
     , m_stop(false)
-    , m_sleep(std::chrono::milliseconds(config(config_options::SCHEDULER_SLEEP).as<int>()))
+    , m_sleep(std::chrono::milliseconds(config(config_options::SCHEDULER_SLEEP).as<int64_t>()))
     , m_thread()
 {
     const boost::filesystem::path path{m_exec_path};
@@ -58,11 +58,23 @@ void scheduler::set_time_limit(int64_t time_limit)
     m_time_limit = time_limit;
 }
 
+int64_t scheduler::get_time_limit() const
+{
+    std::lock_guard<std::mutex> lock_g(m_mutex);
+    return m_time_limit;
+}
+
 void scheduler::set_resource_limit(rlim64_t resource_limit)
 {
     std::lock_guard<std::mutex> lock_g(m_mutex);
 
     m_resource_limit = resource_limit;
+}
+
+rlim64_t scheduler::get_resource_limit() const
+{
+    std::lock_guard<std::mutex> lock_g(m_mutex);
+    return m_resource_limit;
 }
 
 void scheduler::set_process_limit(size_t process_limit)
@@ -72,11 +84,23 @@ void scheduler::set_process_limit(size_t process_limit)
     m_process_limit = process_limit;
 }
 
+size_t scheduler::get_process_limit() const
+{
+    std::lock_guard<std::mutex> lock_g(m_mutex);
+    return m_process_limit;
+}
+
 void scheduler::set_sleep(int64_t sleep)
 {
     std::lock_guard<std::mutex> lock_g(m_mutex);
 
     m_sleep = std::chrono::milliseconds(sleep);
+}
+
+int64_t scheduler::get_sleep() const
+{
+    std::lock_guard<std::mutex> lock_g(m_mutex);
+    return m_sleep.count();
 }
 
 void scheduler::start()
