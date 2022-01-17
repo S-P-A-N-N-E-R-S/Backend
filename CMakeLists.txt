@@ -11,7 +11,7 @@ find_package(Protobuf REQUIRED)
 set(PROTO_PATH ${CMAKE_SOURCE_DIR}/lib/protocol/protos)
 
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system filesystem iostreams coroutine program_options)
+find_package(Boost REQUIRED COMPONENTS system filesystem iostreams coroutine program_options json)
 
 # Set up OpenSSL
 find_package(OpenSSL REQUIRED)
