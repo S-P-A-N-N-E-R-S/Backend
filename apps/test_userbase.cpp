@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <config/config.hpp>
 #include <networking/exceptions.hpp>
 #include <persistence/database_wrapper.hpp>
 #include <persistence/user.hpp>
@@ -11,8 +12,10 @@ server::binary_data to_binary_data(const std::string &string)
 
 int main(int argc, const char **argv)
 {
-    std::string connection_string = "host=localhost port=5432 user= spanner_user dbname=spanner_db "
-                                    "password=pwd connect_timeout=10";
+    // Parse configurations
+    server::config_parser::instance().parse(argc, argv);
+
+    std::string connection_string = server::get_db_connection_string();
     server::database_wrapper db(connection_string);
 
     server::user u1{-1, "user1", to_binary_data("12345"), to_binary_data("sea salt"),

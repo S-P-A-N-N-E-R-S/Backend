@@ -1,4 +1,5 @@
 #include <boost/filesystem.hpp>
+#include <config/config.hpp>
 #include <scheduler/process_flags.hpp>
 #include <scheduler/scheduler.hpp>
 #include <stdexcept>
@@ -9,25 +10,27 @@ namespace server {
 scheduler &scheduler::instance()
 {
     static scheduler instance =
-        scheduler("./src/handler_process", 4,
-                  "host=localhost port=5432 user= spanner_user dbname=spanner_db "
-                  "password=pwd connect_timeout=10");
+        scheduler(config(config_options::SCHEDULER_EXEC_PATH).as<std::string>(),
+                  config(config_options::SCHEDULER_PROCESS_LIMIT).as<int>(),
+                  config(config_options::SCHEDULER_TIME_LIMIT).as<int>(),
+                  config(config_options::SCHEDULER_RESOURCE_LIMIT).as<int>(),
+                  server::get_db_connection_string());
     return instance;
 }
 
-scheduler::scheduler(const std::string &exec_path, size_t process_limit,
-                     const std::string &database_connection)
+scheduler::scheduler(const std::string &exec_path, size_t process_limit, int64_t time_limit,
+                     rlim64_t resource_limit, const std::string &database_connection)
     : m_exec_path(exec_path)
     , m_process_limit(process_limit)
-    , m_time_limit(0)
-    , m_resource_limit(0)
+    , m_time_limit(time_limit)
+    , m_resource_limit(resource_limit)
     , m_processes(0)
     , m_database_connection_string(database_connection)
     , m_database(database_connection)
     , m_thread_started(false)
     , m_thread_halted(false)
     , m_stop(false)
-    , m_sleep(std::chrono::milliseconds(1000))
+    , m_sleep(std::chrono::milliseconds(config(config_options::SCHEDULER_SLEEP).as<int>()))
     , m_thread()
 {
     const boost::filesystem::path path{m_exec_path};

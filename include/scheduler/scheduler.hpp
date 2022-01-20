@@ -100,8 +100,8 @@ public:
     void cancel_user_jobs(int user_id);
 
 private:
-    scheduler(const std::string &exec_path, size_t process_limit,
-              const std::string &database_connection);
+    scheduler(const std::string &exec_path, size_t process_limit, int64_t time_limit,
+              rlim64_t resource_limit, const std::string &database_connection);
 
     std::string m_exec_path;
     size_t m_process_limit;

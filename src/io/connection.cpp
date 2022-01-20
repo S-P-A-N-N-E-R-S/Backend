@@ -9,6 +9,7 @@
 #include <string>
 #include "argon2.h"
 
+#include <config/config.hpp>
 #include <handling/handler_utilities.hpp>
 #include <networking/io/connection_handler.hpp>
 #include <networking/io/request_handling.hpp>
@@ -117,10 +118,8 @@ void connection::handle_internal(boost::asio::yield_context &yield)
     // Read and parse meta message
     MetaData meta_proto = read_message<MetaData>(yield, recv_size);
 
-    // TODO: remove hardcoded string with env variables
     // User authentication
-    std::string connection_string = "host=localhost port=5432 user=spanner_user dbname=spanner_db "
-                                    "password=pwd connect_timeout=10";
+    std::string connection_string = server::get_db_connection_string();
     database_wrapper database(connection_string);
 
     const auto user = database.get_user(meta_proto.user().name());
