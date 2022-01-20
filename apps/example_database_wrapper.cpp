@@ -4,6 +4,7 @@
 #include <ogdf/basic/graph_generators.h>
 #include <ogdf/graphalg/Dijkstra.h>
 
+#include <config/config.hpp>
 #include <handling/handler_utilities.hpp>
 #include <networking/messages/graph_message.hpp>
 #include <networking/messages/meta_data.hpp>
@@ -16,8 +17,10 @@ server::binary_data generate_random_dijkstra(unsigned int seed, int n, int m);
 
 int main(int argc, const char **argv)
 {
-    std::string connection_string = "host=localhost port=5432 user= spanner_user dbname=spanner_db "
-                                    "password=pwd connect_timeout=10";
+    // Parse configurations
+    server::config_parser::instance().parse(argc, argv);
+
+    std::string connection_string = server::get_db_connection_string();
     auto data = generate_random_dijkstra(123, 100, 1000);
     std::cout << "add_job:" << std::endl;
     server::database_wrapper persistence(connection_string);
