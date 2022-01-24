@@ -8,11 +8,11 @@
 #include <ogdf/graphalg/SpannerBerman.h>
 #include <handling/handlers/general_spanner_handler.hpp>
 
-#include <handling/handlers/kruskal_handler.hpp>
 #include <handling/handlers/connectivity_handler.hpp>
 #include <handling/handlers/diameter_handler.hpp>
 #include <handling/handlers/fragility_handler.hpp>
 #include <handling/handlers/girth_handler.hpp>
+#include <handling/handlers/kruskal_handler.hpp>
 #include <handling/handlers/radius_handler.hpp>
 
 // #####   add your own handler includes below   #####
