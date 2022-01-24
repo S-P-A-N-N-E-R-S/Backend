@@ -32,6 +32,8 @@ graphs::HandlerInformation kruskal_handler::handler_information()
     addResultInformation(information,
                          graphs::ResultInformation_HandlerReturnType_VERTEX_COORDINATES,
                          "vertexCoordinates");
+    addResultInformation(information, graphs::ResultInformation_HandlerReturnType_DOUBLE,
+                         "totalWeight", "Total weight");
 
     return information;
 }
@@ -76,17 +78,19 @@ handle_return kruskal_handler::handle()
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    ogdf::makeMinimumSpanningTree<double>(*mst_graph, mst_weights);
+    const auto total_weight = ogdf::makeMinimumSpanningTree<double>(*mst_graph, mst_weights);
 
     auto stop = std::chrono::high_resolution_clock::now();
     long ogdf_time = (std::chrono::duration_cast<std::chrono::microseconds>(stop - start)).count();
 
+    server::generic_response::attribute_map<std::string> graph_attributes;
+    graph_attributes["totalWeight"] = std::to_string(total_weight);
     server::graph_message mst_graph_message{std::move(mst_graph), std::move(mst_node_uids),
                                             std::move(mst_edge_uids)};
 
-    return {std::unique_ptr<abstract_response>{
-                new generic_response{&mst_graph_message, &mst_node_coords, &mst_weights, nullptr,
-                                     nullptr, nullptr, nullptr, nullptr, nullptr, status_code::OK}},
+    return {std::unique_ptr<abstract_response>{new generic_response{
+                &mst_graph_message, &mst_node_coords, &mst_weights, nullptr, nullptr, nullptr,
+                nullptr, nullptr, &graph_attributes, status_code::OK}},
             ogdf_time};
 }
 

@@ -9,6 +9,11 @@
 #include <handling/handlers/general_spanner_handler.hpp>
 
 #include <handling/handlers/kruskal_handler.hpp>
+#include <handling/handlers/connectivity_handler.hpp>
+#include <handling/handlers/diameter_handler.hpp>
+#include <handling/handlers/fragility_handler.hpp>
+#include <handling/handlers/girth_handler.hpp>
+#include <handling/handlers/radius_handler.hpp>
 
 // #####   add your own handler includes below   #####
 
@@ -33,6 +38,11 @@ void init_handlers()
     register_handler<general_spanner_handler<ogdf::SpannerBasicGreedy<double>>>("spanner");
 
     register_handler<kruskal_handler>("Minimum Spanning Trees");
+    register_handler<fragility_handler>("utils");
+    register_handler<radius_handler>("utils");
+    register_handler<diameter_handler>("utils");
+    register_handler<girth_handler>("utils");
+    register_handler<connectivity_handler>("utils");
 
     // #####   register your own handlers below  #####
 
