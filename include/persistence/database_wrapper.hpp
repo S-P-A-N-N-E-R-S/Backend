@@ -63,6 +63,15 @@ public:
     int add_job(int user_id, const meta_data &meta, binary_data_view binary);
 
     /**
+     * @brief Deletes a finished job
+     *
+     * @param job_id The ID of the job which should be deleted.
+     * @param user_id Id of the user in the database
+     * @return true if a finished job with job_id was found, else if not.
+     */
+    bool delete_job(int job_id, int user_id);
+
+    /**
      * Sets the status of a job to 'waiting', 'in progress', 'finished' or 'aborted'.
      * @param job_id The ID of the job where the status should be changed.
      * @param status A status.

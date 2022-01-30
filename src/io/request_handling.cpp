@@ -7,10 +7,15 @@
 #include <networking/responses/new_job_response.hpp>
 #include <networking/responses/response_factory.hpp>
 #include <networking/responses/status_response.hpp>
+#include <scheduler/scheduler.hpp>
 
+#include "abort_job.pb.h"
+#include "delete_job.pb.h"
 #include "new_job_response.pb.h"
 #include "result.pb.h"
 
+using graphs::AbortJobRequest;
+using graphs::DeleteJobRequest;
 using graphs::MetaData;
 using graphs::NewJobResponse;
 using graphs::RequestContainer;
@@ -71,6 +76,42 @@ namespace request_handling {
         status_container.SerializeToArray(binary_response.data() + old_len, binary_response.size());
 
         return std::pair{job_meta_data, binary_response};
+    }
+
+    handled_request handle_abort_job(const RequestContainer &request, const user &user)
+    {
+        AbortJobRequest res_req;
+        if (const bool ok = request.request().UnpackTo(&res_req); !ok)
+        {
+            throw ResponseContainer::INVALID_REQUEST_ERROR;
+        }
+
+        const int job_id = res_req.jobid();
+        scheduler::instance().cancel_job(job_id, user.user_id);
+
+        graphs::ResponseContainer response;
+        response.set_status(graphs::ResponseContainer::OK);
+        return handled_request{meta_data{RequestType::ABORT_JOB}, response};
+    }
+
+    handled_request handle_delete_job(database_wrapper &db, const RequestContainer &request,
+                                      const user &user)
+    {
+        DeleteJobRequest res_req;
+        if (const bool ok = request.request().UnpackTo(&res_req); !ok)
+        {
+            throw ResponseContainer::INVALID_REQUEST_ERROR;
+        }
+
+        const int job_id = res_req.jobid();
+        if (!db.delete_job(job_id, user.user_id))
+        {
+            throw ResponseContainer::ERROR;
+        }
+
+        graphs::ResponseContainer response;
+        response.set_status(graphs::ResponseContainer::OK);
+        return handled_request{meta_data{RequestType::ABORT_JOB}, response};
     }
 
     handled_request handle_new_job(database_wrapper &db, const MetaData &meta,

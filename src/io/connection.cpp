@@ -156,6 +156,22 @@ void connection::handle_internal(boost::asio::yield_context &yield)
             respond(yield, response_meta, response);
             break;
         }
+        case RequestType::ABORT_JOB: {
+            RequestContainer request =
+                read_message<RequestContainer>(yield, meta_proto.containersize());
+
+            auto [response_meta, response] = handle_abort_job(request, *user);
+            respond(yield, response_meta, response);
+            break;
+        }
+        case RequestType::DELETE_JOB: {
+            RequestContainer request =
+                read_message<RequestContainer>(yield, meta_proto.containersize());
+
+            auto [response_meta, response] = handle_delete_job(database, request, *user);
+            respond(yield, response_meta, response);
+            break;
+        }
         default: {
             std::vector<char> buffer;
             buffer.resize(meta_proto.containersize());
