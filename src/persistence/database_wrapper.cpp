@@ -91,6 +91,35 @@ int database_wrapper::add_job(int user_id, const meta_data &meta, binary_data_vi
     return job_id;
 }
 
+bool database_wrapper::delete_job(int job_id, int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+
+    pqxx::result rows =
+        txn.exec_params("SELECT * FROM jobs WHERE job_id=$1 AND user_id=$2", job_id, user_id);
+
+    if (rows.size() != 1)
+    {
+        return false;
+    }
+
+    job_entry job = job_entry(rows[0]);
+    // Don't delete waiting and running jobs
+    if (job.status == graphs::StatusType::WAITING || job.status == graphs::StatusType::RUNNING)
+    {
+        return false;
+    }
+
+    scheduler::instance().cancel_job(job_id, user_id);
+
+    txn.exec_params0("DELETE FROM jobs WHERE job_id=$1 AND user_id=$2", job_id, user_id);
+
+    txn.commit();
+    return true;
+}
+
 void database_wrapper::set_status(int job_id, graphs::StatusType status)
 {
     check_connection();

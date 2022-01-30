@@ -51,6 +51,26 @@ namespace request_handling {
                                                     const user &user);
 
     /**
+     * @brief Creates response to requests for job abort
+     *
+     * @param request Constant reference to the data container of the handled request
+     * @param user Constant reference to a user struct to only query for one users jobs
+     * @return handled_request containing the meta data and the response
+     */
+    handled_request handle_abort_job(const graphs::RequestContainer &request, const user &user);
+
+    /**
+     * @brief Creates response to requests for job delete
+     *
+     * @param db Reference to a database connection to get the status information from
+     * @param request Constant reference to the data container of the handled request
+     * @param user Constant reference to a user struct to only query for one users jobs
+     * @return handled_request containing the meta data and the response
+     */
+    handled_request handle_delete_job(database_wrapper &db, const graphs::RequestContainer &request,
+                                      const user &user);
+
+    /**
      * @brief Creates response for results asking to create a new job
      *
      * @param db Reference to a database connection to get the status information from
