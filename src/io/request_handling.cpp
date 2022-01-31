@@ -3,6 +3,7 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 
+#include <auth/auth_utils.hpp>
 #include <handling/handler_utilities.hpp>
 #include <networking/responses/new_job_response.hpp>
 #include <networking/responses/response_factory.hpp>
@@ -11,11 +12,13 @@
 
 #include "abort_job.pb.h"
 #include "delete_job.pb.h"
+#include "error.pb.h"
 #include "new_job_response.pb.h"
 #include "result.pb.h"
 
 using graphs::AbortJobRequest;
 using graphs::DeleteJobRequest;
+using graphs::ErrorType;
 using graphs::MetaData;
 using graphs::NewJobResponse;
 using graphs::RequestContainer;
@@ -141,6 +144,30 @@ namespace request_handling {
 
         return handled_request{meta_data{RequestType::NEW_JOB_RESPONSE},
                                response_factory::build_response(std::move(response))};
+    }
+
+    handled_request handle_user_creation(database_wrapper &db, const graphs::MetaData &meta)
+    {
+        // Create user data for new user
+        user user_data{};
+        user_data.name = meta.user().name();
+        user_data.role = user_role::User;
+
+        // Get password hash and used salt
+        if (!auth_utils::hash_password(meta.user().password(), user_data.pw_hash, user_data.salt))
+        {
+            throw ErrorType::USER_CREATION;
+        }
+
+        if (!db.create_user(user_data))
+        {
+            throw ErrorType::USER_CREATION;
+        }
+
+        ResponseContainer res;
+        res.set_status(ResponseContainer::OK);
+
+        return handled_request{meta_data{RequestType::CREATE_USER}, res};
     }
 
 }  // namespace request_handling

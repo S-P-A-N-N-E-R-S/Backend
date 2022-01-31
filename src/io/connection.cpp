@@ -9,6 +9,7 @@
 #include <string>
 #include "argon2.h"
 
+#include <auth/auth_utils.hpp>
 #include <config/config.hpp>
 #include <handling/handler_utilities.hpp>
 #include <networking/io/connection_handler.hpp>
@@ -38,28 +39,6 @@ namespace server {
 
 namespace {
     constexpr int LENGTH_FIELD_SIZE = 8;
-
-    bool check_password(const std::string &password, const server::binary_data &salt,
-                        const server::binary_data &correct_hash)
-    {
-        static constexpr const size_t HASH_LENGTH = 32;
-        static constexpr const uint32_t PASSES = 2;
-        static constexpr const uint32_t MEM_USE = (1 << 16);  // 64 MB
-        static constexpr const uint32_t THREADS = 1;
-
-        server::binary_data cur_hash(HASH_LENGTH, std::byte{0});
-
-        if (const int result =
-                argon2id_hash_raw(PASSES, MEM_USE, THREADS, password.c_str(), password.length(),
-                                  salt.data(), salt.length(), cur_hash.data(), cur_hash.length());
-            result != ARGON2_OK)
-        {
-            // TODO: What to do if result != ARGON2_OK? At least log this somewhere.
-            return false;
-        }
-
-        return (cur_hash == correct_hash);
-    }
 }  // namespace
 
 connection::connection(size_t id, connection_handler &handler, socket_ptr sock)
@@ -96,9 +75,15 @@ void connection::handle()
             respond_error(yield, error);
             return;
         }
+        catch (graphs::ErrorMessage &error)
+        {
+            std::cout << "[ERROR] " << error.type() << '\n';
+            respond(yield, meta_data{graphs::RequestType::ERROR}, error);
+            return;
+        }
         catch (std::exception &ex)
         {
-            std::cout << "[ERROR]" << ex.what() << '\n';
+            std::cout << "[ERROR] " << ex.what() << '\n';
             respond_error(yield, ResponseContainer::ERROR);
             return;
         }
@@ -125,11 +110,31 @@ void connection::handle_internal(boost::asio::yield_context &yield)
     const auto user = database.get_user(meta_proto.user().name());
     if (!user)
     {
-        // TODO: Log this incident
-        throw ErrorType::UNAUTHORIZED;
+        // Check if user creation or unauthorized user
+        if (meta_proto.type() == RequestType::CREATE_USER)
+        {
+            // If the user is unknown and the request type is USER_CREATION create new user
+            auto [response_meta, response] = handle_user_creation(database, meta_proto);
+            respond(yield, response_meta, response);
+            return;
+        }
+        else
+        {
+            // TODO: Log this incident
+            throw ErrorType::UNAUTHORIZED;
+        }
+    }
+    else if (meta_proto.type() == RequestType::CREATE_USER)
+    {
+        // Do not allow user creation if a existing user with the same name is found
+        ErrorMessage error;
+        error.set_type(ErrorType::USER_CREATION);
+        error.set_message("User already exists.");
+        throw error;
     }
 
-    if (!check_password(meta_proto.user().password(), user->salt, user->pw_hash))
+    // Check login credentials
+    if (!auth_utils::check_password(meta_proto.user().password(), user->salt, user->pw_hash))
     {
         // TODO: Log this incident
         throw ErrorType::UNAUTHORIZED;
@@ -138,6 +143,12 @@ void connection::handle_internal(boost::asio::yield_context &yield)
     // Reuquest handling
     switch (meta_proto.type())
     {
+        case RequestType::AUTH: {
+            ResponseContainer response;
+            response.set_status(ResponseContainer::OK);
+            respond(yield, meta_data{RequestType::AUTH}, response);
+            break;
+        }
         case RequestType::AVAILABLE_HANDLERS: {
             auto [response_meta, response] = handle_available_handlers();
             respond(yield, response_meta, response);
