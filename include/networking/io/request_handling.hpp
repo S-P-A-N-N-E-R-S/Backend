@@ -82,6 +82,15 @@ namespace request_handling {
     handled_request handle_new_job(database_wrapper &db, const graphs::MetaData &meta,
                                    const std::vector<char> &buffer, const user &user);
 
+    /**
+     * @brief Creates response for a user creation request
+     *
+     * @param db Reference to a database connection to get the status information from
+     * @param meta Constant reference to the requests meta data
+     * @return handled_request containing the meta data and the response
+     */
+    handled_request handle_user_creation(database_wrapper &db, const graphs::MetaData &meta);
+
 }  // namespace request_handling
 
 }  // namespace server

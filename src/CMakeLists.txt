@@ -60,6 +60,7 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/persistence/user.hpp
     ${CMAKE_SOURCE_DIR}/include/scheduler/process_flags.hpp
     ${CMAKE_SOURCE_DIR}/include/scheduler/scheduler.hpp
+    ${CMAKE_SOURCE_DIR}/include/auth/auth_utils.hpp
 )
 
 set(SERVER_SOURCES
@@ -88,6 +89,7 @@ set(SERVER_SOURCES
     requests/shortest_path_request.cpp
     requests/request_factory.cpp
     scheduler/scheduler.cpp
+    auth/auth_utils.cpp
 )
 
 set(server_files

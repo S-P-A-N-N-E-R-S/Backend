@@ -378,7 +378,8 @@ bool database_wrapper::create_user(user &u)
     }
 
     auto row_request = txn.exec_params1("INSERT INTO users (user_name, pw_hash, salt, role) VALUES "
-                                        "($1, $2, $3, $4) RETURNING user_id",
+                                        "($1, decode(encode($2,'HEX'),'HEX'), "
+                                        "decode(encode($3,'HEX'),'HEX'), $4) RETURNING user_id",
                                         u.name, u.pw_hash, u.salt, static_cast<int>(u.role));
 
     if (!(row_request[0] >> u.user_id))
