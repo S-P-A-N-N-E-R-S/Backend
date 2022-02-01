@@ -9,6 +9,7 @@
 #include <handling/handlers/general_spanner_handler.hpp>
 
 #include <handling/handlers/kruskal_handler.hpp>
+#include <handling/handlers/simplification_handler.hpp>
 
 // #####   add your own handler includes below   #####
 
@@ -33,6 +34,7 @@ void init_handlers()
     register_handler<general_spanner_handler<ogdf::SpannerBasicGreedy<double>>>("spanner");
 
     register_handler<kruskal_handler>("Minimum Spanning Trees");
+    register_handler<simplification_handler>();
 
     // #####   register your own handlers below  #####
 

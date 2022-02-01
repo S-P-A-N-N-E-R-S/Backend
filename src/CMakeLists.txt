@@ -71,6 +71,7 @@ set(SERVER_SOURCES
     handling/handlers/abstract_handler.cpp
     handling/handlers/dijkstra_handler.cpp
     handling/handlers/kruskal_handler.cpp
+    handling/handlers/simplification_handler.cpp
     io/io_server.cpp
     io/connection.cpp
     io/request_handling.cpp
