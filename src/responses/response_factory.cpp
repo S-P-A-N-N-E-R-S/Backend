@@ -3,6 +3,7 @@
 #include "networking/responses/available_handlers_response.hpp"
 #include "networking/responses/generic_response.hpp"
 #include "networking/responses/new_job_response.hpp"
+#include "networking/responses/origin_graph_response.hpp"
 #include "networking/responses/shortest_path_response.hpp"
 #include "networking/responses/status_response.hpp"
 
@@ -123,6 +124,17 @@ namespace response_factory {
                 auto new_job_response_graphs = new_job_response->take_new_job_response();
                 const bool ok =
                     proto_container.mutable_response()->PackFrom(new_job_response_graphs);
+                if (!ok)
+                {
+                    proto_container.set_status(to_proto_status(status_code::ERROR));
+                    return proto_container;
+                }
+            }
+            break;
+            case response_type::ORIGIN_GRAPH: {
+                auto *ogr = static_cast<server::origin_graph_response *>(response.get());
+                auto origin_graph_response = ogr->take_origin_graph_response();
+                const bool ok = proto_container.mutable_response()->PackFrom(origin_graph_response);
                 if (!ok)
                 {
                     proto_container.set_status(to_proto_status(status_code::ERROR));

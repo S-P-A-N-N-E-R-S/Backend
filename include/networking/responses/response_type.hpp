@@ -10,7 +10,8 @@ enum class response_type {
     GENERIC = graphs::RequestType::GENERIC,
     AVAILABLE_HANDLERS = graphs::RequestType::AVAILABLE_HANDLERS,
     NEW_JOB = graphs::RequestType::NEW_JOB_RESPONSE,
-    STATUS = graphs::RequestType::STATUS
+    STATUS = graphs::RequestType::STATUS,
+    ORIGIN_GRAPH = graphs::RequestType::ORIGIN_GRAPH
 };
 
 }  // namespace server

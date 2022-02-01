@@ -5,7 +5,9 @@
 
 #include <auth/auth_utils.hpp>
 #include <handling/handler_utilities.hpp>
+#include <networking/requests/generic_request.hpp>
 #include <networking/responses/new_job_response.hpp>
+#include <networking/responses/origin_graph_response.hpp>
 #include <networking/responses/response_factory.hpp>
 #include <networking/responses/status_response.hpp>
 #include <scheduler/scheduler.hpp>
@@ -14,6 +16,7 @@
 #include "delete_job.pb.h"
 #include "error.pb.h"
 #include "new_job_response.pb.h"
+#include "origin_graph.pb.h"
 #include "result.pb.h"
 
 using graphs::AbortJobRequest;
@@ -21,6 +24,8 @@ using graphs::DeleteJobRequest;
 using graphs::ErrorType;
 using graphs::MetaData;
 using graphs::NewJobResponse;
+using graphs::OriginGraphRequest;
+using graphs::OriginGraphResponse;
 using graphs::RequestContainer;
 using graphs::RequestType;
 using graphs::ResponseContainer;
@@ -168,6 +173,42 @@ namespace request_handling {
         res.set_status(ResponseContainer::OK);
 
         return handled_request{meta_data{RequestType::CREATE_USER}, res};
+    }
+
+    handled_request handle_origin_graph(database_wrapper &db, const RequestContainer &request,
+                                        const user &user)
+    {
+        OriginGraphRequest req;
+        if (const bool ok = request.request().UnpackTo(&req); !ok)
+        {
+            throw ResponseContainer::INVALID_REQUEST_ERROR;
+        }
+
+        const int job_id = req.jobid();
+
+        auto [type, job_container] = db.get_request_data(job_id, user.user_id);
+
+        // Only generic requests are supported
+        graphs::GenericRequest job_request;
+        if (const bool ok = job_container.request().UnpackTo(&job_request); !ok)
+        {
+            throw ResponseContainer::ERROR;
+        }
+
+        // Copy job request graph content to response
+        OriginGraphResponse origin_graph_resp;
+        origin_graph_resp.mutable_graph()->Swap(job_request.release_graph());
+        origin_graph_resp.mutable_vertexcoordinates()->Swap(
+            job_request.mutable_vertexcoordinates());
+        origin_graph_resp.mutable_edgecosts()->Swap(job_request.mutable_edgecosts());
+        origin_graph_resp.mutable_vertexcosts()->Swap(job_request.mutable_vertexcosts());
+        origin_graph_resp.mutable_staticattributes()->swap(*job_request.mutable_staticattributes());
+
+        auto response =
+            std::make_unique<origin_graph_response>(std::move(origin_graph_resp), status_code::OK);
+
+        return handled_request{meta_data{RequestType::ORIGIN_GRAPH},
+                               response_factory::build_response(std::move(response))};
     }
 
 }  // namespace request_handling

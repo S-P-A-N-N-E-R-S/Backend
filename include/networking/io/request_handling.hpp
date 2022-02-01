@@ -91,6 +91,17 @@ namespace request_handling {
      */
     handled_request handle_user_creation(database_wrapper &db, const graphs::MetaData &meta);
 
+    /**
+     * @brief Creates response to requests for fetching job origin graph
+     *
+     * @param db Reference to a database connection to get the status information from
+     * @param request Constant reference to the data container of the handled request
+     * @param user Constant reference to a user struct to only query for one users jobs
+     * @return handled_request containing the meta data and the response
+     */
+    handled_request handle_origin_graph(database_wrapper &db,
+                                        const graphs::RequestContainer &request, const user &user);
+
 }  // namespace request_handling
 
 }  // namespace server
