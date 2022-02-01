@@ -47,6 +47,7 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/networking/responses/shortest_path_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/status_code.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/new_job_response.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/responses/origin_graph_response.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/response_factory.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/response_type.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/responses/status_response.hpp
@@ -82,6 +83,7 @@ set(SERVER_SOURCES
     responses/generic_response.cpp
     responses/shortest_path_response.cpp
     responses/new_job_response.cpp
+    responses/origin_graph_response.cpp
     responses/response_factory.cpp
     responses/status_response.cpp
     requests/abstract_request.cpp

@@ -183,6 +183,14 @@ void connection::handle_internal(boost::asio::yield_context &yield)
             respond(yield, response_meta, response);
             break;
         }
+        case RequestType::ORIGIN_GRAPH: {
+            RequestContainer request =
+                read_message<RequestContainer>(yield, meta_proto.containersize());
+
+            auto [response_meta, response] = handle_origin_graph(database, request, *user);
+            respond(yield, response_meta, response);
+            break;
+        }
         default: {
             std::vector<char> buffer;
             buffer.resize(meta_proto.containersize());
