@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include <boost/json.hpp>
+#include <nlohmann/json.hpp>
 
 namespace cli {
 namespace util {
-    void print(std::ostream &os, boost::json::value const &jv, std::string *indent = nullptr);
+    void print(std::ostream &os, nlohmann::json const &jv);
 }  // namespace util
 }  // namespace cli

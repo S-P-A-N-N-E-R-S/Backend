@@ -44,9 +44,9 @@ job_entry::job_entry(const pqxx::row &db_row)
     response_id = (db_row[12].is_null()) ? -1 : db_row[12].as<int>();
 }
 
-boost::json::object job_entry::to_json() const
+nlohmann::json job_entry::to_json() const
 {
-    boost::json::object json_job{};
+    nlohmann::json json_job{};
     json_job["id"] = job_id;
     json_job["name"] = job_name;
     json_job["handler_type"] = handler_type;
@@ -293,7 +293,7 @@ std::optional<job_entry> database_wrapper::get_job_entry(int job_id, int user_id
     return job_entry{result[0]};
 }
 
-std::optional<job_entry> database_wrapper::get_job_entry(const std::string &job_name, int user_id)
+std::optional<job_entry> database_wrapper::get_job_entry(std::string_view job_name, int user_id)
 {
     check_connection();
 
@@ -437,17 +437,17 @@ graphs::StatusSingle database_wrapper::get_status_data(int job_id, int user_id)
     status_single.set_ogdfruntime(job->ogdf_runtime);
 
     // This is never supposed to be empty but we would rather be safe here
-    if (job->time_received != "")
+    if (!job->time_received.empty())
     {
         google::protobuf::util::TimeUtil::FromString(job->time_received,
                                                      status_single.mutable_timereceived());
     }
-    if (job->starting_time != "")
+    if (!job->starting_time.empty())
     {
         google::protobuf::util::TimeUtil::FromString(job->starting_time,
                                                      status_single.mutable_startingtime());
     }
-    if (job->end_time != "")
+    if (!job->end_time.empty())
     {
         google::protobuf::util::TimeUtil::FromString(job->end_time,
                                                      status_single.mutable_endtime());
@@ -486,7 +486,7 @@ bool database_wrapper::create_user(user &u)
     return true;
 }
 
-std::vector<user> database_wrapper::get_all_user()
+std::vector<user> database_wrapper::get_all_users()
 {
     check_connection();
 
@@ -618,7 +618,7 @@ bool database_wrapper::change_user_auth(int user_id, const std::string &pw_hash,
     return true;
 }
 
-bool database_wrapper::block_user(int user_id, bool blocked)
+bool database_wrapper::set_user_blocked(int user_id, bool blocked)
 {
     check_connection();
 

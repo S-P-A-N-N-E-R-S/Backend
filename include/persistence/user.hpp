@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/json.hpp>
+#include <nlohmann/json.hpp>
 #include <pqxx/pqxx>
 #include <string>
 
@@ -27,15 +27,7 @@ struct user {
     bool blocked;
     user_role role;
 
-    boost::json::object to_json() const
-    {
-        boost::json::object json_user{};
-        json_user["id"] = user_id;
-        json_user["name"] = name;
-        json_user["blocked"] = blocked;
-        json_user["role"] = static_cast<int64_t>(role);
-        return json_user;
-    }
+    nlohmann::json to_json() const;
 
     /**
      * @brief Creates a user from a fitting pqxx::row

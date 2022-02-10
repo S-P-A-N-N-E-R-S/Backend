@@ -7,7 +7,7 @@
 
 #include <sys/resource.h>
 
-#include <boost/json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "io/io.hpp"
 #include "subcommands/constants.hpp"
@@ -15,14 +15,16 @@
 #include "util/json.hpp"
 #include "util/span.hpp"
 
-namespace cli {
+using nlohmann::json;
 
+namespace cli {
+    
 namespace {
     namespace detail {
         template <typename T>
-        boost::json::value make_request(std::string_view cmd, std::optional<T> arg)
+        json make_request(std::string_view cmd, std::optional<T> arg)
         {
-            boost::json::object req;
+            json req;
             req["type"] = "scheduler";
             req["cmd"] = std::string{cmd};
 
@@ -83,16 +85,7 @@ namespace {
 
         auto req = detail::make_request("time-limit", limit);
         io::instance().send(std::move(req));
-        const auto &resp = io::instance().receive();
-
-        if (const auto *error = std::get_if<boost::json::error_code>(&resp); error)
-        {
-            std::cerr << "Server sent invalid data" << std::endl;
-            return exit_code::ERROR;
-        }
-
-        // It's not an error so it must be json::value
-        const auto msg = std::get<boost::json::value>(resp).as_object();
+        const auto msg = io::instance().receive();
 
         if (msg.at("status") != "ok")
         {
@@ -129,16 +122,7 @@ namespace {
 
         auto req = detail::make_request("process-limit", limit);
         io::instance().send(std::move(req));
-        const auto &resp = io::instance().receive();
-
-        if (const auto *error = std::get_if<boost::json::error_code>(&resp); error)
-        {
-            std::cerr << "Server sent invalid data" << std::endl;
-            return exit_code::ERROR;
-        }
-
-        // It's not an error so it must be json::value
-        const auto msg = std::get<boost::json::value>(resp).as_object();
+        const auto msg = io::instance().receive();
 
         if (msg.at("status") != "ok")
         {
@@ -175,16 +159,7 @@ namespace {
 
         auto req = detail::make_request("resource-limit", limit);
         io::instance().send(std::move(req));
-        const auto &resp = io::instance().receive();
-
-        if (const auto *error = std::get_if<boost::json::error_code>(&resp); error)
-        {
-            std::cerr << "Server sent invalid data" << std::endl;
-            return exit_code::ERROR;
-        }
-
-        // It's not an error so it must be json::value
-        const auto msg = std::get<boost::json::value>(resp).as_object();
+        const auto msg = io::instance().receive();
 
         if (msg.at("status") != "ok")
         {
@@ -221,16 +196,7 @@ namespace {
 
         auto req = detail::make_request("sleep", dur);
         io::instance().send(std::move(req));
-        const auto &resp = io::instance().receive();
-
-        if (const auto *error = std::get_if<boost::json::error_code>(&resp); error)
-        {
-            std::cerr << "Server sent invalid data" << std::endl;
-            return exit_code::ERROR;
-        }
-
-        // It's not an error so it must be json::value
-        const auto msg = std::get<boost::json::value>(resp).as_object();
+        const auto msg = io::instance().receive();
 
         if (msg.at("status") != "ok")
         {
@@ -247,7 +213,7 @@ namespace {
 
         return exit_code::OK;
     }
-}
+}  // namespace
 
 namespace scheduler {
     exit_code handle(span<std::string_view> args)
@@ -260,25 +226,33 @@ namespace scheduler {
 
         const auto &sc = args.front();
         exit_code ec;
-        if (sc == "time-limit")
+        try
         {
-            ec = time_limit(args.tail());
+            if (sc == "time-limit")
+            {
+                ec = time_limit(args.tail());
+            }
+            else if (sc == "process-limit")
+            {
+                ec = process_limit(args.tail());
+            }
+            else if (sc == "resource-limit")
+            {
+                ec = resource_limit(args.tail());
+            }
+            else if (sc == "sleep")
+            {
+                ec = sleep(args.tail());
+            }
+            else
+            {
+                print_help();
+                return exit_code::ERROR;
+            }
         }
-        else if (sc == "process-limit")
+        catch (json::exception &error)
         {
-            ec = process_limit(args.tail());
-        }
-        else if (sc == "resource-limit")
-        {
-            ec = resource_limit(args.tail());
-        }
-        else if (sc == "sleep")
-        {
-            ec = sleep(args.tail());
-        }
-        else
-        {
-            print_help();
+            std::cerr << "Server sent invalid data" << std::endl;
             return exit_code::ERROR;
         }
 

@@ -3,8 +3,8 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
 #include <future>
+#include <nlohmann/json.hpp>
 #include <string_view>
 #include <utility>
 
@@ -31,7 +31,7 @@ public:
     management_server(management_server &&) = delete;
     management_server &operator=(management_server &&) = delete;
 
-    ~management_server() = default;
+    ~management_server();
 
     using io_server::run;
     using io_server::start;
@@ -42,14 +42,14 @@ private:
 
     void handle_request(boost::asio::yield_context &yield,
                         const boost::asio::local::datagram_protocol::endpoint &receiver,
-                        boost::json::object request);
+                        nlohmann::json request);
 
-    std::pair<boost::asio::local::datagram_protocol::endpoint, boost::json::value> read_json(
+    std::pair<boost::asio::local::datagram_protocol::endpoint, nlohmann::json> read_json(
         boost::asio::yield_context &yield);
 
     void respond_json(boost::asio::yield_context &yield,
                       const boost::asio::local::datagram_protocol::endpoint &receiver,
-                      const boost::json::object &response);
+                      const nlohmann::json &response);
 
     boost::asio::local::datagram_protocol::socket m_sock;
 };

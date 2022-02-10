@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install all dependencies
 RUN apt-get -yq update && \
-    apt-get -y install g++ make cmake libboost-all-dev libasio-dev libpq-dev clang-format autoconf automake libtool wget
+    apt-get -y install g++ make cmake libboost-all-dev libasio-dev libpq-dev clang-format autoconf automake libtool wget git
 
 # Install pqxx manually
 RUN wget https://github.com/jtv/libpqxx/archive/refs/tags/7.5.2.tar.gz

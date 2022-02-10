@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/json.hpp>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <pqxx/pqxx>
 #include <string>
@@ -27,7 +27,7 @@ enum class user_role;
 struct job_entry {
     job_entry(const pqxx::row &db_row);
 
-    boost::json::object to_json() const;
+    nlohmann::json to_json() const;
 
     int job_id;
     std::string job_name;
@@ -160,7 +160,7 @@ public:
      *
      * @return std::optional<job_entry> Response data parsed as struct of type
      */
-    std::optional<job_entry> get_job_entry(const std::string &job_name, int user_id);
+    std::optional<job_entry> get_job_entry(std::string_view job_name, int user_id);
 
     /**
      * @brief Returns all jobs of a user parsed into structs of type <job_entry>
@@ -241,7 +241,7 @@ public:
      *
      * @return std::vector<user> containing all existing users
      */
-    std::vector<user> get_all_user();
+    std::vector<user> get_all_users();
 
     /**
      * @brief Resolves a user from the database from a string_view containing either the name or the id
@@ -302,7 +302,7 @@ public:
      * @param blocked Bool to indicate the new blocked status of the user
      * @return true if a user with user_id was found, else if not.
      */
-    bool block_user(int user_id, bool blocked);
+    bool set_user_blocked(int user_id, bool blocked);
 
     /**
      * @brief Deletes a user and all of its associated jobs and request/response data

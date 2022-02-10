@@ -122,6 +122,7 @@ set(SERVER_INCLUDE_DIRS
 target_include_directories(${SERVER_NAME} PUBLIC ${SERVER_INCLUDE_DIRS})
 target_include_directories(${SERVER_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
 target_include_directories(${SERVER_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/lib/Argon2/include")
+target_include_directories(${SERVER_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/lib/nlohmann-json")
 target_include_directories(${SERVER_NAME} PUBLIC ${PROTOBINDING_PATH})
 target_include_directories(${SERVER_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
 
