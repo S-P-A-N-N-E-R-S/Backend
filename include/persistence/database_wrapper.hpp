@@ -1,8 +1,10 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <pqxx/pqxx>
 #include <string>
+#include <string_view>
 
 #include <networking/messages/meta_data.hpp>
 #include <networking/responses/response_factory.hpp>
@@ -24,6 +26,8 @@ enum class user_role;
  */
 struct job_entry {
     job_entry(const pqxx::row &db_row);
+
+    nlohmann::json to_json() const;
 
     int job_id;
     std::string job_name;
@@ -61,15 +65,6 @@ public:
      * @return ID of the inserted job
      */
     int add_job(int user_id, const meta_data &meta, binary_data_view binary);
-
-    /**
-     * @brief Deletes a finished job
-     *
-     * @param job_id The ID of the job which should be deleted.
-     * @param user_id Id of the user in the database
-     * @return true if a finished job with job_id was found, else if not.
-     */
-    bool delete_job(int job_id, int user_id);
 
     /**
      * Sets the status of a job to 'waiting', 'in progress', 'finished' or 'aborted'.
@@ -122,14 +117,50 @@ public:
     std::pair<graphs::RequestType, binary_data> get_response_data_raw(int job_id, int user_id);
 
     /**
+     * @brief Get the size of the binary_data stored in the data table associated with the job
+     *
+     * @param job_id  The ID of the job the request belongs to
+     * @param user_id The ID of the user the job belongs to
+     *
+     * @return size_t Sum of the data size
+     */
+    size_t get_job_data_size(int job_id, int user_id);
+
+    /**
+     * @brief Return all available jobs from the database
+     *
+     * @return std::vector<job_entry> containing all jobs
+     */
+    std::vector<job_entry> get_all_job_entries();
+
+    /**
+     * @brief Resolves a job from the database from a string_view containing either the name or the id
+     *
+     * @param name_or_id std::string_view containing either job name or the job id
+     *
+     * @return std::optional<job_entry>
+     */
+    std::optional<job_entry> resolve_job_entry(std::string_view name_or_id);
+
+    /**
      * @brief Returns job data parsed into struct of type <job_entry>
      *
      * @param job_id  The ID of the job the request belongs to
      * @param user_id The ID of the user the job belongs to
      *
-     * @return Response data parsed as struct of type <job_entry>
+     * @return std::optional<job_entry> Response data parsed as struct of type
      */
-    job_entry get_job_entry(int job_id, int user_id);
+    std::optional<job_entry> get_job_entry(int job_id, int user_id);
+
+    /**
+     * @brief Returns job data parsed into struct of type <job_entry>
+     *
+     * @param job_name  The name of the job the request belongs to
+     * @param user_id The ID of the user the job belongs to
+     *
+     * @return std::optional<job_entry> Response data parsed as struct of type
+     */
+    std::optional<job_entry> get_job_entry(std::string_view job_name, int user_id);
 
     /**
      * @brief Returns all jobs of a user parsed into structs of type <job_entry>
@@ -139,6 +170,16 @@ public:
      * @return std::vector<job_entry> containing all jobs of the given user
      */
     std::vector<job_entry> get_job_entries(int user_id);
+
+    /**
+     * @brief Deletes a job and stops its execution on the scheduler
+     *
+     * @param job_id  The ID of the job the request belongs to
+     * @param user_id The ID of the user the job belongs to
+     *
+     * @return true if the job is successfully deleted, else false is returned
+     */
+    bool delete_job(int job_id, int user_id);
 
     /**
      * @brief Returns the meta information of a job
@@ -196,6 +237,22 @@ public:
     bool create_user(user &u);
 
     /**
+     * @brief Gets all existing users from the database
+     *
+     * @return std::vector<user> containing all existing users
+     */
+    std::vector<user> get_all_users();
+
+    /**
+     * @brief Resolves a user from the database from a string_view containing either the name or the id
+     *
+     * @param name_or_id std::string_view containing either users name or the users id
+     *
+     * @return std::optional<user>
+     */
+    std::optional<user> resolve_user(std::string_view name_or_id);
+
+    /**
      * @brief Tries to get the user with the corresponding user_name from the database
      *
      * @param name
@@ -210,6 +267,14 @@ public:
      * @return std::optional<user> to the user if it exists in database
      */
     std::optional<user> get_user(int user_id);
+
+    /**
+     * @brief Tries to get the user with the corresponding job_id from the database
+     *
+     * @param job_id int
+     * @return std::optional<user> to the user if it exists in database
+     */
+    std::optional<user> get_user_from_job(int job_id);
 
     /**
      * @brief Changes the hashed password and the salt in the database.
@@ -231,12 +296,29 @@ public:
     bool change_user_role(int user_id, user_role role);
 
     /**
+     * @brief Blocks or unblocks a user to prevent the user from logging in but does not delete its data
+     *
+     * @param user_id Id of the user in the database
+     * @param blocked Bool to indicate the new blocked status of the user
+     * @return true if a user with user_id was found, else if not.
+     */
+    bool set_user_blocked(int user_id, bool blocked);
+
+    /**
      * @brief Deletes a user and all of its associated jobs and request/response data
      *
      * @param user_id Id of the user in the database
      * @return true if a user with user_id was found, else if not.
      */
     bool delete_user(int user_id);
+
+    /**
+     * @brief Deletes the jobs that belong to a user including their job data
+     *
+     * @param user_id int representing the ID of the user
+     * @return true if a user with the user_id was found, false if not
+     */
+    bool delete_user_jobs(int user_id);
 };
 
 }  // end namespace server

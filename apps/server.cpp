@@ -1,16 +1,33 @@
+#include <csignal>
 #include <iostream>
 
 #include <config/config.hpp>
-#include <networking/io/io_server.hpp>
+#include <networking/io/client_server.hpp>
+#include <networking/io/management_server.hpp>
 #include <scheduler/scheduler.hpp>
+
+static constexpr const std::string_view LOCAL_ENDPOINT_PATH{"/tmp/spanners_server"};
+
+static void block_signals(sigset_t &sigset)
+{
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &sigset, nullptr);
+}
 
 int main(int argc, const char **argv)
 {
-    // Parse configurations
+    // Block signals to ensure correct shutdown of server processes
+    sigset_t signal_set;
+    block_signals(signal_set);
+
     server::config_parser::instance().parse(argc, argv);
 
+    server::management_server m_server{LOCAL_ENDPOINT_PATH};
+
 #ifdef SPANNERS_UNENCRYPTED_CONNECTION
-    server::io_server server{
+    server::client_server c_server{
         server::config(server::config_options::SERVER_PORT).as<unsigned short>()};
 #else
     if (server::config(server::config_options::TLS_CERT_PATH).empty() ||
@@ -22,13 +39,23 @@ int main(int argc, const char **argv)
 
     std::string cert_path{server::config(server::config_options::TLS_CERT_PATH).as<std::string>()};
     std::string key_path{server::config(server::config_options::TLS_KEY_PATH).as<std::string>()};
-    server::io_server server{
+    server::client_server c_server{
         server::config(server::config_options::SERVER_PORT).as<unsigned short>(), cert_path,
         key_path};
 #endif
 
-    auto scheduler = &server::scheduler::instance();
-    scheduler->start();
+    server::scheduler::instance().start();
 
-    server.run();
+    c_server.start();
+    m_server.start();
+
+    // Wait for signal to terminate process
+    std::cout << "[INFO] Press Ctrl-C to shutdown" << std::endl;
+    int signal_num = 0;
+    sigwait(&signal_set, &signal_num);
+
+    // Shutdown servers on signal
+    c_server.stop();
+    m_server.stop();
+    return 0;
 }

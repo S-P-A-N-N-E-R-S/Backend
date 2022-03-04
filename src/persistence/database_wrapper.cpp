@@ -1,5 +1,7 @@
 #include <persistence/database_wrapper.hpp>
 
+#include <charconv>
+
 #include <persistence/user.hpp>
 #include <scheduler/scheduler.hpp>
 
@@ -40,6 +42,23 @@ job_entry::job_entry(const pqxx::row &db_row)
 
     request_id = (db_row[11].is_null()) ? -1 : db_row[11].as<int>();
     response_id = (db_row[12].is_null()) ? -1 : db_row[12].as<int>();
+}
+
+nlohmann::json job_entry::to_json() const
+{
+    nlohmann::json json_job{};
+    json_job["id"] = job_id;
+    json_job["name"] = job_name;
+    json_job["handler_type"] = handler_type;
+    json_job["user_id"] = user_id;
+    json_job["time_received"] = time_received;
+    json_job["starting_time"] = starting_time;
+    json_job["end_time"] = end_time;
+    json_job["ogdf_runtime"] = ogdf_runtime;
+    json_job["status"] = static_cast<int64_t>(status);
+    json_job["stdout"] = stdout_msg;
+    json_job["error"] = error_msg;
+    return json_job;
 }
 
 // Default static connection string
@@ -89,35 +108,6 @@ int database_wrapper::add_job(int user_id, const meta_data &meta, binary_data_vi
     txn.commit();
 
     return job_id;
-}
-
-bool database_wrapper::delete_job(int job_id, int user_id)
-{
-    check_connection();
-
-    pqxx::work txn{m_database_connection};
-
-    pqxx::result rows =
-        txn.exec_params("SELECT * FROM jobs WHERE job_id=$1 AND user_id=$2", job_id, user_id);
-
-    if (rows.size() != 1)
-    {
-        return false;
-    }
-
-    job_entry job = job_entry(rows[0]);
-    // Don't delete waiting and running jobs
-    if (job.status == graphs::StatusType::WAITING || job.status == graphs::StatusType::RUNNING)
-    {
-        return false;
-    }
-
-    scheduler::instance().cancel_job(job_id, user_id);
-
-    txn.exec_params0("DELETE FROM jobs WHERE job_id=$1 AND user_id=$2", job_id, user_id);
-
-    txn.commit();
-    return true;
 }
 
 void database_wrapper::set_status(int job_id, graphs::StatusType status)
@@ -229,15 +219,92 @@ std::pair<graphs::RequestType, binary_data> database_wrapper::get_response_data_
     return {type, std::move(binary)};
 }
 
-job_entry database_wrapper::get_job_entry(int job_id, int user_id)
+size_t database_wrapper::get_job_data_size(int job_id, int user_id)
 {
     check_connection();
 
     pqxx::work txn{m_database_connection};
-    pqxx::row row =
-        txn.exec_params1("SELECT * FROM jobs WHERE job_id = $1 AND user_id = $2", job_id, user_id);
+    pqxx::result res = txn.exec_params(
+        "SELECT LENGTH(binary_data) as size FROM data LEFT JOIN "
+        "jobs ON data.job_id = jobs.job_id WHERE data.job_id = $1 AND jobs.user_id = $2",
+        job_id, user_id);
 
-    return job_entry{row};
+    size_t data_size = 0;
+    for (const auto &row : res)
+    {
+        data_size += row["size"].as<size_t>();
+    }
+    return data_size;
+}
+
+std::vector<job_entry> database_wrapper::get_all_job_entries()
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result rows = txn.exec_params("SELECT * FROM jobs");
+
+    std::vector<job_entry> jobs;
+    for (const auto &row : rows)
+    {
+        jobs.emplace_back(row);
+    }
+    return jobs;
+}
+
+std::optional<job_entry> database_wrapper::resolve_job_entry(std::string_view name_or_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result rows;
+
+    int id;
+    auto [_, errc] = std::from_chars(name_or_id.data(), name_or_id.data() + name_or_id.size(), id);
+    if (errc == std::errc{})
+    {
+        // ID
+        rows = txn.exec_params("SELECT * FROM jobs WHERE job_id = $1", id);
+    }
+    else
+    {
+        // Not ID but name
+        rows = txn.exec_params("SELECT * FROM jobs WHERE job_name = $1", name_or_id);
+    }
+
+    if (rows.size() != 1)
+    {
+        return std::nullopt;
+    }
+    return job_entry{rows[0]};
+}
+
+std::optional<job_entry> database_wrapper::get_job_entry(int job_id, int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result result =
+        txn.exec_params("SELECT * FROM jobs WHERE job_id = $1 AND user_id = $2", job_id, user_id);
+    if (result.size() != 1)
+    {
+        return std::nullopt;
+    }
+    return job_entry{result[0]};
+}
+
+std::optional<job_entry> database_wrapper::get_job_entry(std::string_view job_name, int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result result = txn.exec_params("SELECT * FROM jobs WHERE job_name = $1 AND user_id = $2",
+                                          job_name, user_id);
+    if (result.size() != 1)
+    {
+        return std::nullopt;
+    }
+    return job_entry{result[0]};
 }
 
 std::vector<job_entry> database_wrapper::get_job_entries(int user_id)
@@ -254,6 +321,27 @@ std::vector<job_entry> database_wrapper::get_job_entries(int user_id)
     }
 
     return jobs;
+}
+
+bool database_wrapper::delete_job(int job_id, int user_id)
+{
+    check_connection();
+    pqxx::work txn{m_database_connection};
+
+    if (pqxx::result rows = txn.exec_params(
+            "SELECT job_id FROM jobs WHERE job_id = $1 AND user_id = $2", job_id, user_id);
+        rows.size() != 1)
+    {
+        return false;
+    }
+
+    // Make sure the scheduler doesnt work on any of the jobs
+    scheduler::instance().cancel_job(job_id, user_id);
+
+    txn.exec_params0("DELETE FROM jobs WHERE job_id = $1", job_id);
+    txn.commit();
+
+    return true;
 }
 
 meta_data database_wrapper::get_meta_data(int job_id, int user_id)
@@ -333,30 +421,36 @@ graphs::StatusSingle database_wrapper::get_status_data(int job_id, int user_id)
     graphs::StatusSingle status_single;
 
     // Use meta data of the job to get the request type
-    job_entry job = get_job_entry(job_id, user_id);
-    meta_data job_meta_data = get_meta_data(job.job_id, user_id);
-
-    status_single.set_job_id(job.job_id);
-    status_single.set_status(job.status);
-    status_single.set_statusmessage(std::move(job.error_msg));
-    status_single.set_requesttype(job_meta_data.request_type);
-    status_single.set_handlertype(std::move(job.handler_type));
-    status_single.set_jobname(std::move(job.job_name));
-    status_single.set_ogdfruntime(job.ogdf_runtime);
-
-    if (job.time_received != "")
+    std::optional<job_entry> job = get_job_entry(job_id, user_id);
+    if (!job)
     {
-        google::protobuf::util::TimeUtil::FromString(job.time_received,
+        throw row_access_error{"Job not found"};
+    }
+    meta_data job_meta_data = get_meta_data(job->job_id, user_id);
+
+    status_single.set_job_id(job->job_id);
+    status_single.set_status(job->status);
+    status_single.set_statusmessage(std::move(job->error_msg));
+    status_single.set_requesttype(job_meta_data.request_type);
+    status_single.set_handlertype(std::move(job->handler_type));
+    status_single.set_jobname(std::move(job->job_name));
+    status_single.set_ogdfruntime(job->ogdf_runtime);
+
+    // This is never supposed to be empty but we would rather be safe here
+    if (!job->time_received.empty())
+    {
+        google::protobuf::util::TimeUtil::FromString(job->time_received,
                                                      status_single.mutable_timereceived());
     }
-    if (job.starting_time != "")
+    if (!job->starting_time.empty())
     {
-        google::protobuf::util::TimeUtil::FromString(job.starting_time,
+        google::protobuf::util::TimeUtil::FromString(job->starting_time,
                                                      status_single.mutable_startingtime());
     }
-    if (job.end_time != "")
+    if (!job->end_time.empty())
     {
-        google::protobuf::util::TimeUtil::FromString(job.end_time, status_single.mutable_endtime());
+        google::protobuf::util::TimeUtil::FromString(job->end_time,
+                                                     status_single.mutable_endtime());
     }
 
     return status_single;
@@ -392,6 +486,48 @@ bool database_wrapper::create_user(user &u)
     return true;
 }
 
+std::vector<user> database_wrapper::get_all_users()
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result rows = txn.exec_params("SELECT * FROM users");
+
+    std::vector<user> user;
+    for (const auto &row : rows)
+    {
+        user.push_back(user::from_row(row));
+    }
+    return user;
+}
+
+std::optional<user> database_wrapper::resolve_user(std::string_view name_or_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result rows;
+
+    int id;
+    auto [_, errc] = std::from_chars(name_or_id.data(), name_or_id.data() + name_or_id.size(), id);
+    if (errc == std::errc{})
+    {
+        // ID
+        rows = txn.exec_params("SELECT * FROM users WHERE user_id = $1", id);
+    }
+    else
+    {
+        // Not ID but name
+        rows = txn.exec_params("SELECT * FROM users WHERE user_name = $1", name_or_id);
+    }
+
+    if (rows.size() != 1)
+    {
+        return std::nullopt;
+    }
+    return user::from_row(rows[0]);
+}
+
 std::optional<user> database_wrapper::get_user(const std::string &name)
 {
     check_connection();
@@ -400,8 +536,23 @@ std::optional<user> database_wrapper::get_user(const std::string &name)
     // (https://libpqxx.readthedocs.io/en/stable/a01383.html)
 
     pqxx::work txn{m_database_connection};
-    pqxx::result result = txn.exec_params(
-        "SELECT user_id, user_name, pw_hash, salt, role FROM users WHERE user_name = $1", name);
+    pqxx::result result = txn.exec_params("SELECT * FROM users WHERE user_name = $1", name);
+
+    if (result.size() != 1)
+    {
+        return std::nullopt;
+    }
+
+    pqxx::row row = result[0];
+    return user::from_row(row);
+}
+
+std::optional<user> database_wrapper::get_user(int user_id)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    pqxx::result result = txn.exec_params("SELECT * FROM users WHERE user_id = $1", user_id);
 
     if (result.size() != 1)
     {
@@ -412,21 +563,20 @@ std::optional<user> database_wrapper::get_user(const std::string &name)
     return std::optional<user>{user::from_row(row)};
 }
 
-std::optional<user> database_wrapper::get_user(int user_id)
+std::optional<user> database_wrapper::get_user_from_job(int job_id)
 {
     check_connection();
-
     pqxx::work txn{m_database_connection};
-    pqxx::result result = txn.exec_params(
-        "SELECT user_id, user_name, pw_hash, salt, role FROM users WHERE user_id = $1", user_id);
 
-    if (result.size() != 1)
+    pqxx::result job_result = txn.exec_params("SELECT user_id FROM jobs WHERE job_id = $1", job_id);
+    if (job_result.size() != 1)
     {
         return std::nullopt;
     }
 
-    pqxx::row row = result[0];
-    return std::optional<user>{user::from_row(row)};
+    pqxx::row user_row =
+        txn.exec_params1("SELECT * FROM user WHERE user_id = $1", job_result[0][0].as<int>());
+    return user::from_row(user_row);
 }
 
 bool database_wrapper::change_user_role(int user_id, user_role role)
@@ -468,15 +618,33 @@ bool database_wrapper::change_user_auth(int user_id, const std::string &pw_hash,
     return true;
 }
 
+bool database_wrapper::set_user_blocked(int user_id, bool blocked)
+{
+    check_connection();
+
+    pqxx::work txn{m_database_connection};
+    if (pqxx::result rows =
+            txn.exec_params("SELECT user_id FROM users WHERE user_id = $1", user_id);
+        rows.size() != 1)
+    {
+        return false;
+    }
+
+    txn.exec_params0("UPDATE users SET blocked = $1 WHERE user_id = $2", blocked, user_id);
+    txn.commit();
+
+    return true;
+}
+
 bool database_wrapper::delete_user(int user_id)
 {
     check_connection();
 
     pqxx::work txn{m_database_connection};
 
-    pqxx::result rows = txn.exec_params("SELECT user_id FROM users WHERE user_name = $1", user_id);
-
-    if (rows.size() != 0)
+    if (pqxx::result rows =
+            txn.exec_params("SELECT user_id FROM users WHERE user_id = $1", user_id);
+        rows.size() != 1)
     {
         return false;
     }
@@ -486,15 +654,32 @@ bool database_wrapper::delete_user(int user_id)
                      static_cast<int>(graphs::StatusType::ABORTED), user_id,
                      static_cast<int>(graphs::StatusType::WAITING));
 
-    txn.commit();
-
     scheduler::instance().cancel_user_jobs(user_id);
 
-    pqxx::work txn2{m_database_connection};
+    txn.exec_params0("DELETE FROM users WHERE user_id = $1", user_id);
+    txn.commit();
 
-    txn2.exec_params0("DELETE FROM users WHERE user_id=$1", user_id);
+    return true;
+}
 
-    txn2.commit();
+bool database_wrapper::delete_user_jobs(int user_id)
+{
+    check_connection();
+    pqxx::work txn{m_database_connection};
+
+    if (pqxx::result rows =
+            txn.exec_params("SELECT user_id FROM users WHERE user_id = $1", user_id);
+        rows.size() != 1)
+    {
+        return false;
+    }
+
+    // Make sure the scheduler doesnt work on any of the jobs
+    scheduler::instance().cancel_user_jobs(user_id);
+
+    txn.exec_params0("DELETE FROM jobs WHERE user_id = $1", user_id);
+    txn.commit();
+
     return true;
 }
 

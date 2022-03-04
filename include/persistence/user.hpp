@@ -1,5 +1,6 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <pqxx/pqxx>
 #include <string>
 
@@ -23,7 +24,10 @@ struct user {
     std::string name;
     binary_data pw_hash;
     binary_data salt;
+    bool blocked;
     user_role role;
+
+    nlohmann::json to_json() const;
 
     /**
      * @brief Creates a user from a fitting pqxx::row

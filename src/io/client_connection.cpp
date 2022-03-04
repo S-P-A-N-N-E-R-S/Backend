@@ -1,4 +1,4 @@
-#include <networking/io/connection.hpp>
+#include <networking/io/client_connection.hpp>
 
 #include <boost/asio/completion_condition.hpp>
 #include <boost/endian/conversion.hpp>
@@ -41,7 +41,8 @@ namespace {
     constexpr int LENGTH_FIELD_SIZE = 8;
 }  // namespace
 
-connection::connection(size_t id, connection_handler &handler, socket_ptr sock)
+client_connection::client_connection(size_t id, connection_handler<client_connection> &handler,
+                                     socket_ptr sock)
     : m_identifier{id}
     , m_handler{handler}
     , m_sock{std::move(sock)}
@@ -56,7 +57,7 @@ connection::connection(size_t id, connection_handler &handler, socket_ptr sock)
 #endif
 }
 
-void connection::handle()
+void client_connection::handle()
 {
     boost::asio::spawn(m_sock->get_executor(), [this](boost::asio::yield_context yield) {
         try
@@ -67,13 +68,11 @@ void connection::handle()
         {
             std::cout << "[ERROR] " << error << '\n';
             respond_error(yield, error);
-            return;
         }
         catch (ErrorType &error)
         {
             std::cout << "[ERROR] " << error << '\n';
             respond_error(yield, error);
-            return;
         }
         catch (graphs::ErrorMessage &error)
         {
@@ -85,12 +84,14 @@ void connection::handle()
         {
             std::cout << "[ERROR] " << ex.what() << '\n';
             respond_error(yield, ResponseContainer::ERROR);
-            return;
         }
+
+        // Connection finished
+        m_handler.remove(m_identifier);
     });
 }
 
-void connection::handle_internal(boost::asio::yield_context &yield)
+void client_connection::handle_internal(boost::asio::yield_context &yield)
 {
     // Read size of meta message
     size_t recv_size;
@@ -108,7 +109,7 @@ void connection::handle_internal(boost::asio::yield_context &yield)
     database_wrapper database(connection_string);
 
     const auto user = database.get_user(meta_proto.user().name());
-    if (!user)
+    if (!user || user->blocked)
     {
         // Check if user creation or unauthorized user
         if (meta_proto.type() == RequestType::CREATE_USER)
@@ -207,7 +208,7 @@ void connection::handle_internal(boost::asio::yield_context &yield)
 }
 
 template <typename MESSAGE_TYPE>
-MESSAGE_TYPE connection::read_message(boost::asio::yield_context &yield, size_t len)
+MESSAGE_TYPE client_connection::read_message(boost::asio::yield_context &yield, size_t len)
 {
     std::vector<char> recv_buffer(len);
     if (!direct_read(yield, recv_buffer.data(), recv_buffer.size()))
@@ -235,8 +236,8 @@ MESSAGE_TYPE connection::read_message(boost::asio::yield_context &yield, size_t 
 }
 
 template <class Serializable>
-void connection::respond(boost::asio::yield_context &yield, const meta_data &meta_info,
-                         const Serializable &message)
+void client_connection::respond(boost::asio::yield_context &yield, const meta_data &meta_info,
+                                const Serializable &message)
 {
     namespace io = boost::iostreams;
 
@@ -273,13 +274,10 @@ void connection::respond(boost::asio::yield_context &yield, const meta_data &met
     direct_write(yield, reinterpret_cast<const char *>(&len), LENGTH_FIELD_SIZE);
     direct_write(yield, meta_data.data(), meta_data.size());
     direct_write(yield, message_data.data(), message_data.size());
-
-    // Connection finished
-    m_handler.remove(m_identifier);
 }
 
-void connection::respond(boost::asio::yield_context &yield, const meta_data &meta_info,
-                         const binary_data &binary)
+void client_connection::respond(boost::asio::yield_context &yield, const meta_data &meta_info,
+                                const binary_data &binary)
 {
     namespace io = boost::iostreams;
 
@@ -315,27 +313,25 @@ void connection::respond(boost::asio::yield_context &yield, const meta_data &met
     direct_write(yield, reinterpret_cast<const char *>(&len), LENGTH_FIELD_SIZE);
     direct_write(yield, meta_data.data(), meta_data.size());
     direct_write(yield, container_data.data(), container_data.size());
-
-    // Connection finished
-    m_handler.remove(m_identifier);
 }
 
-void connection::respond_error(boost::asio::yield_context &yield,
-                               ResponseContainer::StatusCode code)
+void client_connection::respond_error(boost::asio::yield_context &yield,
+                                      ResponseContainer::StatusCode code)
 {
     ResponseContainer response;
     response.set_status(code);
     respond(yield, meta_data{RequestType::ERROR}, response);
 }
 
-void connection::respond_error(boost::asio::yield_context &yield, ErrorType error_type)
+void client_connection::respond_error(boost::asio::yield_context &yield, ErrorType error_type)
 {
     ErrorMessage msg;
     msg.set_type(error_type);
     respond(yield, meta_data{RequestType::ERROR}, msg);
 }
 
-bool connection::direct_read(boost::asio::yield_context &yield, char *const data, size_t length)
+bool client_connection::direct_read(boost::asio::yield_context &yield, char *const data,
+                                    size_t length)
 {
     error_code error;
     async_read(*m_sock, buffer(data, length), transfer_exactly(length), yield[error]);
@@ -344,7 +340,8 @@ bool connection::direct_read(boost::asio::yield_context &yield, char *const data
     return !error;
 }
 
-void connection::direct_write(boost::asio::yield_context &yield, const char *data, size_t length)
+void client_connection::direct_write(boost::asio::yield_context &yield, const char *data,
+                                     size_t length)
 {
     do
     {

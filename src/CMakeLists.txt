@@ -1,9 +1,10 @@
-find_library(PQXX_LIB pqxx REQUIRED)
-find_library(PQ_LIB pq REQUIRED)
-
 # Create protobuf files
 file(GLOB_RECURSE PROTO_FILES "${PROTO_PATH}/*.proto")
+
 file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated" PROTOBINDING_PATH)
+# Set up as its own variable in order to export it to the parent scope
+set(PROTOBINDING_PATH ${PROTOBINDING_PATH} PARENT_SCOPE)
+
 file(MAKE_DIRECTORY ${PROTOBINDING_PATH})
 
 foreach(proto ${PROTO_FILES})
@@ -35,8 +36,10 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/kruskal_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/exceptions.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/io_server.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/io/client_server.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/io/management_server.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/connection_handler.hpp
-    ${CMAKE_SOURCE_DIR}/include/networking/io/connection.hpp
+    ${CMAKE_SOURCE_DIR}/include/networking/io/client_connection.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/io/request_handling.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/graph_message.hpp
     ${CMAKE_SOURCE_DIR}/include/networking/messages/node_coordinates.hpp
@@ -72,7 +75,9 @@ set(SERVER_SOURCES
     handling/handlers/dijkstra_handler.cpp
     handling/handlers/kruskal_handler.cpp
     io/io_server.cpp
-    io/connection.cpp
+    io/client_server.cpp
+    io/management_server.cpp
+    io/client_connection.cpp
     io/request_handling.cpp
     messages/graph_message.cpp
     messages/node_coordinates.cpp
@@ -104,9 +109,20 @@ set(server_files
 add_library(${SERVER_NAME} STATIC ${server_files})
 add_dependencies(${SERVER_NAME} Argon2)
 
-target_include_directories(${SERVER_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
+set(SERVER_LIB ${SERVER_NAME} PARENT_SCOPE)
+
+set(SERVER_INCLUDE_DIRS
+    "${CMAKE_SOURCE_DIR}/include"
+)
+set(SERVER_INCLUDE_DIRS
+    "${CMAKE_SOURCE_DIR}/include"
+    PARENT_SCOPE
+)
+
+target_include_directories(${SERVER_NAME} PUBLIC ${SERVER_INCLUDE_DIRS})
 target_include_directories(${SERVER_NAME} PUBLIC ${OGDF_INCLUDE_DIRS})
 target_include_directories(${SERVER_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/lib/Argon2/include")
+target_include_directories(${SERVER_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/lib/nlohmann-json")
 target_include_directories(${SERVER_NAME} PUBLIC ${PROTOBINDING_PATH})
 target_include_directories(${SERVER_NAME} PRIVATE ${Protobuf_INCLUDE_DIRS})
 

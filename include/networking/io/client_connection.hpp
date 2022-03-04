@@ -1,5 +1,5 @@
-#ifndef IO_SERVER_CONNECTION_HPP
-#define IO_SERVER_CONNECTION_HPP
+#ifndef IO_SERVER_CLIENT_CONNECTION_HPP
+#define IO_SERVER_CLIENT_CONNECTION_HPP
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
@@ -16,6 +16,7 @@
 
 namespace server {
 
+template <typename CONNECTION_TYPE>
 class connection_handler;
 
 /**
@@ -27,7 +28,7 @@ class connection_handler;
  *  <graphs::ResponseContainer> protobuf. Request and response are gzip compressed and serialized
  *  protobuf messages.
  */
-class connection
+class client_connection
 {
 public:
 #ifndef SPANNERS_UNENCRYPTED_CONNECTION
@@ -37,20 +38,21 @@ public:
 #endif
 
     /**
-     * @brief Ctor of a connection instance
+     * @brief Ctor of a connection instance for the client api
      * @param id Identifier of the connection in the corresponding <server::connection_handler>.
      *          Used to destruct the connection when handling is finished
      * @param connection_handler Reference to the lifetime managing <server::connection_handler>.
      * @param socket Underlying socket of the connection.
      */
-    explicit connection(size_t id, connection_handler &handler, socket_ptr sock);
+    explicit client_connection(size_t id, connection_handler<client_connection> &handler,
+                               socket_ptr sock);
 
-    connection(const connection &) = delete;
-    connection &operator=(const connection &) = delete;
-    connection(connection &&rhs) = delete;
-    connection &operator=(connection &&rhs) = delete;
+    client_connection(const client_connection &) = delete;
+    client_connection &operator=(const client_connection &) = delete;
+    client_connection(client_connection &&rhs) = delete;
+    client_connection &operator=(client_connection &&rhs) = delete;
 
-    ~connection() = default;
+    ~client_connection() = default;
 
     /**
      * @brief Handles receiving and responding.
@@ -83,7 +85,7 @@ private:
 
     size_t m_identifier;
 
-    connection_handler &m_handler;
+    connection_handler<client_connection> &m_handler;
 
     socket_ptr m_sock;
 };

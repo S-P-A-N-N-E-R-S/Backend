@@ -4,22 +4,23 @@
 #include <map>
 #include <memory>
 
-#include <networking/io/connection.hpp>
-
 namespace server {
 
 /**
  * @brief Class to manage the lifetime of active/not finished <server::connection>s.
  */
+template <typename CONNECTION_TYPE>
 class connection_handler
 {
 public:
+    using connection_type = CONNECTION_TYPE;
+
     /**
      * @brief Add a <server::connection>
      * @param identifier Used to identify the connection when trying to remove it
      * @param connection Connection to be managed. Handler takes ownership.
      */
-    bool add(size_t identifier, std::unique_ptr<connection> connection)
+    bool add(size_t identifier, std::unique_ptr<connection_type> connection)
     {
         if (auto [conn_it, success] = m_store.insert({identifier, std::move(connection)}); success)
         {
@@ -44,7 +45,7 @@ public:
     }
 
 private:
-    std::map<size_t, std::unique_ptr<connection>> m_store;
+    std::map<size_t, std::unique_ptr<connection_type>> m_store;
 };
 
 }  // namespace server
