@@ -31,6 +31,12 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/handling/handler_factory.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handler_utilities.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/abstract_handler.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/geospanner_module.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/handler_delta_greedy_euclid.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/handler_path_greedy_euclid.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/handler_yao_graph_euclid.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/handler_yao_parametrized_euclid.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/handler_yao_pruning_euclid.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/dijkstra_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/general_spanner_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/kruskal_handler.hpp
@@ -72,6 +78,11 @@ set(SERVER_SOURCES
     handling/handler_utilities.cpp
     handling/register_handlers.cpp
     handling/handlers/abstract_handler.cpp
+    handling/handlers/geospanner/handler_delta_greedy_euclid.cpp
+    handling/handlers/geospanner/handler_path_greedy_euclid.cpp
+    handling/handlers/geospanner/handler_yao_graph_euclid.cpp
+    handling/handlers/geospanner/handler_yao_parametrized_euclid.cpp
+    handling/handlers/geospanner/handler_yao_pruning_euclid.cpp
     handling/handlers/dijkstra_handler.cpp
     handling/handlers/kruskal_handler.cpp
     io/io_server.cpp
