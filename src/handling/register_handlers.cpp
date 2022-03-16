@@ -10,6 +10,8 @@
 
 #include <handling/handlers/kruskal_handler.hpp>
 
+#include <handling/handlers/geospanner/geospanner_module.hpp>
+
 // #####   add your own handler includes below   #####
 
 // #####   end of handler includes   #####
@@ -33,6 +35,8 @@ void init_handlers()
     register_handler<general_spanner_handler<ogdf::SpannerBasicGreedy<double>>>("spanner");
 
     register_handler<kruskal_handler>("Minimum Spanning Trees");
+
+    register_geospanner();
 
     // #####   register your own handlers below  #####
 
