@@ -28,4 +28,4 @@ private:
     std::unique_ptr<generic_request> m_request;
 };
 
-}   // namespace server
+}  // namespace server

@@ -5,8 +5,8 @@
 #include "networking/responses/generic_response.hpp"
 
 namespace server {
-chechik_langberg_edges_handler::chechik_langberg_edges_handler
-    (std::unique_ptr<abstract_request> request)
+chechik_langberg_edges_handler::chechik_langberg_edges_handler(
+    std::unique_ptr<abstract_request> request)
     : m_request{}
 {
     if (const auto *type_check_ptr = dynamic_cast<generic_request *>(request.get());
@@ -46,7 +46,7 @@ handle_return chechik_langberg_edges_handler::handle()
 
     // TODO: internal_index not used yet
     ogdf::SpannerChechikLangbergEdges<double, ogdf::SpannerBasicGreedy<double>>
-            chechik_langberg_edges_algorithm;
+        chechik_langberg_edges_algorithm;
 
     // Scheduler enforces time limit
     chechik_langberg_edges_algorithm.setTimelimit(-1);
@@ -89,7 +89,8 @@ handle_return chechik_langberg_edges_handler::handle()
 
     return {std::unique_ptr<abstract_response>{new generic_response{
                 &spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr, nullptr, nullptr,
-                nullptr, nullptr, nullptr, status_code::OK}}, ogdf_time};
+                nullptr, nullptr, nullptr, status_code::OK}},
+            ogdf_time};
 }
 
 graphs::HandlerInformation chechik_langberg_edges_handler::handler_information()
@@ -106,7 +107,7 @@ graphs::HandlerInformation chechik_langberg_edges_handler::handler_information()
                         "Fault tolerance parameter", "graphAttributes.fault_tolerance", true);
     addFieldInformation(information, graphs::FieldInformation_FieldType_INT,
                         "Internal Algorithm Index", "graphAttributes.internal", true);
-    addFieldInformation(information, graphs::FieldInformation_FieldType_EDGE_COSTS,"Edge costs",
+    addFieldInformation(information, graphs::FieldInformation_FieldType_EDGE_COSTS, "Edge costs",
                         "edgeCosts", true);
     addFieldInformation(information, graphs::FieldInformation_FieldType_VERTEX_COORDINATES, "",
                         "vertexCoordinates", true);
@@ -127,4 +128,4 @@ std::string chechik_langberg_edges_handler::name()
     return "Chechik Langberg (Edges)";
 }
 
-}   // namespace server
+}  // namespace server

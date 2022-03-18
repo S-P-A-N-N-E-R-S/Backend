@@ -5,8 +5,8 @@
 #include "networking/responses/generic_response.hpp"
 
 namespace server {
-chechik_langberg_vertices_handler::chechik_langberg_vertices_handler
-    (std::unique_ptr<abstract_request> request)
+chechik_langberg_vertices_handler::chechik_langberg_vertices_handler(
+    std::unique_ptr<abstract_request> request)
     : m_request{}
 {
     if (const auto *type_check_ptr = dynamic_cast<generic_request *>(request.get());
@@ -81,7 +81,8 @@ handle_return chechik_langberg_vertices_handler::handle()
 
     return {std::unique_ptr<abstract_response>{new generic_response{
                 &spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr, nullptr, nullptr,
-                nullptr, nullptr, nullptr, status_code::OK}}, ogdf_time};
+                nullptr, nullptr, nullptr, status_code::OK}},
+            ogdf_time};
 }
 
 graphs::HandlerInformation chechik_langberg_vertices_handler::handler_information()
@@ -115,4 +116,4 @@ std::string chechik_langberg_vertices_handler::name()
     return "Chechik Langberg (Vertices)";
 }
 
-}   // namespace server
+}  // namespace server

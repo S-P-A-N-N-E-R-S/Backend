@@ -89,7 +89,8 @@ handle_return bodwin_dinitz_handler::handle()
 
     return {std::unique_ptr<abstract_response>{new generic_response{
                 &spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr, nullptr, nullptr,
-                nullptr, nullptr, nullptr, status_code::OK}}, ogdf_time};
+                nullptr, nullptr, nullptr, status_code::OK}},
+            ogdf_time};
 }
 
 graphs::HandlerInformation bodwin_dinitz_handler::handler_information()
@@ -108,7 +109,7 @@ graphs::HandlerInformation bodwin_dinitz_handler::handler_information()
                         "graphAttributes.tau", true);
     addFieldInformation(information, graphs::FieldInformation_FieldType_DOUBLE, "C",
                         "graphAttributes.c", true);
-    addFieldInformation(information, graphs::FieldInformation_FieldType_EDGE_COSTS,"Edge costs",
+    addFieldInformation(information, graphs::FieldInformation_FieldType_EDGE_COSTS, "Edge costs",
                         "edgeCosts", true);
     addFieldInformation(information, graphs::FieldInformation_FieldType_VERTEX_COORDINATES, "",
                         "vertexCoordinates", true);
@@ -129,4 +130,4 @@ std::string bodwin_dinitz_handler::name()
     return "Bodwin Dinitz";
 }
 
-}   // namespace server
+}  // namespace server

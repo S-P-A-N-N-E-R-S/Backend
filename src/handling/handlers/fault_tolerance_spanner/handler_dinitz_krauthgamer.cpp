@@ -129,4 +129,4 @@ std::string dinitz_krauthgamer_handler::name()
     return "Dinitz Krauthgamer";
 }
 
-}   // namespace server
+}  // namespace server

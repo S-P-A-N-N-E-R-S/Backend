@@ -2,8 +2,8 @@
 
 #include <ogdf/basic/Graph.h>
 #include <ogdf/basic/GraphAttributes.h>
-#include <ogdf/graphalg/SpannerChechikLangbergEdges.h>
 #include <ogdf/graphalg/SpannerBasicGreedy.h>
+#include <ogdf/graphalg/SpannerChechikLangbergEdges.h>
 
 #include "handling/handlers/abstract_handler.hpp"
 #include "networking/requests/generic_request.hpp"
@@ -27,4 +27,4 @@ private:
     std::unique_ptr<generic_request> m_request;
 };
 
-}   // namespace server
+}  // namespace server

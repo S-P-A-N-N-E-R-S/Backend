@@ -95,7 +95,8 @@ handle_return resilient_handler::handle()
 
     return {std::unique_ptr<abstract_response>{new generic_response{
                 &spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr, nullptr, nullptr,
-                nullptr, nullptr, nullptr, status_code::OK}}, ogdf_time};
+                nullptr, nullptr, nullptr, status_code::OK}},
+            ogdf_time};
 }
 
 graphs::HandlerInformation resilient_handler::handler_information()
@@ -108,8 +109,8 @@ graphs::HandlerInformation resilient_handler::handler_information()
                         true);
     addFieldInformation(information, graphs::FieldInformation_FieldType_DOUBLE, "Stretch factor",
                         "graphAttributes.stretch", true);
-    addFieldInformation(information, graphs::FieldInformation_FieldType_INT,
-                        "Sigma", "graphAttributes.sigma", true);
+    addFieldInformation(information, graphs::FieldInformation_FieldType_INT, "Sigma",
+                        "graphAttributes.sigma", true);
     addFieldInformation(information, graphs::FieldInformation_FieldType_INT,
                         "Internal Algorithm Index", "graphAttributes.internal", true);
     addFieldInformation(information, graphs::FieldInformation_FieldType_EDGE_COSTS, "Edge costs",
@@ -133,4 +134,4 @@ std::string resilient_handler::name()
     return "Resilient";
 }
 
-}   // namespace server
+}  // namespace server
