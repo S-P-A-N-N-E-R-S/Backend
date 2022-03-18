@@ -1,8 +1,5 @@
 #pragma once
 
-#include <string_view>
-#include <variant>
-
 #include <boost/asio.hpp>
 #include <nlohmann/json.hpp>
 
@@ -14,15 +11,14 @@ namespace cli {
 class io
 {
 public:
-
     static io &instance();
 
     void send(const nlohmann::json &msg);
     nlohmann::json receive();
 
 private:
-    static constexpr auto LOCAL_EP_PATH = "/tmp/spanners_client"sv;
-    static constexpr auto REMOTE_EP_PATH = "/tmp/spanners_server"sv;
+    static const std::string LOCAL_EP_PATH;
+    static const std::string REMOTE_EP_PATH;
 
     io();
     ~io();

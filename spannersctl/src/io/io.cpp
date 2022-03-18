@@ -1,10 +1,26 @@
 #include "io/io.hpp"
 
+#include <cstdlib>
+#include <string>
+
 using boost::asio::io_context;
 using boost::asio::local::datagram_protocol;
 using nlohmann::json;
 
+namespace {
+
+std::string get_runtime_dir_path()
+{
+    static const char *runtime_dir = std::getenv("XDG_RUNTIME_DIR");
+    return (runtime_dir) ? runtime_dir : "/tmp";
+}
+
+}  // namespace
+
 namespace cli {
+
+const std::string io::LOCAL_EP_PATH = get_runtime_dir_path() + "/spanners_client";
+const std::string io::REMOTE_EP_PATH = get_runtime_dir_path() + "/spanners_server";
 
 io &io::instance()
 {

@@ -1,12 +1,12 @@
 #include <csignal>
+#include <cstdlib>
 #include <iostream>
+#include <string>
 
 #include <config/config.hpp>
 #include <networking/io/client_server.hpp>
 #include <networking/io/management_server.hpp>
 #include <scheduler/scheduler.hpp>
-
-static constexpr const std::string_view LOCAL_ENDPOINT_PATH{"/tmp/spanners_server"};
 
 static void block_signals(sigset_t &sigset)
 {
@@ -14,6 +14,12 @@ static void block_signals(sigset_t &sigset)
     sigaddset(&sigset, SIGINT);
     sigaddset(&sigset, SIGTERM);
     pthread_sigmask(SIG_BLOCK, &sigset, nullptr);
+}
+
+static std::string get_runtime_dir_path()
+{
+    static const char *runtime_dir = std::getenv("XDG_RUNTIME_DIR");
+    return (runtime_dir) ? runtime_dir : "/tmp";
 }
 
 int main(int argc, const char **argv)
@@ -24,7 +30,7 @@ int main(int argc, const char **argv)
 
     server::config_parser::instance().parse(argc, argv);
 
-    server::management_server m_server{LOCAL_ENDPOINT_PATH};
+    server::management_server m_server{get_runtime_dir_path() + "/spanners_server"};
 
 #ifdef SPANNERS_UNENCRYPTED_CONNECTION
     server::client_server c_server{
