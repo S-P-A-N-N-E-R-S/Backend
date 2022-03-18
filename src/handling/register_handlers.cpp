@@ -13,6 +13,8 @@
 
 #include <handling/handlers/geospanner/geospanner_module.hpp>
 
+#include <handling/handlers/fault_tolerance_spanner/fault_tolerance_spanner_module.hpp>
+
 // #####   add your own handler includes below   #####
 
 // #####   end of handler includes   #####
@@ -39,6 +41,8 @@ void init_handlers()
     register_handler<kruskal_handler>("Minimum Spanning Trees");
 
     register_geospanner();
+
+    register_fault_tolerance_spanner();
 
     // #####   register your own handlers below  #####
 

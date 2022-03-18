@@ -37,6 +37,11 @@ set(SERVER_HEADERS
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/handler_yao_graph_euclid.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/handler_yao_parametrized_euclid.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/geospanner/handler_yao_pruning_euclid.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/fault_tolerance_spanner/handler_dinitz_krauthgamer.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/fault_tolerance_spanner/handler_bodwin_dinitz.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/fault_tolerance_spanner/handler_chechik_langberg_edges.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/fault_tolerance_spanner/handler_chechik_langberg_vertices.hpp
+    ${CMAKE_SOURCE_DIR}/include/handling/handlers/fault_tolerance_spanner/handler_resilient.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/dijkstra_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/general_spanner_handler.hpp
     ${CMAKE_SOURCE_DIR}/include/handling/handlers/kruskal_handler.hpp
@@ -83,6 +88,11 @@ set(SERVER_SOURCES
     handling/handlers/geospanner/handler_yao_graph_euclid.cpp
     handling/handlers/geospanner/handler_yao_parametrized_euclid.cpp
     handling/handlers/geospanner/handler_yao_pruning_euclid.cpp
+    handling/handlers/fault_tolerance_spanner/handler_bodwin_dinitz
+    handling/handlers/fault_tolerance_spanner/handler_dinitz_krauthgamer
+    handling/handlers/fault_tolerance_spanner/handler_chechik_langberg_edges
+    handling/handlers/fault_tolerance_spanner/handler_chechik_langberg_vertices
+    handling/handlers/fault_tolerance_spanner/handler_resilient
     handling/handlers/dijkstra_handler.cpp
     handling/handlers/kruskal_handler.cpp
     io/io_server.cpp
