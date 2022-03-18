@@ -45,7 +45,8 @@ handle_return dinitz_krauthgamer_handler::handle()
     auto spanner = std::make_unique<ogdf::GraphCopySimple>(graph);
 
     // TODO: internal_index not used yet
-    ogdf::SpannerDinitzKrauthgamer<double, ogdf::SpannerBasicGreedy<double>> dinitz_krauthgamer_algorithm;
+    ogdf::SpannerDinitzKrauthgamer<double, ogdf::SpannerBasicGreedy<double>>
+        dinitz_krauthgamer_algorithm;
 
     // Scheduler enforces time limit
     dinitz_krauthgamer_algorithm.setTimelimit(-1);
@@ -89,7 +90,8 @@ handle_return dinitz_krauthgamer_handler::handle()
 
     return {std::unique_ptr<abstract_response>{new generic_response{
                 &spanner_gm, &spanner_node_coords, &spanner_edge_costs, nullptr, nullptr, nullptr,
-                nullptr, nullptr, nullptr, status_code::OK}}, ogdf_time};
+                nullptr, nullptr, nullptr, status_code::OK}},
+            ogdf_time};
 }
 
 graphs::HandlerInformation dinitz_krauthgamer_handler::handler_information()
