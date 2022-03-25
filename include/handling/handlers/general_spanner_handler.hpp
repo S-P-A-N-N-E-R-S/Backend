@@ -57,7 +57,10 @@ handle_return general_spanner_handler<spanner_algorithm>::handle()
     auto &graph = graph_message->graph();
 
     ogdf::GraphAttributes ga(graph, ogdf::GraphAttributes::edgeDoubleWeight);
-    ga.directed() = false;
+
+    std::unordered_map<std::string, std::string> static_attributes = m_request->static_attributes();
+
+    ga.directed() = (static_attributes["edgeDirection"] == "Directed");
 
     const auto *parsed_costs = m_request->edge_costs();
 

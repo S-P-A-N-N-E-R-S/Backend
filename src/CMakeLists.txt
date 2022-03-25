@@ -78,13 +78,19 @@ set(SERVER_SOURCES
     handling/handler_utilities.cpp
     handling/register_handlers.cpp
     handling/handlers/abstract_handler.cpp
+    handling/handlers/connectivity_handler.cpp
+    handling/handlers/diameter_handler.cpp
+    handling/handlers/dijkstra_handler.cpp
+    handling/handlers/fragility_handler.cpp
     handling/handlers/geospanner/handler_delta_greedy_euclid.cpp
     handling/handlers/geospanner/handler_path_greedy_euclid.cpp
     handling/handlers/geospanner/handler_yao_graph_euclid.cpp
     handling/handlers/geospanner/handler_yao_parametrized_euclid.cpp
     handling/handlers/geospanner/handler_yao_pruning_euclid.cpp
-    handling/handlers/dijkstra_handler.cpp
+    handling/handlers/girth_handler.cpp
     handling/handlers/kruskal_handler.cpp
+    handling/handlers/radius_handler.cpp
+    handling/handlers/simplification_handler.cpp 
     io/io_server.cpp
     io/client_server.cpp
     io/management_server.cpp
