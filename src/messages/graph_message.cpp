@@ -81,6 +81,8 @@ graph_message::graph_message(const graphs::Graph &proto)
         const auto in_index = it->invertexindex();
         const auto out_index = it->outvertexindex();
 
+        // NOTE: We *purposefully* use m_all_nodes here. The numbers in edgeList refer to the
+        //       *indices* of the nodes in the nodeList, not to their UIDs.
         const auto source = this->m_all_nodes->operator[](in_index);
         const auto target = this->m_all_nodes->operator[](out_index);
 

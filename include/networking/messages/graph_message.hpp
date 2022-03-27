@@ -75,7 +75,8 @@ public:
     graphs::Graph as_proto() const;
 
     /**
-     * @brief Access a node of the graph by its UID.
+     * @brief Access a node of the graph by its UID. This method exists in order to provide handlers
+     *        with the possibility to access nodes by their UID.
      *
      * @param uid UID of the requested node
      *
@@ -84,7 +85,8 @@ public:
     const ogdf::node &node(uid_t uid) const;
 
     /**
-     * @brief Access an edge of the graph by its UID.
+     * @brief Access an edge of the graph by its UID. This method exists in order to provide
+     *        handlers with the possibility to access edges by their UID.
      *
      * @param uid UID of the requested edge
      *
@@ -153,7 +155,16 @@ private:
     std::unique_ptr<ogdf::NodeArray<uid_t>> m_node_uids;
     std::unique_ptr<ogdf::EdgeArray<uid_t>> m_edge_uids;
 
+    /**
+     * Not really "needed" inside this class but handlers might need to be able to access nodes by
+     * their UIDs.
+     */
     std::unique_ptr<std::unordered_map<uid_t, ogdf::node>> m_uid_to_node;
+
+    /**
+     * Not really "needed" inside this class but handlers might need to be able to access edges by
+     * their UIDs.
+     */
     std::unique_ptr<std::unordered_map<uid_t, ogdf::edge>> m_uid_to_edge;
 };
 
