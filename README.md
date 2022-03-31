@@ -122,3 +122,9 @@ The following steps show how to install and run the backend Docker:
 - Rebuild Docker images (helpful if changes have been made in the Dockerfile): `docker-compose up --build`
 - In `docker-compose.yml` the TLS encryption is disabled as TLS requires a signed certificate and a key file. This allows
   quick and easy installation of the server. The encryption is highly recommended if you use compose in production.
+  
+## Licence
+This backend is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
