@@ -16,7 +16,7 @@ public:
     using connection_type = CONNECTION_TYPE;
 
     /**
-     * @brief Add a <server::connection>
+     * @brief Add a server::connection to the storage
      * @param identifier Used to identify the connection when trying to remove it
      * @param connection Connection to be managed. Handler takes ownership.
      */
@@ -31,7 +31,7 @@ public:
     }
 
     /**
-     * @brief Remove a <server::connection>
+     * @brief Remove a server::connection and thereby ending its lifetime
      * @param identifier Identifier of a previously added connection.
      */
     bool remove(size_t identifier)
@@ -45,6 +45,7 @@ public:
     }
 
 private:
+    /// Underlying storage for all handled connections
     std::map<size_t, std::unique_ptr<connection_type>> m_store;
 };
 

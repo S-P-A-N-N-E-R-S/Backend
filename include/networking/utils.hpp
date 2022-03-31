@@ -22,6 +22,14 @@ namespace server {
  */
 namespace utils {
 
+    /**
+     * @brief Simple conversion function to convert a pqxx timestampz to a ISO 8601 formatted string
+     *
+     * @param timestamp Converted string. In place conversion so the string will be modified and contains
+     *  a ISO 8601 formatted data after successful return of the function.
+     *
+     * @return bool indicating success of the conversion operation
+     */
     template <typename string_type,
               typename =
                   std::enable_if_t<std::is_same_v<std::string, std::decay_t<string_type>> ||

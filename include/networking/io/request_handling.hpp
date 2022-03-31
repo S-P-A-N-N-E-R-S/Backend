@@ -16,7 +16,7 @@ namespace request_handling {
 
     /**
      * @brief handled_request Using declaration for the result of a handled request that responsd
-     * with a <graphs::ResponseContainer>
+     *  with a <graphs::ResponseContainer>
      */
     using handled_request = std::pair<meta_data, graphs::ResponseContainer>;
 
@@ -32,6 +32,7 @@ namespace request_handling {
      *
      * @param db Reference to a database connection to get the status information from
      * @param user Constant reference to a user struct to only query for one users jobs
+     *
      * @return handled_request containing the meta data and the response
      */
     handled_request handle_status(database_wrapper &db, const user &user);
@@ -43,6 +44,7 @@ namespace request_handling {
      * @param meta Constant reference to the requests meta data
      * @param request Constant reference to the data container of the handled request
      * @param user Constant reference to a user struct to only query for one users jobs
+     *
      * @return handled_request containing the meta data and the response
      */
     std::pair<meta_data, binary_data> handle_result(database_wrapper &db,
@@ -55,6 +57,7 @@ namespace request_handling {
      *
      * @param request Constant reference to the data container of the handled request
      * @param user Constant reference to a user struct to only query for one users jobs
+     *
      * @return handled_request containing the meta data and the response
      */
     handled_request handle_abort_job(const graphs::RequestContainer &request, const user &user);
@@ -65,6 +68,7 @@ namespace request_handling {
      * @param db Reference to a database connection to get the status information from
      * @param request Constant reference to the data container of the handled request
      * @param user Constant reference to a user struct to only query for one users jobs
+     *
      * @return handled_request containing the meta data and the response
      */
     handled_request handle_delete_job(database_wrapper &db, const graphs::RequestContainer &request,
@@ -77,6 +81,7 @@ namespace request_handling {
      * @param meta Constant reference to the requests meta data
      * @param buffer Constant reference to the buffer containing the compressed data of the job
      * @param user Constant reference to a user struct to only query for one users jobs
+     *
      * @return handled_request containing the meta data and the response
      */
     handled_request handle_new_job(database_wrapper &db, const graphs::MetaData &meta,
@@ -87,6 +92,7 @@ namespace request_handling {
      *
      * @param db Reference to a database connection to get the status information from
      * @param meta Constant reference to the requests meta data
+     *
      * @return handled_request containing the meta data and the response
      */
     handled_request handle_user_creation(database_wrapper &db, const graphs::MetaData &meta);
@@ -97,6 +103,7 @@ namespace request_handling {
      * @param db Reference to a database connection to get the status information from
      * @param request Constant reference to the data container of the handled request
      * @param user Constant reference to a user struct to only query for one users jobs
+     *
      * @return handled_request containing the meta data and the response
      */
     handled_request handle_origin_graph(database_wrapper &db,

@@ -16,12 +16,17 @@ namespace server {
 handle_return handle(const meta_data &meta, graphs::RequestContainer &requestData);
 
 /**
- * @brief 
+ * @brief Constructs a response to send to the frontend. This response lists
+ * all handlers in handler_factories
  * 
  * @return std::unique_ptr<abstract_response> 
  */
 std::unique_ptr<abstract_response> available_handlers();
 
+/**
+ * @brief Provides utility functions for handling
+ * 
+ */
 namespace handler_utilities {
 
     using factory_map =

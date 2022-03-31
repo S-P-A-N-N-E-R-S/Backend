@@ -20,7 +20,13 @@ struct handle_return {
 };
 
 /**
- * @brief Class template for handler classes
+ * @brief Class template for handler classes. To work as generic handler in handler utilities three additional methods need to be implemented:
+ * 
+ * static std::string name()
+ *
+ * static graphs::HandlerInformation handler_information();
+ *
+ * kruskal_handler(std::unique_ptr<abstract_request> request);
  * 
  */
 class abstract_handler
@@ -40,7 +46,6 @@ protected:
     /**
      * Adds the provided FieldInformation to information.
      * Choices must be added manually, there is not shorthand yet for this.
-     * TODO: add default
      */
     static graphs::FieldInformation *addFieldInformation(graphs::HandlerInformation &information,
                                                          graphs::FieldInformation_FieldType type,

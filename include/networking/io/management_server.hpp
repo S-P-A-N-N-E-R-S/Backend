@@ -33,24 +33,30 @@ public:
 
     ~management_server();
 
+    // Use functions provided by abstract base class
     using io_server::run;
     using io_server::start;
     using io_server::stop;
 
 private:
+    /// Handle incoming connections by creating a client_connection per request
     void handle() override;
 
+    /// Handle incoming JSON request from spannersctl CLI tool
     void handle_request(boost::asio::yield_context &yield,
                         const boost::asio::local::datagram_protocol::endpoint &receiver,
                         nlohmann::json request);
 
+    /// Read and parse JSON data from underlying socket connection
     std::pair<boost::asio::local::datagram_protocol::endpoint, nlohmann::json> read_json(
         boost::asio::yield_context &yield);
 
+    /// Respond with JSON data to spannersctl CLI tool
     void respond_json(boost::asio::yield_context &yield,
                       const boost::asio::local::datagram_protocol::endpoint &receiver,
                       const nlohmann::json &response);
 
+    /// Underlying local socket used for communications
     boost::asio::local::datagram_protocol::socket m_sock;
 };
 
