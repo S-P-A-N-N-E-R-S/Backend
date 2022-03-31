@@ -52,6 +52,13 @@ private:
     void check_connection();
 
 public:
+    /**
+     * @brief Construct a new database wrapper object
+     * 
+     * @param connection_string  String with database address and credentials.
+     * See pqxx::connection for more information
+     * 
+     */
     database_wrapper(const std::string &connection_string);
 
     /**

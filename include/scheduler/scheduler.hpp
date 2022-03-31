@@ -11,15 +11,45 @@ namespace server {
 
 using time_point = std::chrono::steady_clock::time_point;
 
+/**
+ * @brief Stores information of a running process
+ * 
+ */
 struct job_process {
+    /**
+     * @brief Id of the job the process handles
+     * 
+     */
     int job_id;
+    /**
+     * @brief Id of the user the job belongs to
+     * 
+     */
     int user_id;
-    boost::asio::io_service ios;  //Use with data to read return messages
-    std::future<std::string>
-        data_cout;  // String data_cout is to write expected error messages to database
-    std::future<std::string>
-        data_cerr;  // String data_cerr is to write unexpected errors like runtime errors or segfaults
+    /**
+     * @brief boost::asio::io_service to catch output
+     * 
+     */
+    boost::asio::io_service ios;
+    /**
+     * @brief Stores cout output
+     * 
+     */
+    std::future<std::string> data_cout;
+    /**
+     * @brief Stores cerr output
+     * 
+     */
+    std::future<std::string> data_cerr;
+    /**
+     * @brief Pointer to the process itself
+     * 
+     */
     std::unique_ptr<boost::process::child> process;
+    /**
+     * @brief Starting time of the process
+     * 
+     */
     time_point start;
 };
 
@@ -27,21 +57,18 @@ class scheduler
 {
 public:
     static scheduler &instance();
-    // {
-    //     static scheduler instance = scheduler("./src/handler_process", 4, "host=localhost port=5432 user= spanner_user dbname=spanner_db "
-    //                                 "password=pwd connect_timeout=10");
-    //     return instance;
-    // }
 
     /**
-     * @brief Destroy the scheduler backend object. Internally calls stop_scheduler(true).
+     * @brief Destroy the scheduler object. Internally calls stop_scheduler(true).
      */
     ~scheduler();
 
     /**
-     * @brief Set the time limit in milliseconds. Can be used while scheduler is used in a thread. In this case, every task above time limit is cancelled.
+     * @brief Set the time limit in milliseconds. Can be used while scheduler is active.
+     * In this case, every process above time limit is cancelled.
      *
-     * @param time_limit If > 0,  this sets the time limit in milliseconds. Otherwise, no time limits are enforced (and possible prior limit is removed)
+     * @param time_limit If > 0,  this sets the time limit in milliseconds. Otherwise, no
+     * time limit is enforced (and possible prior limit is removed)
      */
     void set_time_limit(int64_t time_limit);
 
@@ -53,9 +80,11 @@ public:
     int64_t get_time_limit() const;
 
     /**
-     * @brief Set the memory resource limit in bytes. Can be used while scheduler is used in a thread. In this case, every new task will obey the limit.
+     * @brief Set the memory resource limit in bytes. Can be used while scheduler is active. 
+     * In this case, every new process will obey the limit.
      *
-     * @param ressource_limit If > 0, this sets the memory resource limit in bytes. Otherwise, no resource limits are enforced (and possible prior limit is removed)
+     * @param ressource_limit If > 0, this sets the memory resource limit in bytes. Otherwise,
+     * no resource limit is enforced (and possible prior limit is removed)
      */
     void set_resource_limit(rlim64_t resource_limit);
 
@@ -67,7 +96,8 @@ public:
     rlim64_t get_resource_limit() const;
 
     /**
-     * @brief Set the maximum nuber of processes. Can be used while scheduler is used in a thread. In this case, no new processes are spawned while too many processes are active
+     * @brief Set the maximum number of processes. Can be used while scheduler is active.
+     * In this case, no new processes are spawned until slots are free.
      *
      * @param process_limit Number of processes to schedule parallel
      */
@@ -100,7 +130,7 @@ public:
     void start();
 
     /**
-     * @brief
+     * @brief Checks if scheduler is still running
      *
      * @return true if scheduler runs
      */
@@ -115,13 +145,14 @@ public:
     void stop_scheduler(bool force);
 
     /**
-     * @brief Stops execution of a task. If it is already running, terminate it. If not,
+     * @brief Stops execution of a process. If it is already running, terminate it. If not,
      * change status in database to aborted so that it never gets scheduled
      */
     void cancel_job(int job_id, int user_id);
 
     /**
-     * @brief Cancels all running jobs of the user with id user_id. No updates are written into the database
+     * @brief Cancels all running jobs of the user with id user_id. No updates are written into the
+     * database.
      *
      * @param user_id
      */

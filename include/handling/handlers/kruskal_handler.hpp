@@ -5,6 +5,12 @@
 
 namespace server {
 
+/**
+ * @brief Handler for building MSTs with Kruskal algorithm. Requests need as input a graph,
+ * edge weights, node coordinates and a source node. The response sends a graph, edge weights 
+ * and node coordinates.
+ * 
+ */
 class kruskal_handler : public abstract_handler
 {
 public:

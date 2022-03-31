@@ -10,7 +10,9 @@
 
 namespace server {
 
-// Dummy struct to assert existence of handler_information method
+/**
+ * @brief Dummy struct to assert existence of handler_information method
+ */
 template <class handler_class>
 struct has_handler_information {
     template <typename signature, signature>
@@ -26,7 +28,9 @@ struct has_handler_information {
     static const bool value = decltype(internal_test_dummy<handler_class>(nullptr))::value;
 };
 
-// Dummy struct to assert existence of name method
+/**
+ * @brief Dummy struct to assert existence of handle method
+ */
 template <class handler_class>
 struct has_name {
     template <typename signature, signature>
@@ -45,6 +49,11 @@ struct has_name {
 // Forward declaration
 class abstract_handler;
 
+/**
+ * @brief Class to produce a handler of a specific type and provide the handler_information of 
+ * this type. See handler_factory for documentation of methods.
+ * 
+ */
 class abstract_handler_factory
 {
 public:
@@ -54,6 +63,12 @@ public:
     virtual graphs::HandlerInformation handler_information() const = 0;
 };
 
+/**
+ * @brief Implements abstract_handler_factory. The handler_type to produce instances of
+ * is given as template argument.
+ * 
+ * @tparam handler_derived 
+ */
 template <typename handler_derived>
 class handler_factory : public abstract_handler_factory
 {
@@ -73,6 +88,12 @@ class handler_factory : public abstract_handler_factory
                   "std::string name()");
 
 public:
+    /**
+     * @brief Construct a new handler factory object
+     * 
+     * @param category Category under which the handler is listed in the frontend.
+     *  Use "/" to declare subfolders
+     */
     handler_factory(const std::string &category)
         : category(category)
     {

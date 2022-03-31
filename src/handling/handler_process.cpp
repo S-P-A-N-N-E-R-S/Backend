@@ -13,7 +13,7 @@
 using namespace server;
 
 /**
- * @brief
+ * @brief Process to handle a single job with id job_id of user with id user_id
  *
  * @param argc
  * @param argv (job_id, user_id, db_connection_string[, memory limit])

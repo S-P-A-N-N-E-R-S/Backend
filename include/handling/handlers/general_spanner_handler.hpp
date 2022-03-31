@@ -12,6 +12,13 @@
 
 namespace server {
 
+/**
+ * @brief Handler for all undirected spanners satisfying ogdf::SpannerModule.h
+ * Requests need to send a graph, edge weights, node coordinates and a stretch factor, 
+ * responses answers with a graph, edge weights and node coordinates.
+ * 
+ * @tparam spanner_algorithm 
+ */
 template <class spanner_algorithm>
 class general_spanner_handler : public abstract_handler
 {
@@ -25,9 +32,9 @@ public:
     static graphs::HandlerInformation handler_information();
 
     /**
-     * @brief Constructs a consistent name from the template parameter
+     * @brief Constructs a consistent name from the template parameter per demangling 
      *
-     * @return std::string the name
+     * @return std::string
      */
     static std::string name();
 
